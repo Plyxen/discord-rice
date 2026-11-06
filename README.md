@@ -40,6 +40,18 @@ All options are CSS variables at the top of `chillnight.theme.css`.
 
 The default wallpaper is embedded in the theme file (the long line at the very bottom), so it needs no hosting. `wallpaper.jpg` is the same image. It is only 736×414; for a sharper look, point `--wallpaper` at a bigger copy.
 
+## Code block button (Vencord plugin)
+
+`vencord-plugins/codeBlockButton` adds a ``` button next to the `<>` button in the popup you get when you select text in the chat box. It wraps the selection in ``` ```; click again to unwrap. It reuses Discord's own wrap/unwrap code, so it behaves like the other buttons.
+
+A theme can't add buttons, so this is a Vencord user plugin, and user plugins only run in a Vencord built from source:
+
+- The source build lives in `Documents\Vencord`, with the plugin copied to `src\userplugins\codeBlockButton`.
+- `%APPDATA%\Vencord\dist\patcher.js` (the file Discord loads) now just loads that build. The installer's original is next to it as `patcher.js.official`; delete `patcher.js` and rename that back to undo.
+- Settings and themes stay in `%APPDATA%\Vencord`, same as before.
+- Update Vencord from **Settings → Vencord → Updater** as usual: for a source build it pulls and rebuilds, and the plugin survives that.
+- After changing the plugin: copy it into `Documents\Vencord\src\userplugins\codeBlockButton`, run `pnpm build` there and restart Discord.
+
 ## When Discord updates break it
 
 Most of the layout is imported from midnight's hosted build, and midnight's maintainer fixes it when Discord renames its classes (as happened in November 2026), so those fixes arrive here automatically. The Chillnight extras mostly use links, labels and class-name prefixes (`href`, `aria-label`, `[class*='baseLayer_']`) that survive renames. Two rules use Discord class names directly and may need updating after a big update: the header search width (`.search_bWCaDq`) and the DM list row (`.channel_zln_tS`, which has a class-free fallback).
