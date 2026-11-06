@@ -64,6 +64,7 @@ body {
     --hide-apps-button: on; /* apps / activities launcher in the chat bar */
     --hide-sticker-button: off; /* sticker button in the chat bar */
     --mono-window-controls: on; /* grey window dots that light up on hover */
+    --mono-server-icons: on; /* off | on | hover: black-and-white server pictures. hover = colour under the mouse */
 
     /* ---- internals, no need to touch ---- */
     --background-image: on;
@@ -215,6 +216,14 @@ body .videoControls_qOjco6 > * {
     -webkit-app-region: no-drag;
 }
 
+/* server list: Discord keeps room for a scrollbar on both sides of it, which pushes the icons 8px right.
+   That was fine in a wide column, but in this narrow one it cut off their right edge. Drop the scrollbar
+   (the wheel still scrolls) so the icons sit centred. */
+:is(.scroller_5dqHTG, [class*='guilds_'] [class*='scrollerBase_']) {
+    scrollbar-gutter: auto !important;
+    scrollbar-width: none !important;
+}
+
 /* ================================================================
    chillnight additions
    Selectors lean on hrefs and aria-labels where possible, which survive Discord's class renames.
@@ -249,6 +258,25 @@ body .videoControls_qOjco6 > * {
     syntax: 'off | on';
     inherits: false;
     initial-value: on;
+}
+@property --mono-server-icons {
+    syntax: 'off | on | hover';
+    inherits: false;
+    initial-value: on;
+}
+
+/* black-and-white server pictures (and the DM avatars that pop into the server list). Only the pictures
+   are greyed: unread, mention and voice badges keep their colour. */
+@container body style(--mono-server-icons: on) or style(--mono-server-icons: hover) {
+    :is(.guilds_pog62O, nav[class*='guilds_']) img {
+        filter: grayscale(1);
+        transition: filter 0.2s ease;
+    }
+}
+@container body style(--mono-server-icons: hover) {
+    :is(.guilds_pog62O, nav[class*='guilds_']) :is([class*='listItem_'], [class*='folderGroup_']):hover img {
+        filter: none;
+    }
 }
 
 /* Nitro Home / Shop / Quests rows above the DM list */

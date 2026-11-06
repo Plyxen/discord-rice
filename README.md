@@ -32,6 +32,7 @@ All options are CSS variables at the top of `chillnight.theme.css`.
 | `--hide-apps-button` | `on` | Apps / activities launcher in the chat bar. |
 | `--hide-sticker-button` | `off` | Sticker button in the chat bar. |
 | `--mono-window-controls` | `on` | Grey window dots instead of red/yellow/green. |
+| `--mono-server-icons` | `on` | Black-and-white server pictures. `hover` brings the colour back under the mouse; `off` keeps them in colour. Badges stay coloured either way. |
 | `--top-bar-button-position` | `titlebar` | `titlebar` moves inbox + window buttons into the header; `hide` keeps a top bar without them; `off` is Discord's default. |
 | `--small-user-panel` | `on` | User panel only under the channel list; server icons run full height. |
 | `--gap` | `8px` | Space between the columns. |
