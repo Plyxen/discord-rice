@@ -1,26 +1,33 @@
 /**
  * @name Chillnight
- * @description Dark, clean and quiet. midnight's layout with a Chillax-style monochrome look, no top bar and no store clutter.
+ * @description Chillax-style Discord: one misty wallpaper behind everything, no panels, no top bar, no store clutter.
  * @author Pota
- * @version 1.0.0
+ * @version 2.0.0
  * @source https://github.com/Plyxen/chillnight-discord
  */
 
-/* Layout comes from midnight by refact0r (MIT): https://github.com/refact0r/midnight-discord
+/* Layout plumbing comes from midnight by refact0r (MIT): https://github.com/refact0r/midnight-discord
    Its maintainer fixes it when Discord renames its classes, so this theme picks those fixes up on its own.
-   Everything below only changes options, colours and hides clutter. */
+   Everything below turns its panels off and restyles it. */
 @import url('https://refact0r.github.io/midnight-discord/build/midnight.css');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
 
 body {
-    /* font: '' for Discord's default font */
-    --font: 'figtree';
+    /* font: 'Poppins' like Chillax, 'figtree' for midnight's, '' for Discord's own */
+    --font: 'Poppins';
     --code-font: '';
     font-weight: 400;
 
-    /* sizes */
-    --gap: 12px; /* spacing between panels */
-    --divider-thickness: 4px; /* unread divider and highlighted message edge */
-    --border-thickness: 1px; /* border around the main panels */
+    /* wallpaper: any image url works (imgur, github.io, raw.githubusercontent.com...).
+       The default is the misty forest, embedded at the bottom of this file. */
+    --wallpaper: var(--wallpaper-default);
+    --wallpaper-dim: 0.5; /* 0 = raw wallpaper, 1 = black. Raise it if text is hard to read */
+    --grain: on; /* off | on: film grain over the wallpaper */
+
+    /* spacing: no panels, just air between the columns */
+    --gap: 12px;
+    --border-thickness: 0px;
+    --divider-thickness: 3px;
 
     /* animations */
     --animations: on;
@@ -28,8 +35,8 @@ body {
     --dms-icon-svg-transition: 0.4s ease;
     --border-hover-transition: 0.2s ease;
 
-    /* top bar: collapsed to a thin drag strip. The "Direct Messages" / server title, back/forward arrows
-       and help button are gone; the inbox button moves into the channel header next to the window buttons */
+    /* top bar: gone. No "Direct Messages" title, arrows or help button; inbox and window buttons sit in
+       the channel header */
     --top-bar-height: var(--gap);
     --top-bar-button-position: titlebar; /* off | hide | titlebar */
     --top-bar-title-position: hide; /* off | hide | left */
@@ -39,74 +46,78 @@ body {
     --custom-window-controls: on;
     --window-control-size: 13px;
 
-    /* home (DMs) button at the top of the server list */
-    --custom-dms-icon: off; /* off: Discord logo, hide: nothing, custom: svg below */
-    --dms-icon-svg-url: url('https://refact0r.github.io/midnight-discord/assets/Font_Awesome_5_solid_moon.svg');
-    --dms-icon-svg-size: 90%;
-    --dms-icon-color-before: var(--icon-subtle);
-    --dms-icon-color-after: var(--white);
+    /* home (DMs) button: off = Discord logo */
+    --custom-dms-icon: off;
     --custom-dms-background: off;
 
-    /* wallpaper behind the panels. Any image url works (imgur, github.io, raw.githubusercontent.com...) */
-    --background-image: on; /* off | on */
-    --background-image-url: url('https://warrayquipsome.github.io/Chillax/Wallpapers/modern-dark-bg.png');
+    /* chat bar sits in the chat, no separate box */
+    --custom-chatbar: off;
+    --chatbar-height: 47px;
 
-    /* frosted glass panels */
-    --transparency-tweaks: on;
-    --remove-bg-layer: off;
-    --panel-blur: on;
-    --blur-amount: 24px;
-    --bg-floating: hsla(0, 0%, 8%, 0.94); /* menus, popouts, tooltips */
-
-    /* chat bar */
-    --custom-chatbar: separated; /* off: attached to chat, separated: its own floating panel */
-    --chatbar-height: 52px;
-
-    /* user panel sits under the channel list only; server list runs full height */
+    /* user panel under the channel list; server list runs full height like Chillax */
     --small-user-panel: on;
 
-    /* ---- chillnight declutter (on = hidden) ---- */
+    /* ---- declutter (on = hidden) ---- */
     --hide-store-tabs: on; /* Nitro Home, Shop and Quests at the top of the DM list */
     --hide-gift-button: on; /* gift button in the chat bar */
     --hide-apps-button: on; /* apps / activities launcher in the chat bar */
     --hide-sticker-button: off; /* sticker button in the chat bar */
     --mono-window-controls: on; /* grey window dots that light up on hover */
+
+    /* ---- internals, no need to touch ---- */
+    --background-image: on;
+    --background-image-url: var(--grain-layer), var(--wallpaper-shade), var(--wallpaper);
+    --wallpaper-shade:
+        radial-gradient(ellipse at 60% 40%, transparent 35%, hsla(0, 0%, 0%, 0.45) 100%),
+        linear-gradient(90deg, hsla(0, 0%, 0%, 0.5) 0%, hsla(0, 0%, 0%, 0.3) 30%, transparent 50%),
+        linear-gradient(hsla(0, 0%, 0%, var(--wallpaper-dim)), hsla(0, 0%, 0%, var(--wallpaper-dim)));
+    --grain-layer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 0 .07'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    --transparency-tweaks: on;
+    --remove-bg-layer: off;
+    --panel-blur: off;
 }
 
-/* colours: greyscale like Chillax. Panels are slightly see-through so the wallpaper shows through the blur.
-   For fully solid panels, set every alpha in --bg-1..4 to 1 and --background-image to off. */
+/* a container query can't restyle body itself, so drop the grain one level down */
+@container body style(--grain: off) {
+    #app-mount {
+        --background-image-url: var(--wallpaper-shade), var(--wallpaper);
+    }
+}
+
+/* colours: greyscale, a touch brighter than usual because everything sits on the wallpaper */
 :root {
     --colors: on;
 
     /* text */
-    --text-0: hsl(0, 0%, 7%); /* text on light buttons */
-    --text-1: hsl(0, 0%, 97%); /* bright white text */
-    --text-2: hsl(0, 0%, 87%); /* headings, names */
-    --text-3: hsl(0, 0%, 75%); /* message text */
-    --text-4: hsl(0, 0%, 50%); /* icons, channels */
-    --text-5: hsl(0, 0%, 34%); /* muted channels, timestamps */
+    --text-0: hsl(0, 0%, 6%); /* text on light buttons */
+    --text-1: hsl(0, 0%, 98%);
+    --text-2: hsl(0, 0%, 92%); /* headings, names */
+    --text-3: hsl(0, 0%, 82%); /* message text */
+    --text-4: hsl(0, 0%, 62%); /* icons, channels */
+    --text-5: hsl(0, 0%, 52%); /* muted channels, timestamps */
 
-    /* backgrounds */
-    --bg-1: hsla(0, 0%, 20%, 0.7); /* buttons when clicked */
-    --bg-2: hsla(0, 0%, 15%, 0.7); /* buttons, inputs */
-    --bg-3: hsla(0, 0%, 9%, 0.6); /* gaps between panels, secondary surfaces */
-    --bg-4: hsla(0, 0%, 5%, 0.74); /* main panels */
-    --hover: hsla(0, 0%, 100%, 0.045);
-    --active: hsla(0, 0%, 100%, 0.085);
-    --active-2: hsla(0, 0%, 100%, 0.12);
-    --message-hover: hsla(0, 0%, 100%, 0.025);
+    /* surfaces. bg-3 / bg-4 stay solid: they colour menus, popouts, modals and settings */
+    --bg-1: hsla(0, 0%, 100%, 0.14); /* buttons when clicked */
+    --bg-2: hsla(0, 0%, 100%, 0.08); /* buttons */
+    --bg-3: hsl(0, 0%, 9%); /* menus, popouts */
+    --bg-4: hsl(0, 0%, 6%); /* modals, settings */
+    --glass: hsla(0, 0%, 100%, 0.05); /* inputs and cards sitting on the wallpaper */
+    --hover: hsla(0, 0%, 100%, 0.06);
+    --active: hsla(0, 0%, 100%, 0.1);
+    --active-2: hsla(0, 0%, 100%, 0.14);
+    --message-hover: hsla(0, 0%, 100%, 0.03);
 
-    /* accent: soft white instead of blurple, links get a faint cool tint so they stay readable */
-    --accent-1: oklch(84% 0.04 250); /* links */
-    --accent-2: oklch(86% 0 0); /* unread pills, markers */
-    --accent-3: oklch(92% 0 0); /* primary buttons */
-    --accent-4: oklch(84% 0 0); /* primary buttons, hover */
-    --accent-5: oklch(76% 0 0); /* primary buttons, pressed */
-    --accent-new: var(--red-2); /* mute / deafen and other normally red bits */
-    --mention: linear-gradient(to right, color-mix(in hsl, var(--accent-2), transparent 90%) 40%, transparent);
-    --mention-hover: linear-gradient(to right, color-mix(in hsl, var(--accent-2), transparent 94%) 40%, transparent);
-    --reply: linear-gradient(to right, color-mix(in hsl, var(--text-3), transparent 92%) 40%, transparent);
-    --reply-hover: linear-gradient(to right, color-mix(in hsl, var(--text-3), transparent 95%) 40%, transparent);
+    /* accent: soft white instead of blurple, links slightly cool so they stay readable */
+    --accent-1: oklch(86% 0.04 250);
+    --accent-2: oklch(88% 0 0);
+    --accent-3: oklch(92% 0 0);
+    --accent-4: oklch(84% 0 0);
+    --accent-5: oklch(76% 0 0);
+    --accent-new: var(--red-2);
+    --mention: linear-gradient(to right, color-mix(in hsl, var(--accent-2), transparent 88%) 40%, transparent);
+    --mention-hover: linear-gradient(to right, color-mix(in hsl, var(--accent-2), transparent 93%) 40%, transparent);
+    --reply: linear-gradient(to right, color-mix(in hsl, var(--text-3), transparent 90%) 40%, transparent);
+    --reply-hover: linear-gradient(to right, color-mix(in hsl, var(--text-3), transparent 94%) 40%, transparent);
 
     /* status */
     --online: var(--green-2);
@@ -115,13 +126,13 @@ body {
     --streaming: var(--purple-2);
     --offline: var(--text-4);
 
-    /* borders */
+    /* borders: barely there */
     --border-light: hsla(0, 0%, 100%, 0.04);
-    --border: hsla(0, 0%, 100%, 0.07);
-    --border-hover: hsla(0, 0%, 100%, 0.13);
+    --border: hsla(0, 0%, 100%, 0.06);
+    --border-hover: hsla(0, 0%, 100%, 0.1);
     --button-border: hsla(0, 0%, 100%, 0.1);
 
-    /* base colours (status dots, role colours that use them) */
+    /* base colours */
     --red-1: oklch(75% 0.12 15);
     --red-2: oklch(70% 0.12 15);
     --red-3: oklch(65% 0.12 15);
@@ -154,6 +165,26 @@ body {
 }
 
 /* ================================================================
+   no panels: inside the main app layer every base surface is see-through, so the wallpaper is the
+   background. Menus, popouts, modals and settings live outside this layer and keep solid colours.
+   ================================================================ */
+[class*='layers_'] > [class*='layer_'][class*='baseLayer_'],
+[class*='layers_'] > [class*='layer_'][class*='baseLayer_'] :is(.theme-dark, .theme-darker, .theme-midnight, .theme-light) {
+    --background-gradient-low: transparent;
+    --background-gradient-high: transparent;
+    --background-gradient-highest: transparent;
+    --background-base-low: transparent;
+    --background-base-lower: transparent;
+    --background-base-lowest: transparent;
+    --home-background: transparent;
+    --app-frame-background: transparent;
+    --chat-background-default: var(--glass);
+    --input-background-default: var(--glass);
+    --card-background-default: var(--glass);
+    --background-code: hsla(0, 0%, 0%, 0.3);
+}
+
+/* ================================================================
    chillnight additions
    Selectors lean on hrefs and aria-labels where possible, which survive Discord's class renames.
    ================================================================ */
@@ -179,6 +210,11 @@ body {
     initial-value: off;
 }
 @property --mono-window-controls {
+    syntax: 'off | on';
+    inherits: false;
+    initial-value: on;
+}
+@property --grain {
     syntax: 'off | on';
     inherits: false;
     initial-value: on;
@@ -238,4 +274,9 @@ body {
     [class*='winButtons_'] > [class*='winButtonMinMax_']:nth-child(2):hover::after {
         background-color: var(--online) !important;
     }
+}
+
+/* default wallpaper: misty forest, embedded so it works without hosting. Keep this block last. */
+:root {
+    --wallpaper-default: url('data:image/jpeg;base64,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');
 }

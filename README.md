@@ -1,10 +1,12 @@
 # Chillnight
 
-A dark, clean Discord theme for Vencord: [midnight](https://github.com/refact0r/midnight-discord)'s layout with a [Chillax](https://github.com/warrayquipsome/Chillax)-style monochrome look.
+A [Chillax](https://github.com/warrayquipsome/Chillax)-style Discord theme for Vencord, built on [midnight](https://github.com/refact0r/midnight-discord)'s maintained layout.
 
+- One misty forest wallpaper behind the whole window, with film grain and a dark fade on the left. No panels, boxes or borders: the server icons, DM list, chat and member list sit straight on it.
 - No top bar: the "Direct Messages" / server title, back/forward arrows and help button are gone. Inbox and window buttons sit in the channel header.
-- Greyscale palette, frosted panels over a dark wallpaper, small grey window dots that light up on hover.
+- Greyscale colours, Poppins font, small grey window dots that light up on hover.
 - Store clutter hidden: Nitro Home, Shop and Quests in the DM list, plus the gift and apps buttons in the chat bar.
+- Menus, popouts, modals and settings keep a solid dark background so they stay readable.
 
 ## Install
 
@@ -20,25 +22,26 @@ All options are CSS variables at the top of `chillnight.theme.css`.
 
 | Variable | Default | What it does |
 | --- | --- | --- |
-| `--background-image` | `on` | Wallpaper behind the panels. Set `--background-image-url` to any image link. |
-| `--panel-blur` / `--blur-amount` | `on` / `24px` | Frosted glass on panels. |
+| `--wallpaper` | misty forest | Any image: `url('https://i.imgur.com/....jpg')`. imgur, github.io and raw.githubusercontent.com links work. |
+| `--wallpaper-dim` | `0.5` | How much the wallpaper is darkened (0 to 1). Raise it if text is hard to read. |
+| `--grain` | `on` | Film grain over the wallpaper. |
+| `--font` | `'Poppins'` | `'figtree'` for midnight's font, `''` for Discord's own. |
 | `--hide-store-tabs` | `on` | Nitro Home, Shop, Quests in the DM list. |
 | `--hide-gift-button` | `on` | Gift button in the chat bar. |
 | `--hide-apps-button` | `on` | Apps / activities launcher in the chat bar. |
 | `--hide-sticker-button` | `off` | Sticker button in the chat bar. |
 | `--mono-window-controls` | `on` | Grey window dots instead of red/yellow/green. |
 | `--top-bar-button-position` | `titlebar` | `titlebar` moves inbox + window buttons into the header; `hide` keeps a top bar without them; `off` is Discord's default. |
-| `--custom-chatbar` | `separated` | Chat bar as its own floating panel (`off` to attach it to the chat). |
-| `--small-user-panel` | `on` | User panel only under the channel list. |
-| `--font` | `'figtree'` | `''` for Discord's own font. |
+| `--small-user-panel` | `on` | User panel only under the channel list; server icons run full height. |
+| `--gap` | `12px` | Space between the columns. |
 
-For fully solid panels (no wallpaper): set `--background-image: off` and change the alpha of `--bg-1` to `--bg-4` to `1`.
+The default wallpaper is embedded in the theme file (the long line at the very bottom), so it needs no hosting. `wallpaper.jpg` is the same image. It is only 736×414; for a sharper look, point `--wallpaper` at a bigger copy.
 
 ## When Discord updates break it
 
-Most of the layout is imported from midnight's hosted build, and midnight's maintainer fixes it when Discord renames its classes (as happened in November 2026), so those fixes arrive here automatically. The Chillnight extras mostly use links and labels (`href`, `aria-label`) that survive renames. Two rules use Discord class names directly and may need updating after a big update: the header search width (`.search_bWCaDq`) and the DM list row (`.channel_zln_tS`, which has a class-free fallback).
+Most of the layout is imported from midnight's hosted build, and midnight's maintainer fixes it when Discord renames its classes (as happened in November 2026), so those fixes arrive here automatically. The Chillnight extras mostly use links, labels and class-name prefixes (`href`, `aria-label`, `[class*='baseLayer_']`) that survive renames. Two rules use Discord class names directly and may need updating after a big update: the header search width (`.search_bWCaDq`) and the DM list row (`.channel_zln_tS`, which has a class-free fallback).
 
 ## Credits
 
 - Layout: [midnight-discord](https://github.com/refact0r/midnight-discord) by refact0r (MIT), loaded from its hosted build.
-- Look and default wallpaper: [Chillax](https://github.com/warrayquipsome/Chillax) by the Chillax Squad. The wallpaper is loaded from Chillax's own site, not copied here.
+- Look: [Chillax](https://github.com/warrayquipsome/Chillax) by the Chillax Squad.
