@@ -265,16 +265,20 @@ body .videoControls_qOjco6 > * {
     initial-value: on;
 }
 
-/* black-and-white server pictures (and the DM avatars that pop into the server list). Only the pictures
-   are greyed: unread, mention and voice badges keep their colour. */
+/* black-and-white server pictures (and the DM avatars that pop into the server list), plus folders: the
+   mini icons in a closed folder, the folder colour and the open-folder glyph and tint. Only pictures and
+   folders are greyed: unread, mention and voice badges keep their colour. */
 @container body style(--mono-server-icons: on) or style(--mono-server-icons: hover) {
-    :is(.guilds_pog62O, nav[class*='guilds_']) img {
+    :is(.guilds_pog62O, nav[class*='guilds_'])
+        :is(img, [class*='folderPreviewWrapper_'], [class*='folderIcon_'], [class*='folderGroupBackground_']) {
         filter: grayscale(1);
         transition: filter 0.2s ease;
     }
 }
 @container body style(--mono-server-icons: hover) {
-    :is(.guilds_pog62O, nav[class*='guilds_']) :is([class*='listItem_'], [class*='folderGroup_']):hover img {
+    :is(.guilds_pog62O, nav[class*='guilds_'])
+        :is([class*='listItem_'], [class*='folderHeader_']):hover
+        :is(img, [class*='folderPreviewWrapper_'], [class*='folderIcon_']) {
         filter: none;
     }
 }
