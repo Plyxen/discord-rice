@@ -1,0 +1,241 @@
+/**
+ * @name Chillnight
+ * @description Dark, clean and quiet. midnight's layout with a Chillax-style monochrome look, no top bar and no store clutter.
+ * @author Pota
+ * @version 1.0.0
+ * @source https://github.com/Plyxen/chillnight-discord
+ */
+
+/* Layout comes from midnight by refact0r (MIT): https://github.com/refact0r/midnight-discord
+   Its maintainer fixes it when Discord renames its classes, so this theme picks those fixes up on its own.
+   Everything below only changes options, colours and hides clutter. */
+@import url('https://refact0r.github.io/midnight-discord/build/midnight.css');
+
+body {
+    /* font: '' for Discord's default font */
+    --font: 'figtree';
+    --code-font: '';
+    font-weight: 400;
+
+    /* sizes */
+    --gap: 12px; /* spacing between panels */
+    --divider-thickness: 4px; /* unread divider and highlighted message edge */
+    --border-thickness: 1px; /* border around the main panels */
+
+    /* animations */
+    --animations: on;
+    --list-item-transition: 0.2s ease;
+    --dms-icon-svg-transition: 0.4s ease;
+    --border-hover-transition: 0.2s ease;
+
+    /* top bar: collapsed to a thin drag strip. The "Direct Messages" / server title, back/forward arrows
+       and help button are gone; the inbox button moves into the channel header next to the window buttons */
+    --top-bar-height: var(--gap);
+    --top-bar-button-position: titlebar; /* off | hide | titlebar */
+    --top-bar-title-position: hide; /* off | hide | left */
+    --subtle-top-bar-title: off;
+
+    /* window buttons: small dots instead of Windows' - [] x */
+    --custom-window-controls: on;
+    --window-control-size: 13px;
+
+    /* home (DMs) button at the top of the server list */
+    --custom-dms-icon: off; /* off: Discord logo, hide: nothing, custom: svg below */
+    --dms-icon-svg-url: url('https://refact0r.github.io/midnight-discord/assets/Font_Awesome_5_solid_moon.svg');
+    --dms-icon-svg-size: 90%;
+    --dms-icon-color-before: var(--icon-subtle);
+    --dms-icon-color-after: var(--white);
+    --custom-dms-background: off;
+
+    /* wallpaper behind the panels. Any image url works (imgur, github.io, raw.githubusercontent.com...) */
+    --background-image: on; /* off | on */
+    --background-image-url: url('https://warrayquipsome.github.io/Chillax/Wallpapers/modern-dark-bg.png');
+
+    /* frosted glass panels */
+    --transparency-tweaks: on;
+    --remove-bg-layer: off;
+    --panel-blur: on;
+    --blur-amount: 24px;
+    --bg-floating: hsla(0, 0%, 8%, 0.94); /* menus, popouts, tooltips */
+
+    /* chat bar */
+    --custom-chatbar: separated; /* off: attached to chat, separated: its own floating panel */
+    --chatbar-height: 52px;
+
+    /* user panel sits under the channel list only; server list runs full height */
+    --small-user-panel: on;
+
+    /* ---- chillnight declutter (on = hidden) ---- */
+    --hide-store-tabs: on; /* Nitro Home, Shop and Quests at the top of the DM list */
+    --hide-gift-button: on; /* gift button in the chat bar */
+    --hide-apps-button: on; /* apps / activities launcher in the chat bar */
+    --hide-sticker-button: off; /* sticker button in the chat bar */
+    --mono-window-controls: on; /* grey window dots that light up on hover */
+}
+
+/* colours: greyscale like Chillax. Panels are slightly see-through so the wallpaper shows through the blur.
+   For fully solid panels, set every alpha in --bg-1..4 to 1 and --background-image to off. */
+:root {
+    --colors: on;
+
+    /* text */
+    --text-0: hsl(0, 0%, 7%); /* text on light buttons */
+    --text-1: hsl(0, 0%, 97%); /* bright white text */
+    --text-2: hsl(0, 0%, 87%); /* headings, names */
+    --text-3: hsl(0, 0%, 75%); /* message text */
+    --text-4: hsl(0, 0%, 50%); /* icons, channels */
+    --text-5: hsl(0, 0%, 34%); /* muted channels, timestamps */
+
+    /* backgrounds */
+    --bg-1: hsla(0, 0%, 20%, 0.7); /* buttons when clicked */
+    --bg-2: hsla(0, 0%, 15%, 0.7); /* buttons, inputs */
+    --bg-3: hsla(0, 0%, 9%, 0.6); /* gaps between panels, secondary surfaces */
+    --bg-4: hsla(0, 0%, 5%, 0.74); /* main panels */
+    --hover: hsla(0, 0%, 100%, 0.045);
+    --active: hsla(0, 0%, 100%, 0.085);
+    --active-2: hsla(0, 0%, 100%, 0.12);
+    --message-hover: hsla(0, 0%, 100%, 0.025);
+
+    /* accent: soft white instead of blurple, links get a faint cool tint so they stay readable */
+    --accent-1: oklch(84% 0.04 250); /* links */
+    --accent-2: oklch(86% 0 0); /* unread pills, markers */
+    --accent-3: oklch(92% 0 0); /* primary buttons */
+    --accent-4: oklch(84% 0 0); /* primary buttons, hover */
+    --accent-5: oklch(76% 0 0); /* primary buttons, pressed */
+    --accent-new: var(--red-2); /* mute / deafen and other normally red bits */
+    --mention: linear-gradient(to right, color-mix(in hsl, var(--accent-2), transparent 90%) 40%, transparent);
+    --mention-hover: linear-gradient(to right, color-mix(in hsl, var(--accent-2), transparent 94%) 40%, transparent);
+    --reply: linear-gradient(to right, color-mix(in hsl, var(--text-3), transparent 92%) 40%, transparent);
+    --reply-hover: linear-gradient(to right, color-mix(in hsl, var(--text-3), transparent 95%) 40%, transparent);
+
+    /* status */
+    --online: var(--green-2);
+    --dnd: var(--red-2);
+    --idle: var(--yellow-2);
+    --streaming: var(--purple-2);
+    --offline: var(--text-4);
+
+    /* borders */
+    --border-light: hsla(0, 0%, 100%, 0.04);
+    --border: hsla(0, 0%, 100%, 0.07);
+    --border-hover: hsla(0, 0%, 100%, 0.13);
+    --button-border: hsla(0, 0%, 100%, 0.1);
+
+    /* base colours (status dots, role colours that use them) */
+    --red-1: oklch(75% 0.12 15);
+    --red-2: oklch(70% 0.12 15);
+    --red-3: oklch(65% 0.12 15);
+    --red-4: oklch(60% 0.12 15);
+    --red-5: oklch(55% 0.12 15);
+
+    --green-1: oklch(78% 0.11 155);
+    --green-2: oklch(73% 0.11 155);
+    --green-3: oklch(68% 0.11 155);
+    --green-4: oklch(63% 0.11 155);
+    --green-5: oklch(58% 0.11 155);
+
+    --blue-1: oklch(78% 0.07 240);
+    --blue-2: oklch(73% 0.07 240);
+    --blue-3: oklch(68% 0.07 240);
+    --blue-4: oklch(63% 0.07 240);
+    --blue-5: oklch(58% 0.07 240);
+
+    --yellow-1: oklch(82% 0.1 85);
+    --yellow-2: oklch(77% 0.1 85);
+    --yellow-3: oklch(72% 0.1 85);
+    --yellow-4: oklch(67% 0.1 85);
+    --yellow-5: oklch(62% 0.1 85);
+
+    --purple-1: oklch(76% 0.1 305);
+    --purple-2: oklch(71% 0.1 305);
+    --purple-3: oklch(66% 0.1 305);
+    --purple-4: oklch(61% 0.1 305);
+    --purple-5: oklch(56% 0.1 305);
+}
+
+/* ================================================================
+   chillnight additions
+   Selectors lean on hrefs and aria-labels where possible, which survive Discord's class renames.
+   ================================================================ */
+
+@property --hide-store-tabs {
+    syntax: 'off | on';
+    inherits: false;
+    initial-value: on;
+}
+@property --hide-gift-button {
+    syntax: 'off | on';
+    inherits: false;
+    initial-value: on;
+}
+@property --hide-apps-button {
+    syntax: 'off | on';
+    inherits: false;
+    initial-value: on;
+}
+@property --hide-sticker-button {
+    syntax: 'off | on';
+    inherits: false;
+    initial-value: off;
+}
+@property --mono-window-controls {
+    syntax: 'off | on';
+    inherits: false;
+    initial-value: on;
+}
+
+/* Nitro Home / Shop / Quests rows above the DM list */
+@container body style(--hide-store-tabs: on) {
+    nav :is(li, [role='listitem'], .channel_zln_tS):has(a:is([href='/store'], [href='/shop'], [href='/quest-home'])),
+    nav a:is([href='/store'], [href='/shop'], [href='/quest-home']) {
+        display: none;
+    }
+}
+
+/* chat bar buttons */
+@container body style(--hide-gift-button: on) {
+    [class*='channelTextArea'] [aria-label='Send a gift'] {
+        display: none;
+    }
+}
+@container body style(--hide-apps-button: on) {
+    [class*='channelTextArea'] :is([class*='channelAppLauncher_'], .app-launcher-entrypoint) {
+        display: none;
+    }
+}
+@container body style(--hide-sticker-button: on) {
+    [class*='channelTextArea'] .expression-picker-chat-input-button:has([aria-label='Open sticker picker']) {
+        display: none;
+    }
+}
+
+/* keep the DM / channel name visible in the header. Discord sizes the header search box as if the right
+   edge were free (100cqi - 320px), but in titlebar mode midnight parks the inbox and window buttons there,
+   so on smaller windows the name got squeezed to nothing. Shrink the search box by that space instead. */
+@container body style(--top-bar-button-position: titlebar) {
+    .search_bWCaDq {
+        flex: 0 1 auto;
+        width: clamp(var(--space-64), 100cqi - 360px - var(--top-bar-right-margin, 0px), 244px);
+    }
+}
+
+/* grey window dots, coloured on hover */
+@container body style(--mono-window-controls: on) and style(--custom-window-controls: on) {
+    /* midnight colours these with !important at (0,2,1), so match that and come later */
+    [class*='winButtons_'] > [class*='winButton_']::after {
+        background-color: var(--text-5) !important;
+        transition: background-color 0.15s ease;
+    }
+    [class*='winButtons_'] > [class*='winButton_']:hover::after {
+        filter: none;
+    }
+    [class*='winButtons_'] > [class*='winButtonClose_']:hover::after {
+        background-color: var(--dnd) !important;
+    }
+    [class*='winButtons_'] > [class*='winButtonMinMax_']:nth-child(1):hover::after {
+        background-color: var(--idle) !important;
+    }
+    [class*='winButtons_'] > [class*='winButtonMinMax_']:nth-child(2):hover::after {
+        background-color: var(--online) !important;
+    }
+}
