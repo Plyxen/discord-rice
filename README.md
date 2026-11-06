@@ -5,6 +5,7 @@ A [Chillax](https://github.com/warrayquipsome/Chillax)-style Discord theme for V
 - One misty forest wallpaper behind the whole window, with film grain and a dark fade on the left. No panels, boxes or borders: the server icons, DM list, chat and member list sit straight on it.
 - No top bar: the "Direct Messages" / server title, back/forward arrows and help button are gone. Inbox and window buttons sit in the channel header.
 - Greyscale colours, Poppins font, small grey window dots that light up on hover.
+- Drag the window by the empty space in the channel header, next to the name.
 - Store clutter hidden: Nitro Home, Shop and Quests in the DM list, plus the gift and apps buttons in the chat bar.
 - Menus, popouts, modals and settings keep a solid dark background so they stay readable.
 
@@ -33,7 +34,8 @@ All options are CSS variables at the top of `chillnight.theme.css`.
 | `--mono-window-controls` | `on` | Grey window dots instead of red/yellow/green. |
 | `--top-bar-button-position` | `titlebar` | `titlebar` moves inbox + window buttons into the header; `hide` keeps a top bar without them; `off` is Discord's default. |
 | `--small-user-panel` | `on` | User panel only under the channel list; server icons run full height. |
-| `--gap` | `12px` | Space between the columns. |
+| `--gap` | `8px` | Space between the columns. |
+| `--custom-guild-list-padding` | `6px` | Space left and right of the server icons (in the `:root` block). |
 
 The default wallpaper is embedded in the theme file (the long line at the very bottom), so it needs no hosting. `wallpaper.jpg` is the same image. It is only 736×414; for a sharper look, point `--wallpaper` at a bigger copy.
 

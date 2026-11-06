@@ -24,8 +24,9 @@ body {
     --wallpaper-dim: 0.5; /* 0 = raw wallpaper, 1 = black. Raise it if text is hard to read */
     --grain: on; /* off | on: film grain over the wallpaper */
 
-    /* spacing: no panels, just air between the columns */
-    --gap: 12px;
+    /* spacing: no panels, just air between the columns. Server icon padding is --custom-guild-list-padding
+       in the :root block below */
+    --gap: 8px;
     --border-thickness: 0px;
     --divider-thickness: 3px;
 
@@ -87,6 +88,7 @@ body {
 /* colours: greyscale, a touch brighter than usual because everything sits on the wallpaper */
 :root {
     --colors: on;
+    --custom-guild-list-padding: 6px; /* space left and right of the server icons (midnight: 12px) */
 
     /* text */
     --text-0: hsl(0, 0%, 6%); /* text on light buttons */
@@ -190,6 +192,20 @@ body {
     :is(.wrapper_hbKzX7, .callContainer_hbKzX7, .callContainer_hbKzX7 > [class*='root_'], .callContainer_DwQMm_, [class*='callContainer_']) {
     background: transparent !important;
 }
+/* and the dark fades Discord lays over the top and bottom of a call while you hover it */
+[class*='callContainer_'] :is(.gradientContainer_rTsZa_, [class*='gradientContainer_']) {
+    background-image: none;
+}
+
+/* drag the window by the empty part of the channel header (next to the name), not just the thin strip above.
+   Only the title area is a drag region: the inbox and window buttons sit over the header's right end and
+   would stop taking clicks if the whole header were draggable. Anything clickable in the title stays clickable. */
+.children_ybUK7Z {
+    -webkit-app-region: drag;
+}
+.children_ybUK7Z :is(a, button, input, [role='button'], [role='link'], [role='textbox'], [tabindex]:not([tabindex='-1'])) {
+    -webkit-app-region: no-drag;
+}
 
 /* ================================================================
    chillnight additions
@@ -237,7 +253,8 @@ body {
 
 /* chat bar buttons */
 @container body style(--hide-gift-button: on) {
-    [class*='channelTextArea'] [aria-label='Send a gift'] {
+    /* the label varies ("Send a gift", "Send a gift to <name>"...), so match any gift button */
+    [class*='channelTextArea'] :is(button, [role='button'])[aria-label*='gift' i] {
         display: none;
     }
 }
