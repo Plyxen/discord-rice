@@ -184,6 +184,13 @@ body {
     --background-code: hsla(0, 0%, 0%, 0.3);
 }
 
+/* calls: drop the black backdrop behind the tiles so the wallpaper shows. Video and screen share tiles
+   keep their own background. Classes are midnight's (it maintains them); the [class*] one is a fallback. */
+[class*='baseLayer_']
+    :is(.wrapper_hbKzX7, .callContainer_hbKzX7, .callContainer_hbKzX7 > [class*='root_'], .callContainer_DwQMm_, [class*='callContainer_']) {
+    background: transparent !important;
+}
+
 /* ================================================================
    chillnight additions
    Selectors lean on hrefs and aria-labels where possible, which survive Discord's class renames.
