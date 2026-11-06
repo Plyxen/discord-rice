@@ -196,6 +196,14 @@ body {
 [class*='callContainer_'] :is(.gradientContainer_rTsZa_, [class*='gradientContainer_']) {
     background-image: none;
 }
+/* same for the small picture-in-picture preview you get after leaving the call screen. Without the dark
+   bands, a soft shadow keeps its back arrow, name and buttons readable over bright video. */
+body :is(.videoControls_qOjco6, .pipHeaderContentOpen_W1lBQu) {
+    background: none;
+}
+body .videoControls_qOjco6 > * {
+    filter: drop-shadow(0 1px 2px hsla(0, 0%, 0%, 0.75));
+}
 
 /* drag the window by the empty part of the channel header (next to the name), not just the thin strip above.
    Only the title area is a drag region: the inbox and window buttons sit over the header's right end and
