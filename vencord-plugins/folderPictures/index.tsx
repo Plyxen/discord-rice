@@ -254,7 +254,24 @@ export function pickText(folderId: string) {
 }
 
 function MenuIcon({ icon }: { icon: string; }) {
-    return <div style={{ width: 18, height: 18, background: "currentColor", mask: `${iconUrl(icon)} center / contain no-repeat` }} />;
+    return <div style={{ width: 18, height: 18, flexShrink: 0, background: "currentColor", mask: `${iconUrl(icon)} center / contain no-repeat` }} />;
+}
+
+// Discord's newer menu style ignores a menu item's `icon` and only draws a `trailingIndicator`; the
+// older style does the opposite. Pass both, so the icon shows either way
+function menuIcon(icon: string) {
+    const Icon = () => <MenuIcon icon={icon} />;
+    return { icon: Icon, trailingIndicator: { type: "icon", icon: Icon } } as any;
+}
+
+// a preset's ASCII in a fixed-width column in front of its name
+function AsciiLabel({ ascii, name }: { ascii: string; name: string; }) {
+    return (
+        <span style={{ whiteSpace: "pre" }}>
+            <span style={{ fontFamily: "var(--code-font, 'Iosevka'), ui-monospace, monospace" }}>{ascii.padEnd(6, " ")}</span>
+            {name}
+        </span>
+    );
 }
 
 // the folder right-click menu gets { folderId, folderName, folderColor, unread }. Its menu id isn't
@@ -272,7 +289,7 @@ const folderMenuPatch: GlobalContextMenuPatchCallback = (_navId, children, ...ar
                 <Menu.MenuSeparator />
                 <Menu.MenuItem id="vc-folder-look-ascii" label="ASCII">
                     {PRESETS.map(p => (
-                        <Menu.MenuItem key={p.name} id={`vc-folder-look-ascii-${p.icon}`} label={`${p.ascii.padEnd(6, " ")} ${p.name}`}
+                        <Menu.MenuItem key={p.name} id={`vc-folder-look-ascii-${p.icon}`} label={<AsciiLabel ascii={p.ascii} name={p.name} />}
                             action={() => setLook(id, { kind: "ascii", text: p.ascii })} />
                     ))}
                     <Menu.MenuSeparator />
@@ -281,7 +298,7 @@ const folderMenuPatch: GlobalContextMenuPatchCallback = (_navId, children, ...ar
                 <Menu.MenuItem id="vc-folder-look-icon" label="Icon">
                     {PRESETS.map(p => (
                         <Menu.MenuItem key={p.name} id={`vc-folder-look-icon-${p.icon}`} label={p.name}
-                            icon={() => <MenuIcon icon={p.icon} />}
+                            {...menuIcon(p.icon)}
                             action={() => setLook(id, { kind: "icon", icon: p.icon })} />
                     ))}
                 </Menu.MenuItem>

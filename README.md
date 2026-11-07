@@ -2,7 +2,7 @@
 
 Discord made to look like a tiling-WM Linux rice, for [Vencord](https://vencord.dev). It's a theme plus three small plugins.
 
-![discord-rice: tiled panes on a misty wallpaper, Iosevka, greyscale, folder icons in the server list](screenshots/discord-rice.webp)
+![discord-rice: tiled panes on a misty wallpaper, Iosevka, a fetch code block, folder icons in the server list](screenshots/discord-rice.webp)
 
 ## The theme
 
@@ -99,11 +99,15 @@ After changing a plugin, copy it in again, run `pnpm build`, and restart Discord
 
 - The top of the panel is a neofetch-style block: your name `@discord`, the theme, font, corners, wallpaper, how many folders have a look, which plugins are on, and a colour row.
 - Below that: whether the theme and the other plugins are on, your folders with their looks, and switches for the inbox button, notification bell, nameplates, quests, store tabs, chat bar buttons, plain folders, black-and-white icons, the Arch logo, font, corners, gaps, glass menus, window dots, wallpaper link, ASCII wallpaper, wallpaper dim and grain. There's a reset button too.
+![The discord-rice panel: a neofetch-style block, status, tips and folder looks](screenshots/panel.webp)
+
 - The panel opens as a popup the first time you start Discord with the plugin, and never again on its own. It's also in the Vencord toolbox.
 - The **Theme** switch at the top turns the theme on or off, whether you installed it as a file or as the online link.
 - It works by setting the theme's CSS variables from a small style sheet, which beats the theme file's defaults. Turn the plugin off and the theme file's own values come back.
 
 **ASCII wallpaper** redraws the wallpaper (yours or the default one) out of text, sized to your screen:
+
+![The misty forest redrawn out of digits behind the whole window](screenshots/ascii-wallpaper.webp)
 
 | Mode | Looks like |
 | --- | --- |
@@ -122,6 +126,8 @@ The character size slider goes from 6px (fine, more detail) to 16px (chunky). Th
 - **ASCII** A few characters in the folder's colour, in the code font. There are presets, or **Your own text…** for up to 5 characters.
 - **Icon** A line icon in the folder's colour.
 - **Back to normal** shows up once a folder has a look.
+
+![Right-click a folder → Folder look → ASCII, with the presets listed](screenshots/folder-look-menu.webp)
 
 The presets come in pairs, the same name as ASCII and as an icon:
 
