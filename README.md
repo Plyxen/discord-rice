@@ -10,7 +10,8 @@ Discord made to look like a tiling-WM Linux rice, for [Vencord](https://vencord.
 - **Greyscale.** Made to sit on a black-and-white desktop. Server icons and folders are black-and-white too. Only status dots, unread badges and red "danger" buttons keep a muted colour.
 - **Terminal touches.** Iosevka everywhere, and the chat bar is a `❯` prompt whose line lights up while you type. The selected channel is a solid bar like ranger's cursor, categories are bold like directories in `ls`, and message times sit in `[brackets]`.
 - **Menus like rofi.** Right-click menus, the emoji/GIF picker and other popouts are dark frosted glass with a thin border.
-- **Plain folders.** A closed folder shows a folder icon instead of a 2×2 grid of tiny server icons, or your own picture with the folder plugin.
+- **Plain folders.** A closed folder shows a folder icon instead of a 2×2 grid of tiny server icons. With the folder plugin it can show a picture, an icon or a bit of ASCII instead.
+- **ASCII wallpaper.** With the discord-rice plugin, the wallpaper can be redrawn out of characters, digits or 0s and 1s, like the fetch screenshots on r/unixporn.
 - **Less clutter.** Nitro, Shop and Quests are gone from the DM list, and so are the quest card above your user panel, nameplates behind names, and the gift and apps buttons in the chat bar.
 - **Small fixes.** The game page (click the game you're playing) opens as a smaller centred window, so its close button isn't stuck under the window controls. Drag the window by the empty space in the channel header.
 
@@ -24,7 +25,7 @@ This copies the theme into `%APPDATA%\Vencord\themes`. The first time, turn it o
 
 ### Options
 
-The easy way is inside Discord: **Settings → discord-rice** (in the Vencord section) has switches for all of the options below, plus a short intro to the theme. It comes from the DiscordRice plugin, which also shows that page as a popup the first time you start Discord with it. Changes apply straight away.
+The easy way is inside Discord: the **sliders button** in the channel header, where the inbox button used to be, opens a panel with switches for all of the options below, plus a short intro to the theme. The same panel is under **Settings → discord-rice** (in the Vencord section). It comes from the DiscordRice plugin, which also shows it as a popup the first time you start Discord with it. Changes apply straight away.
 
 Without the plugin, every option is a CSS variable at the top of the theme file:
 
@@ -65,19 +66,50 @@ All three are Vencord user plugins in `vencord-plugins/`. User plugins only run 
 
 ### discord-rice options
 
-`discordRice` adds the **Settings → discord-rice** page: what the theme does, whether it and the other plugins are on, and switches for nameplates, quests, store tabs, chat bar buttons, plain folders, black-and-white icons, the Arch logo, font, corners, gaps, glass menus, wallpaper link, wallpaper dim and grain. There's a reset button too.
+`discordRice` puts a sliders button in the channel header, in place of the inbox button (nobody uses the inbox; you can bring it back with the "Inbox button" switch). The button opens the discord-rice panel, which is also under **Settings → discord-rice**.
 
-- The same page opens as a popup the first time you start Discord with the plugin. Open it again from the Vencord toolbox, or from the plugin's entry in **Plugins**.
+- The top of the panel is a neofetch-style block: your name `@discord`, the theme, font, corners, wallpaper, how many folders have a look, which plugins are on, and a colour row.
+- Below that: whether the theme and the other plugins are on, your folders with their looks, and switches for the inbox button, nameplates, quests, store tabs, chat bar buttons, plain folders, black-and-white icons, the Arch logo, font, corners, gaps, glass menus, window dots, wallpaper link, ASCII wallpaper, wallpaper dim and grain. There's a reset button too.
+- The panel opens as a popup the first time you start Discord with the plugin, and never again on its own. It's also in the Vencord toolbox.
 - It works by setting the theme's CSS variables from a small style sheet, which beats the theme file's defaults. Turn the plugin off and the theme file's own values come back.
 
-### Folder pictures
+**ASCII wallpaper** redraws the wallpaper (yours or the default one) out of text, sized to your screen:
 
-`folderPictures` gives a server folder its own picture.
+| Mode | Looks like |
+| --- | --- |
+| Characters | `.:-=+*#%@`, denser characters where the picture is brighter. |
+| Digits | Random digits everywhere, brighter where the picture is. This one looks best on the misty forest. |
+| Binary | The same with `0` and `1`. |
 
-- Right-click a folder → **Set folder picture…**. The same menu can change or remove the picture later.
-- Or use **Settings → Vencord → Plugins → FolderPictures**, which lists every folder with Set / Change / Remove buttons.
-- The picture sits inside the folder, framed by the folder's colour, in place of the folder icon or the 2×2 grid.
-- Pictures are stored locally and never uploaded. They're cropped square from the middle and shrunk to 128px. GIFs up to 1 MB are kept as they are, so they stay animated.
+The character size slider goes from 6px (fine, more detail) to 16px (chunky). The wallpaper has to allow being read by the page: the default one and imgur links do, and if one doesn't you get a message and the normal wallpaper stays.
+
+### Folder looks
+
+`folderPictures` gives a server folder its own look, inside the folder and framed by its colour, in place of the folder icon or the 2×2 grid. Right-click a folder → **Folder look**:
+
+- **Picture from file…** Pictures are cropped square from the middle and shrunk to 128px. GIFs up to 1 MB are kept as they are, so they stay animated.
+- **Picture from link…** Paste an image link. For Pinterest, open the pin, right-click the picture → **Copy image address** (an `i.pinimg.com` link) and paste that. imgur and Discord image links work too. Pinterest and imgur pictures are cropped and saved like files; other sites only work if Discord allows loading from them.
+- **ASCII** A few characters in the folder's colour, in the code font. There are presets, or **Your own text…** for up to 5 characters.
+- **Icon** A line icon in the folder's colour.
+- **Back to normal** shows up once a folder has a look.
+
+The presets come in pairs, the same name as ASCII and as an icon:
+
+| Preset | ASCII | Preset | ASCII |
+| --- | --- | --- | --- |
+| Important | `!!` | Anime | `^.^` |
+| Semi important | `!` | Hot | `~*~` |
+| Random | `??` | Night | `zZ` |
+| Games | `[>]` | Chill | `c[_]` |
+| Friends | `<3` | Bots | `[o_o]` |
+| Music | `d\|b` | Dead | `x_x` |
+| Code | `</>` | Archive | `[_]` |
+| School / work | `[=]` | Home | `~/` |
+| Art | `*~` | Terminal | `>_` |
+| Memes | `:P` | Fast | `/!\` |
+
+- The discord-rice panel (and **Settings → Vencord → Plugins → FolderPictures**) lists every folder with a preset picker and File / Link / Text / Reset buttons.
+- Looks are stored locally and never uploaded.
 - With `--mono-server-icons` on, pictures are black-and-white like everything else in the server list.
 
 ### Code block button
@@ -95,3 +127,4 @@ A few rules use Discord's exact class names and may need updating after a big up
 - Layout: [midnight-discord](https://github.com/refact0r/midnight-discord) by refact0r (MIT), loaded from its hosted build.
 - Font: [Iosevka](https://github.com/be5invis/Iosevka) by Belleve Invis (OFL), via [Fontsource](https://fontsource.org) on jsDelivr.
 - Home icon: the Arch Linux logo from [Simple Icons](https://simpleicons.org) (CC0). The logo is a trademark of Arch Linux.
+- Folder icons: [Lucide](https://lucide.dev) (ISC).

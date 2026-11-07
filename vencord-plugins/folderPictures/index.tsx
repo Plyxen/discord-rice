@@ -1,33 +1,90 @@
 /*
- * FolderPictures, a Vencord user plugin.
- * Give a server folder its own picture: right-click the folder → "Set folder picture…" and pick an
- * image. The closed folder then shows that picture, framed by the folder's colour, instead of the 2x2
- * grid of its servers (or the folder icon discord-rice's --plain-folders draws). The same can be done
- * from the plugin's settings page, which lists every folder.
- *
- * Pictures are kept locally in Vencord's storage (nothing is uploaded), cropped square and shrunk to
- * 128px so they stay small. GIFs up to 1 MB are kept as they are, so they stay animated.
- *
- * How it shows them: one small patch tags each folder's preview with its folder id, and a style sheet
- * puts the picture there. If Discord changes and the patch stops matching, a second selector (the
- * folder's list id) usually still finds it.
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import { addGlobalContextMenuPatch, GlobalContextMenuPatchCallback, removeGlobalContextMenuPatch } from "@api/ContextMenu";
 import * as DataStore from "@api/DataStore";
 import { Button } from "@components/Button";
+import { Paragraph } from "@components/Paragraph";
 import definePlugin from "@utils/types";
-import { GuildStore, Menu, showToast, SortedGuildStore, useEffect, useReducer } from "@webpack/common";
+import { GuildStore, Menu, Modal, openModal, Select, showToast, SortedGuildStore, TextInput, useEffect, useReducer, useState } from "@webpack/common";
 
-const STORE_KEY = "FolderPictures_pictures";
+import { ICONS } from "./icons";
+
+const STORE_KEY = "FolderPictures_looks";
+const OLD_STORE_KEY = "FolderPictures_pictures";
 const MAX_SIDE = 128;
 const KEEP_GIF_UP_TO = 1024 * 1024;
 
-let pictures: Record<string, string> = {};
+export type Look =
+    | { kind: "picture"; url: string; }
+    | { kind: "ascii"; text: string; }
+    | { kind: "icon"; icon: string; };
+
+// the folder kinds people usually sort servers into, each with an ASCII look and an icon look
+export const PRESETS = [
+    { name: "Important", ascii: "!!", icon: "star" },
+    { name: "Semi important", ascii: "!", icon: "flag" },
+    { name: "Random", ascii: "??", icon: "dices" },
+    { name: "Games", ascii: "[>]", icon: "gamepad" },
+    { name: "Friends", ascii: "<3", icon: "heart" },
+    { name: "Music", ascii: "d|b", icon: "music" },
+    { name: "Code", ascii: "</>", icon: "code" },
+    { name: "School / work", ascii: "[=]", icon: "bookopen" },
+    { name: "Art", ascii: "*~", icon: "palette" },
+    { name: "Memes", ascii: ":P", icon: "ghost" },
+    { name: "Anime", ascii: "^.^", icon: "sparkles" },
+    { name: "Hot", ascii: "~*~", icon: "flame" },
+    { name: "Night", ascii: "zZ", icon: "moon" },
+    { name: "Chill", ascii: "c[_]", icon: "coffee" },
+    { name: "Bots", ascii: "[o_o]", icon: "bot" },
+    { name: "Dead", ascii: "x_x", icon: "skull" },
+    { name: "Archive", ascii: "[_]", icon: "archive" },
+    { name: "Home", ascii: "~/", icon: "house" },
+    { name: "Terminal", ascii: ">_", icon: "terminal" },
+    { name: "Fast", ascii: "/!\\", icon: "zap" }
+];
+
+let looks: Record<string, Look> = {};
 let styleEl: HTMLStyleElement | null = null;
 const listeners = new Set<() => void>();
 
-const cssString = (s: string) => `"${s.replace(/["\\]/g, "\\$&")}"`;
+const cssString = (s: string) => `"${s.replace(/["\\]/g, "\\$&").replace(/\n/g, "\\a ")}"`;
+
+export const iconUrl = (icon: string) =>
+    `url("data:image/svg+xml,${encodeURIComponent(
+        `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>${ICONS[icon] ?? ""}</svg>`
+    )}")`;
+
+// smaller text the longer it is, so 5 characters still fit in the folder
+const asciiSize = (text: string) => [0, 17, 16, 14, 12, 10][Math.min(text.length, 5)] ?? 10;
+
+// the text and icon colour: the folder's own colour, lifted so it reads on the folder's tinted background
+const INK = "color-mix(in srgb, var(--custom-folder-color, #fff), white 55%)";
+
+function lookCss(id: string, look: Look) {
+    const tile = `:is([data-vc-folder-id=${cssString(id)}], [data-list-item-id=${cssString("guildsnav___" + id)}] [class*="folderPreviewWrapper_"])`;
+    const inner = `${tile} > [class*="folderPreview_"]`;
+    const base = `${inner} { position: relative; }\n${inner} > * { visibility: hidden; }\n`;
+
+    switch (look.kind) {
+        case "picture":
+            return base
+                + `${inner} { background: center / cover no-repeat url(${cssString(look.url)}); border-radius: max(2px, calc(var(--radius-lg, 12px) - var(--custom-folder-preview-padding, 4px))); }\n`
+                + `${inner}::before, ${inner}::after { content: none !important; }`;
+        case "ascii":
+            return base
+                + `${inner}::before { content: ${cssString(look.text)} !important; position: absolute; inset: 0 !important; width: auto !important; height: auto !important; margin: 0 !important;`
+                + " display: flex; align-items: center; justify-content: center; white-space: pre; text-align: center; mask: none !important; background: none !important;"
+                + ` color: ${INK}; font-family: var(--code-font, 'Iosevka'), ui-monospace, monospace; font-weight: 600; font-size: ${asciiSize(look.text)}px; line-height: 1; letter-spacing: -0.03em; }`;
+        case "icon":
+            return base
+                + `${inner}::before { content: "" !important; position: absolute; inset: 0 !important; margin: auto !important; width: 22px !important; height: 22px !important;`
+                + ` background: ${INK} !important; mask: ${iconUrl(look.icon)} center / contain no-repeat !important; }`;
+    }
+}
 
 function updateStyle() {
     if (!styleEl) {
@@ -35,23 +92,18 @@ function updateStyle() {
         styleEl.id = "vc-folder-pictures";
     }
     if (!styleEl.isConnected) document.head.appendChild(styleEl);
-
-    // the picture fills the inner area where the 2x2 grid (or a theme's folder icon) sits, so the folder's
-    // colour stays around it as a frame
-    styleEl.textContent = Object.entries(pictures).map(([id, url]) => {
-        const tile = `:is([data-vc-folder-id=${cssString(id)}], [data-list-item-id=${cssString("guildsnav___" + id)}] [class*="folderPreviewWrapper_"])`;
-        const inner = `${tile} > [class*="folderPreview_"]`;
-        return `${inner} { background: center / cover no-repeat url(${cssString(url)}); border-radius: max(2px, calc(var(--radius-lg, 12px) - var(--custom-folder-preview-padding, 4px))); }\n`
-            + `${inner} > * { visibility: hidden; }\n`
-            + `${inner}::before, ${inner}::after { content: none !important; }`;
-    }).join("\n");
-
+    styleEl.textContent = Object.entries(looks).map(([id, look]) => lookCss(id, look)).join("\n");
     listeners.forEach(l => l());
 }
 
-async function save(next: Record<string, string>) {
-    pictures = next;
-    await DataStore.set(STORE_KEY, pictures);
+export function getLooks() {
+    return looks;
+}
+
+export async function setLook(folderId: string, look: Look | null) {
+    const { [folderId]: _, ...rest } = looks;
+    looks = look ? { ...rest, [folderId]: look } : rest;
+    await DataStore.set(STORE_KEY, looks);
     updateStyle();
 }
 
@@ -64,21 +116,18 @@ function readAsDataUrl(file: Blob) {
     });
 }
 
-function loadImage(src: string) {
+function loadImage(src: string, crossOrigin = false) {
     return new Promise<HTMLImageElement>((resolve, reject) => {
         const img = new Image();
+        if (crossOrigin) img.crossOrigin = "anonymous";
         img.onload = () => resolve(img);
         img.onerror = reject;
         img.src = src;
     });
 }
 
-// square crop from the middle, at most 128px. Small GIFs stay as they are so they keep animating
-async function toPictureUrl(file: File) {
-    const dataUrl = await readAsDataUrl(file);
-    if (file.type === "image/gif" && file.size <= KEEP_GIF_UP_TO) return dataUrl;
-
-    const img = await loadImage(dataUrl);
+// square crop from the middle, at most 128px
+function squareCrop(img: HTMLImageElement) {
     const side = Math.min(img.naturalWidth, img.naturalHeight);
     const size = Math.min(MAX_SIDE, side);
     const canvas = document.createElement("canvas");
@@ -89,7 +138,13 @@ async function toPictureUrl(file: File) {
     return canvas.toDataURL("image/webp", 0.9);
 }
 
-function pickPicture(folderId: string) {
+async function fileToPicture(file: File) {
+    const dataUrl = await readAsDataUrl(file);
+    if (file.type === "image/gif" && file.size <= KEEP_GIF_UP_TO) return dataUrl;
+    return squareCrop(await loadImage(dataUrl));
+}
+
+export function pickFile(folderId: string) {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
@@ -97,7 +152,7 @@ function pickPicture(folderId: string) {
         const file = input.files?.[0];
         if (!file) return;
         try {
-            await save({ ...pictures, [folderId]: await toPictureUrl(file) });
+            await setLook(folderId, { kind: "picture", url: await fileToPicture(file) });
         } catch {
             showToast({ text: "Couldn't read that picture.", variant: "critical" });
         }
@@ -105,9 +160,92 @@ function pickPicture(folderId: string) {
     input.click();
 }
 
-function removePicture(folderId: string) {
-    const { [folderId]: _, ...rest } = pictures;
-    save(rest);
+// a link becomes a small local copy when the site allows that (CORS), otherwise the link itself is kept
+async function linkToPicture(link: string): Promise<string> {
+    const url = new URL(link.trim());
+    if (url.protocol !== "https:") throw new Error("Use an https:// link.");
+    if (/(^|\.)pinterest\.[a-z.]+$/.test(url.hostname) || url.hostname === "pin.it")
+        throw new Error("That's a Pinterest page, not the picture. Right-click the picture → Copy image address, and paste that (it starts with https://i.pinimg.com).");
+
+    try {
+        return squareCrop(await loadImage(url.href, true));
+    } catch {
+        // no CORS: keep the link, if Discord is allowed to show pictures from that site
+        const allowed = await VencordNative.csp.isDomainAllowed(url.href, ["img-src"]).catch(() => false);
+        const discordCdn = /(^|\.)(discordapp\.(com|net)|discord\.com)$/.test(url.hostname);
+        if (!allowed && !discordCdn)
+            throw new Error(`Discord won't load pictures from ${url.hostname}. Pinterest (i.pinimg.com), imgur and Discord image links work, or save the picture and use "Picture from file".`);
+        await loadImage(url.href);
+        return url.href;
+    }
+}
+
+function LinkModal({ folderId, modalProps }: { folderId: string; modalProps: any; }) {
+    const [link, setLink] = useState("");
+    const [error, setError] = useState<string | null>(null);
+    const [busy, setBusy] = useState(false);
+
+    const save = async () => {
+        setBusy(true);
+        setError(null);
+        try {
+            await setLook(folderId, { kind: "picture", url: await linkToPicture(link) });
+            modalProps.onClose();
+        } catch (e: any) {
+            setError(e?.message && !(e instanceof Event) ? e.message : "Couldn't load a picture from that link.");
+        }
+        setBusy(false);
+    };
+
+    return (
+        <Modal
+            {...modalProps}
+            size="sm"
+            title="Picture from link"
+            subtitle="Paste a link to a picture. On Pinterest: right-click the picture → Copy image address."
+            notice={error ? { message: error, type: "critical" } : undefined}
+            actions={[
+                { text: "Cancel", variant: "secondary", onClick: modalProps.onClose },
+                { text: "Use it", variant: "primary", onClick: save, loading: busy, disabled: !link.trim() }
+            ]}
+        >
+            <TextInput value={link} onChange={(v: string) => setLink(v)} placeholder="https://i.pinimg.com/..." autoFocus />
+        </Modal>
+    );
+}
+
+export function pickLink(folderId: string) {
+    openModal(props => <LinkModal folderId={folderId} modalProps={props} />);
+}
+
+function TextModal({ folderId, modalProps }: { folderId: string; modalProps: any; }) {
+    const current = looks[folderId];
+    const [text, setText] = useState(current?.kind === "ascii" ? current.text : "");
+    return (
+        <Modal
+            {...modalProps}
+            size="sm"
+            title="Your own text"
+            subtitle="Up to 5 characters, shown in the folder in the terminal font. Try >_ or (o.o) or ;-;"
+            actions={[
+                { text: "Cancel", variant: "secondary", onClick: modalProps.onClose },
+                {
+                    text: "Use it", variant: "primary", disabled: !text.trim(),
+                    onClick: () => { setLook(folderId, { kind: "ascii", text: text.trim() }); modalProps.onClose(); }
+                }
+            ]}
+        >
+            <TextInput value={text} maxLength={5} onChange={(v: string) => setText(v)} placeholder="!!" autoFocus />
+        </Modal>
+    );
+}
+
+export function pickText(folderId: string) {
+    openModal(props => <TextModal folderId={folderId} modalProps={props} />);
+}
+
+function MenuIcon({ icon }: { icon: string; }) {
+    return <div style={{ width: 18, height: 18, background: "currentColor", mask: `${iconUrl(icon)} center / contain no-repeat` }} />;
 }
 
 // the folder right-click menu gets { folderId, folderName, folderColor, unread }. Its menu id isn't
@@ -116,23 +254,33 @@ const folderMenuPatch: GlobalContextMenuPatchCallback = (_navId, children, ...ar
     const props = args[0];
     if (props?.folderId == null || props.guild != null) return;
     const id = String(props.folderId);
-    const has = id in pictures;
 
     children.push(
         <Menu.MenuGroup>
-            <Menu.MenuItem
-                id="vc-folder-picture-set"
-                label={has ? "Change folder picture…" : "Set folder picture…"}
-                action={() => pickPicture(id)}
-            />
-            {has && (
-                <Menu.MenuItem
-                    id="vc-folder-picture-remove"
-                    label="Remove folder picture"
-                    color="danger"
-                    action={() => removePicture(id)}
-                />
-            )}
+            <Menu.MenuItem id="vc-folder-look" label="Folder look">
+                <Menu.MenuItem id="vc-folder-look-file" label="Picture from file…" action={() => pickFile(id)} />
+                <Menu.MenuItem id="vc-folder-look-link" label="Picture from link…" action={() => pickLink(id)} />
+                <Menu.MenuSeparator />
+                <Menu.MenuItem id="vc-folder-look-ascii" label="ASCII">
+                    {PRESETS.map(p => (
+                        <Menu.MenuItem key={p.name} id={`vc-folder-look-ascii-${p.icon}`} label={`${p.ascii.padEnd(6, " ")} ${p.name}`}
+                            action={() => setLook(id, { kind: "ascii", text: p.ascii })} />
+                    ))}
+                    <Menu.MenuSeparator />
+                    <Menu.MenuItem id="vc-folder-look-text" label="Your own text…" action={() => pickText(id)} />
+                </Menu.MenuItem>
+                <Menu.MenuItem id="vc-folder-look-icon" label="Icon">
+                    {PRESETS.map(p => (
+                        <Menu.MenuItem key={p.name} id={`vc-folder-look-icon-${p.icon}`} label={p.name}
+                            icon={() => <MenuIcon icon={p.icon} />}
+                            action={() => setLook(id, { kind: "icon", icon: p.icon })} />
+                    ))}
+                </Menu.MenuItem>
+                {id in looks && <Menu.MenuSeparator />}
+                {id in looks && (
+                    <Menu.MenuItem id="vc-folder-look-reset" label="Back to normal" color="danger" action={() => setLook(id, null)} />
+                )}
+            </Menu.MenuItem>
         </Menu.MenuGroup>
     );
 };
@@ -143,32 +291,60 @@ function folderLabel(folder: { folderName?: string | null; guildIds: string[]; }
     return names.join(", ") || "Unnamed folder";
 }
 
-function FolderList() {
+// a small copy of the folder, for the list
+export function LookPreview({ look, size = 36 }: { look?: Look; size?: number; }) {
+    const box = { width: size, height: size, flexShrink: 0, borderRadius: 6, display: "grid", placeItems: "center", background: "var(--background-mod-normal)", overflow: "hidden" };
+    if (!look) return <div style={box} />;
+    if (look.kind === "picture") return <div style={{ ...box, background: `center / cover url(${cssString(look.url)})` }} />;
+    if (look.kind === "icon") return <div style={box}><MenuIcon icon={look.icon} /></div>;
+    return <div style={{ ...box, fontFamily: "var(--code-font, monospace)", fontWeight: 600, fontSize: Math.round(asciiSize(look.text) * size / 48), whiteSpace: "pre" }}>{look.text}</div>;
+}
+
+const presetOptions = [
+    ...PRESETS.map(p => ({ label: `ASCII  ${p.ascii}  ${p.name}`, value: `ascii:${p.ascii}` })),
+    ...PRESETS.map(p => ({ label: `Icon  ${p.name}`, value: `icon:${p.icon}` }))
+];
+
+export function FolderList() {
     const [, rerender] = useReducer(x => x + 1, 0);
-    // re-render when a picture changes
+    // re-render when a look changes
     useEffect(() => {
         listeners.add(rerender);
         return () => void listeners.delete(rerender);
     }, []);
 
     const folders = SortedGuildStore.getGuildFolders().filter(f => f.folderId != null);
-    if (!folders.length) return <p style={{ color: "var(--text-muted)" }}>You don't have any server folders.</p>;
+    if (!folders.length) return <Paragraph>You don't have any server folders.</Paragraph>;
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {folders.map(f => {
                 const id = String(f.folderId);
+                const look = looks[id];
+                const value = look?.kind === "ascii" ? `ascii:${look.text}` : look?.kind === "icon" ? `icon:${look.icon}` : null;
                 return (
                     <div key={id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{
-                            width: 32, height: 32, flexShrink: 0, borderRadius: 8,
-                            background: pictures[id] ? `center / cover url(${cssString(pictures[id])})` : "var(--background-mod-normal)"
-                        }} />
-                        <span style={{ flex: 1, color: "var(--text-default)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <LookPreview look={look} />
+                        <span style={{ width: 130, flexShrink: 0, color: "var(--text-default)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {folderLabel(f)}
                         </span>
-                        <Button size="small" onClick={() => pickPicture(id)}>{pictures[id] ? "Change" : "Set picture"}</Button>
-                        {pictures[id] && <Button size="small" variant="dangerSecondary" onClick={() => removePicture(id)}>Remove</Button>}
+                        <div style={{ flex: 1, minWidth: 150 }}>
+                            <Select
+                                placeholder="Preset…"
+                                options={presetOptions}
+                                closeOnSelect
+                                isSelected={v => v === value}
+                                serialize={v => String(v)}
+                                select={(v: string) => {
+                                    const [kind, rest] = [v.slice(0, v.indexOf(":")), v.slice(v.indexOf(":") + 1)];
+                                    setLook(id, kind === "ascii" ? { kind: "ascii", text: rest } : { kind: "icon", icon: rest });
+                                }}
+                            />
+                        </div>
+                        <Button size="small" variant="secondary" onClick={() => pickFile(id)}>File</Button>
+                        <Button size="small" variant="secondary" onClick={() => pickLink(id)}>Link</Button>
+                        <Button size="small" variant="secondary" onClick={() => pickText(id)}>Text</Button>
+                        {look && <Button size="small" variant="dangerSecondary" onClick={() => setLook(id, null)}>Reset</Button>}
                     </div>
                 );
             })}
@@ -178,7 +354,7 @@ function FolderList() {
 
 export default definePlugin({
     name: "FolderPictures",
-    description: "Give server folders their own picture instead of the 2x2 grid of their servers. Right-click a folder → Set folder picture…",
+    description: "Give server folders their own look instead of the 2x2 grid of their servers: a picture (file or link), an ASCII preset or an icon. Right-click a folder → Folder look.",
     authors: [{ name: "Pota", id: 0n }],
     enabledByDefault: true,
 
@@ -196,7 +372,14 @@ export default definePlugin({
     settingsAboutComponent: FolderList,
 
     async start() {
-        pictures = (await DataStore.get(STORE_KEY)) ?? {};
+        let saved = await DataStore.get<Record<string, Look>>(STORE_KEY);
+        if (!saved) {
+            // pictures saved by the first version were plain strings
+            const old = await DataStore.get<Record<string, string>>(OLD_STORE_KEY);
+            saved = Object.fromEntries(Object.entries(old ?? {}).map(([id, url]) => [id, { kind: "picture", url } as Look]));
+            if (old) await DataStore.set(STORE_KEY, saved);
+        }
+        looks = saved;
         updateStyle();
         addGlobalContextMenuPatch(folderMenuPatch);
     },
