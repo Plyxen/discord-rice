@@ -1,7 +1,13 @@
 /*
- * Vencord, a Discord client mod
- * Copyright (c) 2026 Vendicated and contributors
+ * discord-rice (https://github.com/Plyxen/discord-rice)
+ * Copyright (c) 2026 Pota
  * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+/*
+ * FolderPictures, a Vencord user plugin that goes with the discord-rice theme.
+ * Gives a server folder its own look in place of the 2x2 grid: a picture (from a file or a link),
+ * a few characters of ASCII, or a line icon. Looks are kept in Vencord's local DataStore.
  */
 
 import { addGlobalContextMenuPatch, GlobalContextMenuPatchCallback, removeGlobalContextMenuPatch } from "@api/ContextMenu";
@@ -171,7 +177,10 @@ async function linkToPicture(link: string): Promise<string> {
         return squareCrop(await loadImage(url.href, true));
     } catch {
         // no CORS: keep the link, if Discord is allowed to show pictures from that site
-        const allowed = await VencordNative.csp.isDomainAllowed(url.href, ["img-src"]).catch(() => false);
+        // (the browser version of Vencord has no csp helper; there the link is just tried)
+        const allowed = VencordNative.csp
+            ? await VencordNative.csp.isDomainAllowed(url.href, ["img-src"]).catch(() => false)
+            : true;
         const discordCdn = /(^|\.)(discordapp\.(com|net)|discord\.com)$/.test(url.hostname);
         if (!allowed && !discordCdn)
             throw new Error(`Discord won't load pictures from ${url.hostname}. Pinterest (i.pinimg.com), imgur and Discord image links work, or save the picture and use "Picture from file".`);

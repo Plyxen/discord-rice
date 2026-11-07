@@ -1,4 +1,10 @@
 /*
+ * discord-rice (https://github.com/Plyxen/discord-rice)
+ * Copyright (c) 2026 Pota
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+/*
  * CodeBlockButton, a Vencord user plugin.
  * Adds a ``` button next to the <> (inline code) button in the popup you get when you select text in
  * the chat box. Click it to wrap the selection in ``` ```, click again to unwrap.

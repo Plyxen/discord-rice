@@ -1,4 +1,10 @@
 /*
+ * discord-rice (https://github.com/Plyxen/discord-rice)
+ * Copyright (c) 2026 Pota
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+/*
  * DiscordRice, a Vencord user plugin that goes with the discord-rice theme.
  *
  * - A button in the channel header (where the inbox button was) opens the discord-rice popup: a
@@ -25,10 +31,13 @@ import SettingsPlugin from "@plugins/_core/settings";
 import { removeFromArray } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
 import { findComponentByCodeLazy } from "@webpack";
-import { Modal, openModal, Select, showToast, Slider, SortedGuildStore, TextInput, UserStore, useState } from "@webpack/common";
+import { Modal, openModal, Select, showToast, Slider, SortedGuildStore, TextInput, useEffect, UserStore, useState } from "@webpack/common";
 import type { ComponentType, ReactNode } from "react";
 
 const THEME_FILE = "discord-rice.theme.css";
+// the online-theme link (Settings → Vencord → Themes → Online Themes), served by jsDelivr from the repo
+const THEME_LINK = "https://cdn.jsdelivr.net/gh/Plyxen/discord-rice@main/discord-rice.theme.css";
+const isOurLink = (link: string) => link.includes(THEME_FILE);
 const ENTRY_KEY = "vencord_discord_rice";
 
 const HeaderBarIcon = findComponentByCodeLazy(".HEADER_BAR_BADGE_BOTTOM,", 'position:"bottom"');
@@ -100,7 +109,7 @@ const FONTS: Record<string, [string, string, string]> = {
 
 /* ---------------- ASCII wallpaper ---------------- */
 
-let asciiUrl: string | null = null;
+let asciiUrl: string | null = null; // a blob: link, so the style sheet stays small
 let asciiKey = "";
 let asciiTimer: ReturnType<typeof setTimeout> | undefined;
 let asciiRetries = 0;
@@ -205,7 +214,14 @@ async function drawAscii(src: string, mode: string, cell: number) {
             ctx.fillText(char, x * cw, y * ch);
         }
     }
-    return out.toDataURL("image/jpeg", 0.85);
+    const blob = await new Promise<Blob | null>(resolve => out.toBlob(resolve, "image/jpeg", 0.85));
+    if (!blob) throw new Error("Couldn't encode the ASCII wallpaper");
+    return URL.createObjectURL(blob);
+}
+
+function setAsciiUrl(url: string | null) {
+    if (asciiUrl) URL.revokeObjectURL(asciiUrl);
+    asciiUrl = url;
 }
 
 // redraw the ASCII wallpaper when its source, style or size changes
@@ -213,7 +229,7 @@ function syncAscii() {
     const { asciiWallpaper: mode, asciiSize: cell } = settings.store;
     if (mode === "off") {
         asciiKey = "";
-        asciiUrl = null;
+        setAsciiUrl(null);
         return;
     }
     const src = wallpaperSource();
@@ -229,10 +245,14 @@ function syncAscii() {
     asciiTimer = setTimeout(async () => {
         try {
             const url = await drawAscii(src, mode, cell);
-            if (asciiKey !== key) return;
-            asciiUrl = url;
+            if (asciiKey !== key) {
+                // the settings changed while drawing; a newer drawing is on its way
+                URL.revokeObjectURL(url);
+                return;
+            }
+            setAsciiUrl(url);
         } catch {
-            asciiUrl = null;
+            setAsciiUrl(null);
             showToast({ text: "Couldn't turn that wallpaper into ASCII. The site doesn't let Discord read the picture; try an imgur link.", variant: "critical" });
         }
         applyStyle(false);
@@ -311,13 +331,13 @@ const mono = { margin: 0, fontFamily: "var(--code-font, 'Iosevka'), ui-monospace
 
 function Fetch() {
     const s = settings.use();
-    const { enabledThemes } = useSettings(["enabledThemes"]);
+    const { enabledThemes, themeLinks } = useSettings(["enabledThemes", "themeLinks"]);
     const user = UserStore.getCurrentUser();
     const ours = ["DiscordRice", "FolderPictures", "CodeBlockButton"].filter(isPluginEnabled);
     const folders = SortedGuildStore.getGuildFolders().filter(f => f.folderId != null).length;
 
     const rows: [string, string][] = [
-        ["theme", enabledThemes.includes(THEME_FILE) ? "discord-rice" : "off"],
+        ["theme", enabledThemes.includes(THEME_FILE) || themeLinks.some(isOurLink) ? "discord-rice" : "off"],
         ["wm", s.gap ? `tiled, ${s.gap}px gaps` : "tiled, no gaps"],
         ["font", FONTS[s.font]?.[2] ?? "Iosevka"],
         ["colors", "greyscale"],
@@ -400,19 +420,32 @@ function Range({ k, title, markers, render }: { k: keyof Store; title: string; m
 }
 
 function ThemeStatus() {
-    const { enabledThemes } = useSettings(["enabledThemes"]);
-    const themeOn = enabledThemes.includes(THEME_FILE);
+    const { enabledThemes, themeLinks } = useSettings(["enabledThemes", "themeLinks"]);
+    // whether the theme file is in the themes folder; if not, turning the theme on adds the online link
+    const [hasFile, setHasFile] = useState(false);
+    useEffect(() => {
+        VencordNative.themes.getThemesList()
+            .then(list => setHasFile(list.some(t => t.fileName === THEME_FILE)))
+            .catch(() => void 0);
+    }, []);
+
+    const themeOn = enabledThemes.includes(THEME_FILE) || themeLinks.some(isOurLink);
     const plugin = (name: string) => isPluginEnabled(name) ? "on" : "off (turn it on in Plugins, then restart Discord)";
 
     return (
         <>
             <FormSwitch
                 title="Theme"
-                description={`${THEME_FILE} in Vencord's themes folder. Everything below needs it on.`}
+                description="From the themes folder or the online link. Everything below needs it on."
                 value={themeOn}
                 onChange={on => {
-                    const others = enabledThemes.filter(t => t !== THEME_FILE);
-                    Settings.enabledThemes = on ? [...others, THEME_FILE] : others;
+                    if (on) {
+                        if (hasFile) Settings.enabledThemes = [...enabledThemes, THEME_FILE];
+                        else Settings.themeLinks = [...themeLinks, THEME_LINK];
+                    } else {
+                        Settings.enabledThemes = enabledThemes.filter(t => t !== THEME_FILE);
+                        Settings.themeLinks = themeLinks.filter(l => !isOurLink(l));
+                    }
                 }}
             />
             <Paragraph className={Margins.top8}>FolderPictures plugin: {plugin("FolderPictures")}</Paragraph>
@@ -468,13 +501,13 @@ function RicePanel() {
 
             <Section title="Hide">
                 <Toggle k="hideInbox" title="Inbox button" description="In the channel header. The discord-rice button takes its place." />
-                <Toggle k="hideNotificationButton" title="Notification bell" description="In the channel header. Right-click a channel for the same settings." />
+                <Toggle k="hideNotificationButton" title="Notification bell" description="In the channel header. Right-click a channel for the same settings. English Discord only." />
                 <Toggle k="hideNameplates" title="Nameplates" description="The picture strips behind names in the member list, DM list and user panel." />
                 <Toggle k="hideQuests" title="Quests" description="The quest card above your user panel, and quest embeds in chat." />
                 <Toggle k="hideStoreTabs" title="Nitro, Shop and Quests tabs" description="The rows at the top of the DM list." />
-                <Toggle k="hideGiftButton" title="Gift button" description="In the chat bar." />
+                <Toggle k="hideGiftButton" title="Gift button" description="In the chat bar. English Discord only." />
                 <Toggle k="hideAppsButton" title="Apps button" description="The apps / activities launcher in the chat bar." />
-                <Toggle k="hideStickerButton" title="Sticker button" description="In the chat bar." />
+                <Toggle k="hideStickerButton" title="Sticker button" description="In the chat bar. English Discord only." />
             </Section>
 
             <Section title="Server list">
@@ -633,6 +666,8 @@ export default definePlugin({
 
     stop() {
         clearTimeout(asciiTimer);
+        asciiKey = "";
+        setAsciiUrl(null);
         styleEl?.remove();
         removeFromArray(SettingsPlugin.customEntries, e => e.key === ENTRY_KEY);
     }

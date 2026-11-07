@@ -17,11 +17,23 @@ Discord made to look like a tiling-WM Linux rice, for [Vencord](https://vencord.
 
 ### Install
 
+You need [Vencord](https://vencord.dev) (or [Vesktop](https://github.com/Vencord/Vesktop), which has Vencord built in). The theme works on its own; the plugins below are optional extras.
+
+**Online link (any OS, updates itself).** In Discord, open **Settings → Vencord → Themes → Online Themes** and paste:
+
+```
+https://cdn.jsdelivr.net/gh/Plyxen/discord-rice@main/discord-rice.theme.css
+```
+
+jsDelivr can take up to a day to pick up a new version.
+
+**Or as a file.** Download `discord-rice.theme.css`, open **Settings → Vencord → Themes → Open Themes Folder**, drop the file in, and turn on **discord-rice** in the list. On Windows, `install.ps1` does the copying for Vencord and Vesktop:
+
 ```powershell
 .\install.ps1
 ```
 
-This copies the theme into `%APPDATA%\Vencord\themes`. The first time, turn it on in Discord under **Settings → Vencord → Themes → discord-rice**. After that, running the script again updates the theme live.
+Edits to the file show up live.
 
 ### Options
 
@@ -58,12 +70,26 @@ The wallpaper is embedded in the theme (the long line at the bottom), so it need
 
 ## The plugins
 
-All three are Vencord user plugins in `vencord-plugins/`. User plugins only run in a Vencord built from source, set up like this:
+All three are Vencord user plugins in `vencord-plugins/`. They're optional: the theme works without them. User plugins can't be added to the normal Vencord install; they need Vencord built from source, which takes [git](https://git-scm.com), [Node.js](https://nodejs.org) and [pnpm](https://pnpm.io). Vencord's own guide is [here](https://docs.vencord.dev/installing/custom-plugins/).
 
-- The source build is in `Documents\Vencord`, with each plugin copied to `src\userplugins\<name>`.
-- `%APPDATA%\Vencord\dist\patcher.js` (the file Discord loads) just points at that build. The installer's original is next to it as `patcher.js.official`. To undo, delete `patcher.js` and rename the original back.
-- Settings and themes stay in `%APPDATA%\Vencord`. **Settings → Vencord → Updater** still works: it pulls and rebuilds, and the plugins survive that.
-- After changing a plugin, copy it into `src\userplugins`, run `pnpm build` in `Documents\Vencord`, then fully restart Discord (quit from the tray, not just the window).
+```sh
+git clone https://github.com/Vendicated/Vencord
+cd Vencord
+pnpm install --frozen-lockfile
+```
+
+Copy the three folders from `vencord-plugins/` into `Vencord/src/userplugins/` (create the folder if it isn't there), so you end up with `src/userplugins/discordRice/index.tsx` and so on. Then build it and install it into Discord:
+
+```sh
+pnpm build
+pnpm inject
+```
+
+Fully restart Discord (quit from the tray, not just the window), then turn the plugins on under **Settings → Vencord → Plugins** if they aren't already. Your settings and themes carry over from the normal install. **Settings → Vencord → Updater** keeps working: it pulls Vencord and rebuilds, and the plugins stay.
+
+For **Vesktop**, skip `pnpm inject` and point Vesktop at the build instead: **Settings → Vesktop Settings → Vencord Location** → the `dist` folder inside your Vencord clone.
+
+After changing a plugin, copy it in again, run `pnpm build`, and restart Discord.
 
 ### discord-rice options
 
@@ -72,6 +98,7 @@ All three are Vencord user plugins in `vencord-plugins/`. User plugins only run 
 - The top of the panel is a neofetch-style block: your name `@discord`, the theme, font, corners, wallpaper, how many folders have a look, which plugins are on, and a colour row.
 - Below that: whether the theme and the other plugins are on, your folders with their looks, and switches for the inbox button, notification bell, nameplates, quests, store tabs, chat bar buttons, plain folders, black-and-white icons, the Arch logo, font, corners, gaps, glass menus, window dots, wallpaper link, ASCII wallpaper, wallpaper dim and grain. There's a reset button too.
 - The panel opens as a popup the first time you start Discord with the plugin, and never again on its own. It's also in the Vencord toolbox.
+- The **Theme** switch at the top turns the theme on or off, whether you installed it as a file or as the online link.
 - It works by setting the theme's CSS variables from a small style sheet, which beats the theme file's defaults. Turn the plugin off and the theme file's own values come back.
 
 **ASCII wallpaper** redraws the wallpaper (yours or the default one) out of text, sized to your screen:
@@ -117,15 +144,23 @@ The presets come in pairs, the same name as ASCII and as an icon:
 
 `codeBlockButton` adds a ``` button next to `<>` in the popup that appears when you select text in the chat box. It wraps the selection in a code block, and clicking it again unwraps it.
 
+## Known limits
+
+- The **notification bell**, **sticker button** and **gift button** switches find those buttons by their English labels, so they do nothing when Discord is set to another language. Everything else works in any language.
+- The theme is made for Discord's dark mode on desktop.
+- The ASCII wallpaper needs a picture the page is allowed to read: the default one and imgur links work; some sites don't allow it.
+
 ## When Discord updates break it
 
 Most of the layout comes from midnight's hosted build, and midnight's maintainer fixes it when Discord renames its classes, so those fixes arrive here automatically. The extras mostly match links, labels and class-name prefixes (`href`, `aria-label`, `[class*='folderPreview_']`), which usually survive renames.
 
 A few rules use Discord's exact class names and may need updating after a big update: the pane lines, the prompt, the selected channel bar, the timestamp brackets, menu styling, the game page window and the header search. If one stops working, the rest of the theme still works.
 
-## Credits
+## Credits and licence
+
+discord-rice is licensed under the [GPL-3.0-or-later](LICENSE), like Vencord. Third-party licence texts are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 - Layout: [midnight-discord](https://github.com/refact0r/midnight-discord) by refact0r (MIT), loaded from its hosted build.
 - Font: [Iosevka](https://github.com/be5invis/Iosevka) by Belleve Invis (OFL), via [Fontsource](https://fontsource.org) on jsDelivr.
 - Home icon: the Arch Linux logo from [Simple Icons](https://simpleicons.org) (CC0). The logo is a trademark of Arch Linux.
-- Folder icons: [Lucide](https://lucide.dev) (ISC).
+- Folder icons: [Lucide](https://lucide.dev) (ISC; a few from [Feather](https://feathericons.com), MIT).
