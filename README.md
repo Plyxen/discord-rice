@@ -12,7 +12,7 @@ Discord made to look like a tiling-WM Linux rice, for [Vencord](https://vencord.
 - **Menus like rofi.** Right-click menus, the emoji/GIF picker and other popouts are dark frosted glass with a thin border.
 - **Plain folders.** A closed folder shows a folder icon instead of a 2×2 grid of tiny server icons. With the folder plugin it can show a picture, an icon or a bit of ASCII instead.
 - **ASCII wallpaper.** With the discord-rice plugin, the wallpaper can be redrawn out of characters, digits or 0s and 1s, like the fetch screenshots on r/unixporn.
-- **Less clutter.** Nitro, Shop and Quests are gone from the DM list, and so are the quest card above your user panel, nameplates behind names, and the gift and apps buttons in the chat bar.
+- **Less clutter.** Nitro, Shop and Quests are gone from the DM list, and so are the quest card above your user panel, nameplates behind names, the notification bell in the channel header, and the gift and apps buttons in the chat bar.
 - **Small fixes.** The game page (click the game you're playing) opens as a smaller centred window, so its close button isn't stuck under the window controls. Drag the window by the empty space in the channel header.
 
 ### Install
@@ -46,6 +46,7 @@ Without the plugin, every option is a CSS variable at the top of the theme file:
 | `--hide-gift-button` | `on` | Gift button in the chat bar. |
 | `--hide-apps-button` | `on` | Apps / activities button in the chat bar. |
 | `--hide-sticker-button` | `off` | Sticker button in the chat bar. |
+| `--hide-notification-button` | `on` | The bell in the channel header. Right-click a channel for the same settings. |
 | `--custom-dms-icon` | `custom` | Arch logo on the home button. `off` brings back Discord's logo, and `--dms-icon-svg-url` takes any svg. |
 | `--mono-window-controls` | `on` | Grey window dots instead of red / yellow / green. |
 | `--top-bar-button-position` | `titlebar` | Where the inbox and window buttons go: `titlebar` puts them in the channel header, `hide` keeps a top bar without them, `off` is Discord's default. |
@@ -69,7 +70,7 @@ All three are Vencord user plugins in `vencord-plugins/`. User plugins only run 
 `discordRice` puts a sliders button in the channel header, in place of the inbox button (nobody uses the inbox; you can bring it back with the "Inbox button" switch). The button opens the discord-rice panel, which is also under **Settings → discord-rice**.
 
 - The top of the panel is a neofetch-style block: your name `@discord`, the theme, font, corners, wallpaper, how many folders have a look, which plugins are on, and a colour row.
-- Below that: whether the theme and the other plugins are on, your folders with their looks, and switches for the inbox button, nameplates, quests, store tabs, chat bar buttons, plain folders, black-and-white icons, the Arch logo, font, corners, gaps, glass menus, window dots, wallpaper link, ASCII wallpaper, wallpaper dim and grain. There's a reset button too.
+- Below that: whether the theme and the other plugins are on, your folders with their looks, and switches for the inbox button, notification bell, nameplates, quests, store tabs, chat bar buttons, plain folders, black-and-white icons, the Arch logo, font, corners, gaps, glass menus, window dots, wallpaper link, ASCII wallpaper, wallpaper dim and grain. There's a reset button too.
 - The panel opens as a popup the first time you start Discord with the plugin, and never again on its own. It's also in the Vencord toolbox.
 - It works by setting the theme's CSS variables from a small style sheet, which beats the theme file's defaults. Turn the plugin off and the theme file's own values come back.
 

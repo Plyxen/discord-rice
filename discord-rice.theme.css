@@ -74,6 +74,7 @@ body {
     --hide-gift-button: on; /* gift button in the chat bar */
     --hide-apps-button: on; /* apps / activities launcher in the chat bar */
     --hide-sticker-button: off; /* sticker button in the chat bar */
+    --hide-notification-button: on; /* the bell in the channel header (right-click a channel for its notification settings) */
     --mono-window-controls: on; /* grey window dots that light up on hover */
     --mono-server-icons: on; /* off | on | hover: black-and-white server pictures. hover = colour under the mouse */
     --glass-menus: on; /* off | on: frosted-glass menus and pickers. off = solid dark */
@@ -278,6 +279,11 @@ body .videoControls_qOjco6 > * {
     inherits: false;
     initial-value: off;
 }
+@property --hide-notification-button {
+    syntax: 'off | on';
+    inherits: false;
+    initial-value: on;
+}
 @property --mono-window-controls {
     syntax: 'off | on';
     inherits: false;
@@ -389,6 +395,14 @@ body .videoControls_qOjco6 > * {
 }
 @container body style(--hide-sticker-button: on) {
     [class*='channelTextArea'] .expression-picker-chat-input-button:has([aria-label='Open sticker picker']) {
+        display: none;
+    }
+}
+
+/* the notification bell in the channel and thread header. The same settings are a right-click away on the
+   channel, so it only takes room up there */
+@container body style(--hide-notification-button: on) {
+    [class*='toolbar_'] [aria-label='Notification Settings'] {
         display: none;
     }
 }

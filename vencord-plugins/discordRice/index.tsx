@@ -41,6 +41,7 @@ const settings = definePluginSettings({
     hideGiftButton: { type: OptionType.BOOLEAN, description: "Hide the gift button", default: true, hidden: true },
     hideAppsButton: { type: OptionType.BOOLEAN, description: "Hide the apps button", default: true, hidden: true },
     hideStickerButton: { type: OptionType.BOOLEAN, description: "Hide the sticker button", default: false, hidden: true },
+    hideNotificationButton: { type: OptionType.BOOLEAN, description: "Hide the notification bell", default: true, hidden: true },
     plainFolders: { type: OptionType.BOOLEAN, description: "Plain folder icons", default: true, hidden: true },
     monoServerIcons: {
         type: OptionType.SELECT, description: "Black-and-white server icons", hidden: true,
@@ -83,7 +84,7 @@ type Store = typeof settings.store;
 
 const DEFAULTS: Partial<Store> = {
     hideInbox: true, hideNameplates: true, hideQuests: true, hideStoreTabs: true, hideGiftButton: true,
-    hideAppsButton: true, hideStickerButton: false, plainFolders: true, monoServerIcons: "on", glassMenus: true,
+    hideAppsButton: true, hideStickerButton: false, hideNotificationButton: true, plainFolders: true, monoServerIcons: "on", glassMenus: true,
     archLogo: true, monoWindowControls: true, grain: true, font: "iosevka", corners: 3, gap: 0, wallpaper: "",
     wallpaperDim: 0.5, asciiWallpaper: "off", asciiSize: 10
 };
@@ -252,6 +253,7 @@ function applyStyle(checkAscii = true) {
         "--hide-gift-button": onOff(s.hideGiftButton),
         "--hide-apps-button": onOff(s.hideAppsButton),
         "--hide-sticker-button": onOff(s.hideStickerButton),
+        "--hide-notification-button": onOff(s.hideNotificationButton),
         "--plain-folders": onOff(s.plainFolders),
         "--mono-server-icons": s.monoServerIcons,
         "--glass-menus": onOff(s.glassMenus),
@@ -466,6 +468,7 @@ function RicePanel() {
 
             <Section title="Hide">
                 <Toggle k="hideInbox" title="Inbox button" description="In the channel header. The discord-rice button takes its place." />
+                <Toggle k="hideNotificationButton" title="Notification bell" description="In the channel header. Right-click a channel for the same settings." />
                 <Toggle k="hideNameplates" title="Nameplates" description="The picture strips behind names in the member list, DM list and user panel." />
                 <Toggle k="hideQuests" title="Quests" description="The quest card above your user panel, and quest embeds in chat." />
                 <Toggle k="hideStoreTabs" title="Nitro, Shop and Quests tabs" description="The rows at the top of the DM list." />
