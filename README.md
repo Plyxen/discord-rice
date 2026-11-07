@@ -1,85 +1,88 @@
 # discord-rice
 
-A clean, Linux-rice-style Discord for Vencord: the **Chillnight** theme, plus two small Vencord plugins (a code block button, and pictures for server folders).
+Discord made to look like a tiling-WM Linux rice, for [Vencord](https://vencord.dev). It's a theme plus two small plugins.
 
-## Chillnight
+## The theme
 
-A Linux-rice Discord theme for Vencord, built on [midnight](https://github.com/refact0r/midnight-discord)'s maintained layout. It started out as a [Chillax](https://github.com/warrayquipsome/Chillax) look-alike.
+`discord-rice.theme.css`, built on [midnight](https://github.com/refact0r/midnight-discord)'s layout.
 
-- Tiled like i3 or Hyprland with no gaps: one misty forest wallpaper behind the whole window, the columns split by thin 1px lines. No floating panels, boxes or shadows.
-- Iosevka everywhere, greyscale colours to match a black-and-white desktop (only status dots, unread badges and danger buttons keep a muted colour; pings are a light grey band), small corners, the Arch logo on the home button.
-- Terminal touches: the chat bar is a prompt line (a `❯` in front, and its line lights up while you type), the selected channel is a solid bar like ranger's cursor, categories are bright and bold like directories in `ls`, and message times sit in `[brackets]` like an IRC log.
-- No top bar: the "Direct Messages" / server title, back/forward arrows and help button are gone. Inbox and window buttons sit in the channel header, as small grey dots that light up on hover.
-- Drag the window by the empty space in the channel header, next to the name.
-- The game page (click the game you're playing) opens as a smaller window in the middle instead of filling Discord, so its close button isn't hidden under the window dots.
-- Store clutter hidden: Nitro Home, Shop and Quests in the DM list, plus the gift and apps buttons in the chat bar.
-- Menus, the GIF / emoji picker and other popouts look like rofi on Hyprland: dark frosted glass (see-through with a blur, the same misty dark as the rest of the window), small corners and a thin light border instead of a shadow. The open picker tab and the menu item under the mouse are light bars (red for dangerous ones like Leave Server). Settings and other popups keep a solid background in the same dark tone so they stay readable.
+- **Tiled, no gaps.** One misty wallpaper behind the whole window, with the columns split by 1px lines. No floating panels, boxes or shadows, and no top bar.
+- **Greyscale.** Made to sit on a black-and-white desktop. Server icons and folders are black-and-white too. Only status dots, unread badges and red "danger" buttons keep a muted colour.
+- **Terminal touches.** Iosevka everywhere, and the chat bar is a `❯` prompt whose line lights up while you type. The selected channel is a solid bar like ranger's cursor, categories are bold like directories in `ls`, and message times sit in `[brackets]`.
+- **Menus like rofi.** Right-click menus, the emoji/GIF picker and other popouts are dark frosted glass with a thin border.
+- **Plain folders.** A closed folder shows a folder icon instead of a 2×2 grid of tiny server icons, or your own picture with the folder plugin.
+- **Less clutter.** Nitro, Shop and Quests are gone from the DM list, and so are the quest card above your user panel, nameplates behind names, and the gift and apps buttons in the chat bar.
+- **Small fixes.** The game page (click the game you're playing) opens as a smaller centred window, so its close button isn't stuck under the window controls. Drag the window by the empty space in the channel header.
 
-## Install
+### Install
 
 ```powershell
 .\install.ps1
 ```
 
-That copies `chillnight.theme.css` into `%APPDATA%\Vencord\themes`. Then in Discord: **Settings → Vencord → Themes → Local Themes**, turn on **Chillnight**. After that, re-running the script updates it live (Vencord reloads theme files on save).
+This copies the theme into `%APPDATA%\Vencord\themes`. The first time, turn it on in Discord under **Settings → Vencord → Themes → discord-rice**. After that, running the script again updates the theme live.
 
-## Options
+### Options
 
-All options are CSS variables at the top of `chillnight.theme.css`.
+Everything is a CSS variable at the top of the theme file.
 
 | Variable | Default | What it does |
 | --- | --- | --- |
-| `--wallpaper` | misty forest | Any image: `url('https://i.imgur.com/....jpg')`. imgur, github.io and raw.githubusercontent.com links work. |
-| `--wallpaper-dim` | `0.5` | How much the wallpaper is darkened (0 to 1). Raise it if text is hard to read. |
+| `--wallpaper` | misty forest | Any image, e.g. `url('https://i.imgur.com/....jpg')`. imgur, github.io and raw.githubusercontent.com links work. |
+| `--wallpaper-dim` | `0.5` | How dark the wallpaper is, from 0 to 1. Raise it if text is hard to read. |
 | `--grain` | `on` | Film grain over the wallpaper. |
-| `--font` | `'Iosevka'` | `'figtree'` for midnight's font, `''` for Discord's own. `--code-font` does the same for code blocks. |
+| `--font` | `'Iosevka'` | `'figtree'` for midnight's font, `''` for Discord's own. `--code-font` is the same for code blocks. |
 | `--corners` | `3px` | Corner size. `0px` for dead sharp. Avatars and pills stay round. |
-| `--hide-store-tabs` | `on` | Nitro Home, Shop, Quests in the DM list. |
-| `--hide-gift-button` | `on` | Gift button in the chat bar. |
-| `--hide-apps-button` | `on` | Apps / activities launcher in the chat bar. |
-| `--hide-sticker-button` | `off` | Sticker button in the chat bar. |
-| `--custom-dms-icon` | `custom` | Arch logo on the home button. `off` brings back Discord's logo; `--dms-icon-svg-url` takes any svg. |
-| `--mono-window-controls` | `on` | Grey window dots instead of red/yellow/green. |
-| `--mono-server-icons` | `on` | Black-and-white server pictures and folders. `hover` brings the colour back under the mouse; `off` keeps them in colour. Badges stay coloured either way. |
-| `--glass-menus` | `on` | Frosted-glass menus and pickers. `off` makes them solid dark. The tint and blur are `--bg-float` and `--float-blur` in the `:root` block. |
-| `--top-bar-button-position` | `titlebar` | `titlebar` moves inbox + window buttons into the header; `hide` keeps a top bar without them; `off` is Discord's default. |
-| `--small-user-panel` | `on` | User panel only under the channel list; server icons run full height. |
 | `--gap` | `0px` | Space between the columns. Raise it for i3-style gaps. |
-| `--line`, `--line-focus`, `--float-border` | faint and light grey | Colour of the lines between the panes, of the chat bar's line while you type, and of the border around menus and pickers (in the `:root` block). |
-| `--custom-guild-list-padding` | `6px` | Space left and right of the server icons (in the `:root` block). |
+| `--plain-folders` | `on` | Closed folders show a folder icon. `off` brings back the 2×2 grid. |
+| `--mono-server-icons` | `on` | Black-and-white server icons and folders. `hover` shows colour under the mouse; `off` keeps colour. |
+| `--glass-menus` | `on` | Frosted-glass menus and pickers. `off` makes them solid. The tint and blur are `--bg-float` and `--float-blur`. |
+| `--hide-quests` | `on` | The quest card above your user panel, and quest embeds in chat. |
+| `--hide-nameplates` | `on` | The picture strips behind names in the member list, DM list and user panel. Shop and settings previews stay. |
+| `--hide-store-tabs` | `on` | Nitro Home, Shop and Quests in the DM list. |
+| `--hide-gift-button` | `on` | Gift button in the chat bar. |
+| `--hide-apps-button` | `on` | Apps / activities button in the chat bar. |
+| `--hide-sticker-button` | `off` | Sticker button in the chat bar. |
+| `--custom-dms-icon` | `custom` | Arch logo on the home button. `off` brings back Discord's logo, and `--dms-icon-svg-url` takes any svg. |
+| `--mono-window-controls` | `on` | Grey window dots instead of red / yellow / green. |
+| `--top-bar-button-position` | `titlebar` | Where the inbox and window buttons go: `titlebar` puts them in the channel header, `hide` keeps a top bar without them, `off` is Discord's default. |
+| `--small-user-panel` | `on` | User panel only under the channel list, so the server list runs full height. |
+| `--line`, `--line-focus`, `--float-border` | faint / light grey | The lines between panes, the chat bar's line while typing, and the border around menus (in the `:root` block). |
+| `--mention` | faint grey band | The background of messages that ping you (in the `:root` block). |
 
-The default wallpaper is embedded in the theme file (the long line at the very bottom), so it needs no hosting. `wallpaper.jpg` is the same image. It is only 736×414; for a sharper look, point `--wallpaper` at a bigger copy.
+The wallpaper is embedded in the theme (the long line at the bottom), so it needs no hosting. `wallpaper.jpg` is the same image, at only 736×414, so for a sharper look point `--wallpaper` at a bigger copy.
 
-## Code block button (Vencord plugin)
+## The plugins
 
-`vencord-plugins/codeBlockButton` adds a ``` button next to the `<>` button in the popup you get when you select text in the chat box. It wraps the selection in ``` ```; click again to unwrap. It reuses Discord's own wrap/unwrap code, so it behaves like the other buttons.
+Both are Vencord user plugins in `vencord-plugins/`. User plugins only run in a Vencord built from source, set up like this:
 
-A theme can't add buttons, so this is a Vencord user plugin, and user plugins only run in a Vencord built from source:
+- The source build is in `Documents\Vencord`, with each plugin copied to `src\userplugins\<name>`.
+- `%APPDATA%\Vencord\dist\patcher.js` (the file Discord loads) just points at that build. The installer's original is next to it as `patcher.js.official`. To undo, delete `patcher.js` and rename the original back.
+- Settings and themes stay in `%APPDATA%\Vencord`. **Settings → Vencord → Updater** still works: it pulls and rebuilds, and the plugins survive that.
+- After changing a plugin, copy it into `src\userplugins`, run `pnpm build` in `Documents\Vencord`, then fully restart Discord (quit from the tray, not just the window).
 
-- The source build lives in `Documents\Vencord`, with the plugin copied to `src\userplugins\codeBlockButton`.
-- `%APPDATA%\Vencord\dist\patcher.js` (the file Discord loads) now just loads that build. The installer's original is next to it as `patcher.js.official`; delete `patcher.js` and rename that back to undo.
-- Settings and themes stay in `%APPDATA%\Vencord`, same as before.
-- Update Vencord from **Settings → Vencord → Updater** as usual: for a source build it pulls and rebuilds, and the plugin survives that.
-- After changing the plugin: copy it into `Documents\Vencord\src\userplugins\codeBlockButton`, run `pnpm build` there and restart Discord.
+### Folder pictures
 
-## Folder pictures (Vencord plugin)
+`folderPictures` gives a server folder its own picture.
 
-`vencord-plugins/folderPictures` lets a server folder show its own picture instead of the 2×2 grid of its servers.
+- Right-click a folder → **Set folder picture…**. The same menu can change or remove the picture later.
+- Or use **Settings → Vencord → Plugins → FolderPictures**, which lists every folder with Set / Change / Remove buttons.
+- The picture sits inside the folder, framed by the folder's colour, in place of the folder icon or the 2×2 grid.
+- Pictures are stored locally and never uploaded. They're cropped square from the middle and shrunk to 128px. GIFs up to 1 MB are kept as they are, so they stay animated.
+- With `--mono-server-icons` on, pictures are black-and-white like everything else in the server list.
 
-- Right-click a folder → **Set folder picture…** and pick an image. The same menu has **Change folder picture…** and **Remove folder picture** once one is set.
-- Or go to **Settings → Vencord → Plugins → FolderPictures**: its settings page lists every folder with Set / Change / Remove buttons.
-- Pictures are kept locally in Vencord's storage, nothing is uploaded. They're cropped square from the middle and shrunk to 128px. GIFs up to 1 MB are kept as they are, so they stay animated.
-- With Chillnight's `--mono-server-icons` on, folder pictures turn black-and-white like the server icons (`hover` brings the colour back under the mouse).
-- It's set up the same way as the code block button: copied to `Documents\Vencord\src\userplugins\folderPictures`, built with `pnpm build`, and it loads after a full Discord restart (quit from the tray, not just closing the window).
-- It tags each folder's preview with its folder id through one small patch. If a Discord update breaks that patch, a fallback selector (the folder's list id) usually still finds the folder.
+### Code block button
+
+`codeBlockButton` adds a ``` button next to `<>` in the popup that appears when you select text in the chat box. It wraps the selection in a code block, and clicking it again unwraps it.
 
 ## When Discord updates break it
 
-Most of the layout is imported from midnight's hosted build, and midnight's maintainer fixes it when Discord renames its classes (as happened in November 2026), so those fixes arrive here automatically. The Chillnight extras mostly use links, labels and class-name prefixes (`href`, `aria-label`, `[class*='baseLayer_']`) that survive renames. Some rules use Discord class names directly and may need updating after a big update: the header search width (`.search_bWCaDq`), the DM list row (`.channel_zln_tS`, which has a class-free fallback), and the rice touches (pane lines, prompt, selected channel bar, category colour, timestamp brackets, menu and picker styling, the game page window). If one of those stops showing, the rest of the theme still works.
+Most of the layout comes from midnight's hosted build, and midnight's maintainer fixes it when Discord renames its classes, so those fixes arrive here automatically. The extras mostly match links, labels and class-name prefixes (`href`, `aria-label`, `[class*='folderPreview_']`), which usually survive renames.
+
+A few rules use Discord's exact class names and may need updating after a big update: the pane lines, the prompt, the selected channel bar, the timestamp brackets, menu styling, the game page window and the header search. If one stops working, the rest of the theme still works.
 
 ## Credits
 
 - Layout: [midnight-discord](https://github.com/refact0r/midnight-discord) by refact0r (MIT), loaded from its hosted build.
-- Font: [Iosevka](https://github.com/be5invis/Iosevka) by Belleve Invis (OFL), loaded from [Fontsource](https://fontsource.org) on jsDelivr.
-- Home icon: Arch Linux logo from [Simple Icons](https://simpleicons.org) (CC0). The logo is a trademark of Arch Linux.
-- Original look: [Chillax](https://github.com/warrayquipsome/Chillax) by the Chillax Squad.
+- Font: [Iosevka](https://github.com/be5invis/Iosevka) by Belleve Invis (OFL), via [Fontsource](https://fontsource.org) on jsDelivr.
+- Home icon: the Arch Linux logo from [Simple Icons](https://simpleicons.org) (CC0). The logo is a trademark of Arch Linux.

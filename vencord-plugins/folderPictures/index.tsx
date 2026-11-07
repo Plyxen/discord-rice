@@ -1,8 +1,9 @@
 /*
  * FolderPictures, a Vencord user plugin.
  * Give a server folder its own picture: right-click the folder → "Set folder picture…" and pick an
- * image. The closed folder then shows that picture instead of the 2x2 grid of its servers. The same
- * can be done from the plugin's settings page, which lists every folder.
+ * image. The closed folder then shows that picture, framed by the folder's colour, instead of the 2x2
+ * grid of its servers (or the folder icon discord-rice's --plain-folders draws). The same can be done
+ * from the plugin's settings page, which lists every folder.
  *
  * Pictures are kept locally in Vencord's storage (nothing is uploaded), cropped square and shrunk to
  * 128px so they stay small. GIFs up to 1 MB are kept as they are, so they stay animated.
@@ -35,10 +36,14 @@ function updateStyle() {
     }
     if (!styleEl.isConnected) document.head.appendChild(styleEl);
 
+    // the picture fills the inner area where the 2x2 grid (or a theme's folder icon) sits, so the folder's
+    // colour stays around it as a frame
     styleEl.textContent = Object.entries(pictures).map(([id, url]) => {
-        const sel = `:is([data-vc-folder-id=${cssString(id)}], [data-list-item-id=${cssString("guildsnav___" + id)}] [class*="folderPreviewWrapper_"])`;
-        return `${sel} { background-image: url(${cssString(url)}); background-size: cover; background-position: center; }\n`
-            + `${sel} > * { visibility: hidden; }`;
+        const tile = `:is([data-vc-folder-id=${cssString(id)}], [data-list-item-id=${cssString("guildsnav___" + id)}] [class*="folderPreviewWrapper_"])`;
+        const inner = `${tile} > [class*="folderPreview_"]`;
+        return `${inner} { background: center / cover no-repeat url(${cssString(url)}); border-radius: max(2px, calc(var(--radius-lg, 12px) - var(--custom-folder-preview-padding, 4px))); }\n`
+            + `${inner} > * { visibility: hidden; }\n`
+            + `${inner}::before, ${inner}::after { content: none !important; }`;
     }).join("\n");
 
     listeners.forEach(l => l());
