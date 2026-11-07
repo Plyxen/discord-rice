@@ -533,9 +533,15 @@ body .videoControls_qOjco6 > * {
     initial-value: on;
 }
 @container body style(--glass-menus: on) {
-    :is(.menu_M3qk4j, .contentWrapper_58b0l2, .autocomplete_rg6La1, .container_cbVzxY,
+    /* the glass layer needs a positioned parent. :where() has no weight, so popups Discord already
+       positions keep theirs: the autocomplete above the chat bar (emoji, @, /) is position: absolute,
+       and making it relative pushes the chat bar up the screen */
+    :where(.menu_M3qk4j, .contentWrapper_58b0l2, .autocomplete_rg6La1, .container_cbVzxY,
         .messagesPopoutWrap_6bgemo, .popout_j5xNzb) {
         position: relative;
+    }
+    :is(.menu_M3qk4j, .contentWrapper_58b0l2, .autocomplete_rg6La1, .container_cbVzxY,
+        .messagesPopoutWrap_6bgemo, .popout_j5xNzb) {
         isolation: isolate;
         background: transparent !important;
         --background-surface-high: transparent;
