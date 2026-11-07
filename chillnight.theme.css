@@ -74,6 +74,7 @@ body {
     --hide-sticker-button: off; /* sticker button in the chat bar */
     --mono-window-controls: on; /* grey window dots that light up on hover */
     --mono-server-icons: on; /* off | on | hover: black-and-white server pictures. hover = colour under the mouse */
+    --glass-menus: on; /* off | on: frosted-glass menus and pickers. off = solid dark */
 
     /* ---- internals, no need to touch ---- */
     --background-image: on;
@@ -140,8 +141,10 @@ body {
     /* surfaces. bg-3 / bg-4 stay solid: they colour menus, popouts, modals and settings */
     --bg-1: hsla(219, 28%, 88%, 0.14); /* buttons when clicked */
     --bg-2: hsla(219, 28%, 88%, 0.08); /* buttons */
-    --bg-3: var(--nord0); /* menus, popouts */
-    --bg-4: #242933; /* modals, settings */
+    --bg-3: hsl(220, 13%, 12%); /* menus, popouts, tooltips: the dark of the dimmed wallpaper, not Nord's slate */
+    --bg-4: hsl(220, 14%, 9%); /* modals, settings */
+    --bg-float: hsla(220, 14%, 8%, 0.72); /* glass menus and pickers: tint over the blur */
+    --float-blur: 20px;
     --glass: hsla(219, 28%, 88%, 0.04); /* inputs and cards sitting on the wallpaper */
     --hover: hsla(219, 28%, 88%, 0.06);
     --active: hsla(219, 28%, 88%, 0.1);
@@ -460,8 +463,8 @@ body .videoControls_qOjco6 > * {
 }
 
 /* floating windows: right-click menus, the GIF / sticker / emoji picker, inbox, autocomplete, search
-   suggestions, small modals. Styled like rofi or a floating window in Hyprland: solid Nord background,
-   small corners, a thin frost border instead of a drop shadow, flat inputs */
+   suggestions, small modals. Styled like rofi or a floating window in Hyprland: small corners, a thin
+   frost border instead of a drop shadow, flat inputs */
 :is(.menu_M3qk4j, .contentWrapper_58b0l2, .autocomplete_rg6La1, .container_cbVzxY,
     .messagesPopoutWrap_6bgemo, .popout_j5xNzb, .root__KoJTP) {
     border: 1px solid var(--float-border) !important;
@@ -472,6 +475,42 @@ body .videoControls_qOjco6 > * {
     --input-border-hover: var(--border-hover);
     --input-border-active: var(--nord8);
     --input-border-focused: var(--nord8);
+}
+
+/* ...and frosted glass, so they have the same dark, misty look as the rest of the window: a see-through
+   dark tint with whatever is behind blurred, like Hyprland's blur. The glass sits on a layer behind the
+   content (a blur straight on a menu would break its submenus). Their inner panels (sticker sidebar,
+   picker footer) go see-through too, slightly darker. --glass-menus: off gives solid dark menus instead */
+@property --glass-menus {
+    syntax: 'off | on';
+    inherits: false;
+    initial-value: on;
+}
+@container body style(--glass-menus: on) {
+    :is(.menu_M3qk4j, .contentWrapper_58b0l2, .autocomplete_rg6La1, .container_cbVzxY,
+        .messagesPopoutWrap_6bgemo, .popout_j5xNzb) {
+        position: relative;
+        isolation: isolate;
+        background: transparent !important;
+        --background-surface-high: transparent;
+        --background-surface-higher: transparent;
+        --background-surface-highest: var(--bg-2);
+        --background-base-low: transparent;
+        --background-base-lower: hsla(220, 14%, 4%, 0.3);
+        --background-base-lowest: hsla(220, 14%, 4%, 0.3);
+        --background-secondary-alt: hsla(220, 14%, 4%, 0.3);
+
+        &::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            border-radius: inherit;
+            background: var(--bg-float);
+            backdrop-filter: blur(var(--float-blur)) saturate(1.2);
+            pointer-events: none;
+        }
+    }
 }
 
 /* picker tabs (GIFs / Stickers / Emoji): the open one is a frost bar, like the selected channel */

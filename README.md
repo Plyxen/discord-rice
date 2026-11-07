@@ -12,7 +12,7 @@ A Linux-rice Discord theme for Vencord, built on [midnight](https://github.com/r
 - No top bar: the "Direct Messages" / server title, back/forward arrows and help button are gone. Inbox and window buttons sit in the channel header, as small grey dots that light up on hover.
 - Drag the window by the empty space in the channel header, next to the name.
 - Store clutter hidden: Nitro Home, Shop and Quests in the DM list, plus the gift and apps buttons in the chat bar.
-- Menus, the GIF / emoji picker and other popouts look like rofi: solid Nord background, small corners and a thin frost border instead of a shadow. The open picker tab and the menu item under the mouse are frost bars (red for dangerous ones like Leave Server). Settings keep a solid background so they stay readable.
+- Menus, the GIF / emoji picker and other popouts look like rofi on Hyprland: dark frosted glass (see-through with a blur, the same misty dark as the rest of the window), small corners and a thin frost border instead of a shadow. The open picker tab and the menu item under the mouse are frost bars (red for dangerous ones like Leave Server). Settings and other popups keep a solid background in the same dark tone so they stay readable.
 
 ## Install
 
@@ -40,6 +40,7 @@ All options are CSS variables at the top of `chillnight.theme.css`.
 | `--custom-dms-icon` | `custom` | Arch logo on the home button. `off` brings back Discord's logo; `--dms-icon-svg-url` takes any svg. |
 | `--mono-window-controls` | `on` | Grey window dots instead of red/yellow/green. |
 | `--mono-server-icons` | `on` | Black-and-white server pictures and folders. `hover` brings the colour back under the mouse; `off` keeps them in colour. Badges stay coloured either way. |
+| `--glass-menus` | `on` | Frosted-glass menus and pickers. `off` makes them solid dark. The tint and blur are `--bg-float` and `--float-blur` in the `:root` block. |
 | `--top-bar-button-position` | `titlebar` | `titlebar` moves inbox + window buttons into the header; `hide` keeps a top bar without them; `off` is Discord's default. |
 | `--small-user-panel` | `on` | User panel only under the channel list; server icons run full height. |
 | `--gap` | `0px` | Space between the columns. Raise it for i3-style gaps. |
