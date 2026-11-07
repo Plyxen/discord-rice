@@ -1,6 +1,6 @@
 # discord-rice
 
-A clean, Linux-rice-style Discord for Vencord: the **Chillnight** theme, plus a small plugin that adds a code block button.
+A clean, Linux-rice-style Discord for Vencord: the **Chillnight** theme, plus two small Vencord plugins (a code block button, and pictures for server folders).
 
 ## Chillnight
 
@@ -61,6 +61,17 @@ A theme can't add buttons, so this is a Vencord user plugin, and user plugins on
 - Settings and themes stay in `%APPDATA%\Vencord`, same as before.
 - Update Vencord from **Settings → Vencord → Updater** as usual: for a source build it pulls and rebuilds, and the plugin survives that.
 - After changing the plugin: copy it into `Documents\Vencord\src\userplugins\codeBlockButton`, run `pnpm build` there and restart Discord.
+
+## Folder pictures (Vencord plugin)
+
+`vencord-plugins/folderPictures` lets a server folder show its own picture instead of the 2×2 grid of its servers.
+
+- Right-click a folder → **Set folder picture…** and pick an image. The same menu has **Change folder picture…** and **Remove folder picture** once one is set.
+- Or go to **Settings → Vencord → Plugins → FolderPictures**: its settings page lists every folder with Set / Change / Remove buttons.
+- Pictures are kept locally in Vencord's storage, nothing is uploaded. They're cropped square from the middle and shrunk to 128px. GIFs up to 1 MB are kept as they are, so they stay animated.
+- With Chillnight's `--mono-server-icons` on, folder pictures turn black-and-white like the server icons (`hover` brings the colour back under the mouse).
+- It's set up the same way as the code block button: copied to `Documents\Vencord\src\userplugins\folderPictures`, built with `pnpm build`, and it loads after a full Discord restart (quit from the tray, not just closing the window).
+- It tags each folder's preview with its folder id through one small patch. If a Discord update breaks that patch, a fallback selector (the folder's list id) usually still finds the folder.
 
 ## When Discord updates break it
 
