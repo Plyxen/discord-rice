@@ -2,6 +2,8 @@
 
 Discord made to look like a tiling-WM Linux rice, for [Vencord](https://vencord.dev). It's a theme plus three small plugins.
 
+![discord-rice: tiled panes on a misty wallpaper, Iosevka, greyscale, folder icons in the server list](screenshots/discord-rice.webp)
+
 ## The theme
 
 `discord-rice.theme.css`, built on [midnight](https://github.com/refact0r/midnight-discord)'s layout.
