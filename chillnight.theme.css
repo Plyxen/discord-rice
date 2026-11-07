@@ -141,9 +141,9 @@ body {
     --accent-4: hsl(0, 0%, 80%); /* ...hovered */
     --accent-5: hsl(0, 0%, 72%); /* ...clicked */
     --accent-new: var(--red-2);
-    /* messages that ping you: a light grey band, a step brighter than a reply */
-    --mention: linear-gradient(to right, color-mix(in hsl, var(--text-1), transparent 85%) 40%, transparent);
-    --mention-hover: linear-gradient(to right, color-mix(in hsl, var(--text-1), transparent 90%) 40%, transparent);
+    /* messages that ping you: a faint grey band that fades out to the right */
+    --mention: linear-gradient(to right, color-mix(in hsl, var(--text-1), transparent 93%) 30%, transparent);
+    --mention-hover: linear-gradient(to right, color-mix(in hsl, var(--text-1), transparent 95%) 30%, transparent);
     --reply: linear-gradient(to right, color-mix(in hsl, var(--text-3), transparent 90%) 40%, transparent);
     --reply-hover: linear-gradient(to right, color-mix(in hsl, var(--text-3), transparent 94%) 40%, transparent);
 
