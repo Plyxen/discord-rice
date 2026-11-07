@@ -127,6 +127,7 @@ body {
     /* the lines between the panes. --line-focus lights the chat bar's line while you type */
     --line: hsla(219, 28%, 80%, 0.14);
     --line-focus: var(--nord8);
+    --float-border: color-mix(in srgb, var(--nord8) 55%, transparent); /* border of menus and pickers */
 
     /* text */
     --text-0: var(--nord0); /* text on accent bars and buttons */
@@ -456,6 +457,54 @@ body .videoControls_qOjco6 > * {
 }
 .cozy_2i8Bfm .timestamp_2i8Bfm:not(.alt_2i8Bfm) time::after {
     content: ']';
+}
+
+/* floating windows: right-click menus, the GIF / sticker / emoji picker, inbox, autocomplete, search
+   suggestions, small modals. Styled like rofi or a floating window in Hyprland: solid Nord background,
+   small corners, a thin frost border instead of a drop shadow, flat inputs */
+:is(.menu_M3qk4j, .contentWrapper_58b0l2, .autocomplete_rg6La1, .container_cbVzxY,
+    .messagesPopoutWrap_6bgemo, .popout_j5xNzb, .root__KoJTP) {
+    border: 1px solid var(--float-border) !important;
+    border-radius: var(--radius-sm) !important;
+    box-shadow: none !important;
+    --input-background-default: transparent;
+    --input-border-default: var(--line);
+    --input-border-hover: var(--border-hover);
+    --input-border-active: var(--nord8);
+    --input-border-focused: var(--nord8);
+}
+
+/* picker tabs (GIFs / Stickers / Emoji): the open one is a frost bar, like the selected channel */
+.navButton_58b0l2 {
+    border-radius: var(--radius-xs);
+    color: var(--text-4);
+}
+:is(.navButtonActive_58b0l2, .navButtonActive_58b0l2:hover, .navButtonActive_58b0l2:active) {
+    background-color: var(--accent-2);
+    color: var(--text-0);
+}
+
+/* menu items: the one under the mouse is a frost bar with dark text, like rofi's selected entry.
+   Red for the dangerous ones (leave, delete...) */
+.colorDefault_M3qk4j.focused_M3qk4j {
+    background-color: var(--accent-2);
+    border-radius: var(--radius-xs);
+    color: var(--text-0);
+}
+.colorDefault_M3qk4j.focused_M3qk4j
+    :is(.label_M3qk4j, .subtext_M3qk4j, .caret_M3qk4j, .icon_M3qk4j, .check_M3qk4j, .radioSelection_M3qk4j) {
+    color: var(--text-0);
+}
+.colorDefault_M3qk4j.focused_M3qk4j:not(.checkboxContainer_M3qk4j) path {
+    fill: var(--text-0);
+}
+.colorDanger_M3qk4j.focused_M3qk4j {
+    background-color: var(--red-2);
+    border-radius: var(--radius-xs);
+}
+.colorDanger_M3qk4j.focused_M3qk4j :is(.label_M3qk4j, .subtext_M3qk4j, .icon_M3qk4j, .check_M3qk4j),
+.colorDanger_M3qk4j.focused_M3qk4j {
+    color: var(--text-0);
 }
 
 /* default wallpaper: misty forest, embedded so it works without hosting. Keep this block last. */

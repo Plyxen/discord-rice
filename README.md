@@ -12,7 +12,7 @@ A Linux-rice Discord theme for Vencord, built on [midnight](https://github.com/r
 - No top bar: the "Direct Messages" / server title, back/forward arrows and help button are gone. Inbox and window buttons sit in the channel header, as small grey dots that light up on hover.
 - Drag the window by the empty space in the channel header, next to the name.
 - Store clutter hidden: Nitro Home, Shop and Quests in the DM list, plus the gift and apps buttons in the chat bar.
-- Menus, popouts, modals and settings keep a solid Nord background so they stay readable.
+- Menus, the GIF / emoji picker and other popouts look like rofi: solid Nord background, small corners and a thin frost border instead of a shadow. The open picker tab and the menu item under the mouse are frost bars (red for dangerous ones like Leave Server). Settings keep a solid background so they stay readable.
 
 ## Install
 
@@ -43,7 +43,7 @@ All options are CSS variables at the top of `chillnight.theme.css`.
 | `--top-bar-button-position` | `titlebar` | `titlebar` moves inbox + window buttons into the header; `hide` keeps a top bar without them; `off` is Discord's default. |
 | `--small-user-panel` | `on` | User panel only under the channel list; server icons run full height. |
 | `--gap` | `0px` | Space between the columns. Raise it for i3-style gaps. |
-| `--line`, `--line-focus` | faint grey, frost | Colour of the lines between the panes, and of the chat bar's line while you type (in the `:root` block). |
+| `--line`, `--line-focus`, `--float-border` | faint grey, frost | Colour of the lines between the panes, of the chat bar's line while you type, and of the border around menus and pickers (in the `:root` block). |
 | `--custom-guild-list-padding` | `6px` | Space left and right of the server icons (in the `:root` block). |
 
 The default wallpaper is embedded in the theme file (the long line at the very bottom), so it needs no hosting. `wallpaper.jpg` is the same image. It is only 736×414; for a sharper look, point `--wallpaper` at a bigger copy.
@@ -62,7 +62,7 @@ A theme can't add buttons, so this is a Vencord user plugin, and user plugins on
 
 ## When Discord updates break it
 
-Most of the layout is imported from midnight's hosted build, and midnight's maintainer fixes it when Discord renames its classes (as happened in November 2026), so those fixes arrive here automatically. The Chillnight extras mostly use links, labels and class-name prefixes (`href`, `aria-label`, `[class*='baseLayer_']`) that survive renames. Some rules use Discord class names directly and may need updating after a big update: the header search width (`.search_bWCaDq`), the DM list row (`.channel_zln_tS`, which has a class-free fallback), and the rice touches (pane lines, prompt, selected channel bar, category colour, timestamp brackets). If one of those stops showing, the rest of the theme still works.
+Most of the layout is imported from midnight's hosted build, and midnight's maintainer fixes it when Discord renames its classes (as happened in November 2026), so those fixes arrive here automatically. The Chillnight extras mostly use links, labels and class-name prefixes (`href`, `aria-label`, `[class*='baseLayer_']`) that survive renames. Some rules use Discord class names directly and may need updating after a big update: the header search width (`.search_bWCaDq`), the DM list row (`.channel_zln_tS`, which has a class-free fallback), and the rice touches (pane lines, prompt, selected channel bar, category colour, timestamp brackets, menu and picker styling). If one of those stops showing, the rest of the theme still works.
 
 ## Credits
 
