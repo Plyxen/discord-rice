@@ -1,6 +1,6 @@
 /**
  * @name Chillnight
- * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, Nord colours, no top bar, no store clutter.
+ * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, no top bar, no store clutter.
  * @author Pota
  * @version 3.0.0
  * @source https://github.com/Plyxen/discord-rice
@@ -52,12 +52,12 @@ body {
     --custom-window-controls: on;
     --window-control-size: 13px;
 
-    /* home (DMs) button: the Arch logo in frost. off = Discord's logo, or point --dms-icon-svg-url at any svg */
+    /* home (DMs) button: the Arch logo in light grey. off = Discord's logo, or point --dms-icon-svg-url at any svg */
     --custom-dms-icon: custom;
     --dms-icon-svg-url: var(--arch-logo);
     --dms-icon-svg-size: 100%;
-    --dms-icon-color-before: var(--nord8);
-    --dms-icon-color-after: var(--nord6);
+    --dms-icon-color-before: var(--text-3);
+    --dms-icon-color-after: var(--text-1);
     --custom-dms-background: off;
 
     /* chat bar sits in the chat, no separate box */
@@ -80,9 +80,9 @@ body {
     --background-image: on;
     --background-image-url: var(--grain-layer), var(--wallpaper-shade), var(--wallpaper);
     --wallpaper-shade:
-        radial-gradient(ellipse at 60% 40%, transparent 35%, hsla(220, 25%, 4%, 0.45) 100%),
-        linear-gradient(90deg, hsla(220, 25%, 4%, 0.5) 0%, hsla(220, 25%, 4%, 0.3) 30%, transparent 50%),
-        linear-gradient(hsla(220, 25%, 4%, var(--wallpaper-dim)), hsla(220, 25%, 4%, var(--wallpaper-dim)));
+        radial-gradient(ellipse at 60% 40%, transparent 35%, hsla(0, 0%, 0%, 0.45) 100%),
+        linear-gradient(90deg, hsla(0, 0%, 0%, 0.5) 0%, hsla(0, 0%, 0%, 0.3) 30%, transparent 50%),
+        linear-gradient(hsla(0, 0%, 0%, var(--wallpaper-dim)), hsla(0, 0%, 0%, var(--wallpaper-dim)));
     --radius-xs: min(var(--corners), 4px);
     --radius-sm: var(--corners);
     --radius-md: calc(var(--corners) * 1.34);
@@ -102,66 +102,49 @@ body {
     }
 }
 
-/* colours: Nord. Polar night for surfaces, snow storm for text, frost for accents, aurora for status.
-   A touch brighter than stock Nord where text sits straight on the wallpaper */
+/* colours: greyscale, to match the black-and-white wallpaper and desktop. Only status dots, mentions and
+   red "danger" bits keep a muted colour. A touch brighter than usual because text sits on the wallpaper */
 :root {
     --colors: on;
     --custom-guild-list-padding: 6px; /* space left and right of the server icons (midnight: 12px) */
 
-    --nord0: #2e3440;
-    --nord1: #3b4252;
-    --nord2: #434c5e;
-    --nord3: #4c566a;
-    --nord4: #d8dee9;
-    --nord5: #e5e9f0;
-    --nord6: #eceff4;
-    --nord7: #8fbcbb;
-    --nord8: #88c0d0;
-    --nord9: #81a1c1;
-    --nord10: #5e81ac;
-    --nord11: #bf616a;
-    --nord12: #d08770;
-    --nord13: #ebcb8b;
-    --nord14: #a3be8c;
-    --nord15: #b48ead;
-
     /* the lines between the panes. --line-focus lights the chat bar's line while you type */
-    --line: hsla(219, 28%, 80%, 0.14);
-    --line-focus: var(--nord8);
-    --float-border: color-mix(in srgb, var(--nord8) 55%, transparent); /* border of menus and pickers */
+    --line: hsla(0, 0%, 100%, 0.12);
+    --line-focus: hsla(0, 0%, 100%, 0.6);
+    --float-border: hsla(0, 0%, 100%, 0.2); /* border of menus and pickers */
 
     /* text */
-    --text-0: var(--nord0); /* text on accent bars and buttons */
-    --text-1: var(--nord6);
-    --text-2: var(--nord5); /* headings, names */
-    --text-3: var(--nord4); /* message text */
-    --text-4: #a3acbd; /* icons, channels */
-    --text-5: #7f899c; /* muted channels, timestamps */
+    --text-0: hsl(0, 0%, 8%); /* text on the light selection bars and buttons */
+    --text-1: hsl(0, 0%, 98%);
+    --text-2: hsl(0, 0%, 92%); /* headings, names */
+    --text-3: hsl(0, 0%, 84%); /* message text */
+    --text-4: hsl(0, 0%, 64%); /* icons, channels */
+    --text-5: hsl(0, 0%, 50%); /* muted channels, timestamps */
 
-    /* surfaces. bg-3 / bg-4 stay solid: they colour menus, popouts, modals and settings */
-    --bg-1: hsla(219, 28%, 88%, 0.14); /* buttons when clicked */
-    --bg-2: hsla(219, 28%, 88%, 0.08); /* buttons */
-    --bg-3: hsl(220, 13%, 12%); /* menus, popouts, tooltips: the dark of the dimmed wallpaper, not Nord's slate */
-    --bg-4: hsl(220, 14%, 9%); /* modals, settings */
-    --bg-float: hsla(220, 14%, 8%, 0.72); /* glass menus and pickers: tint over the blur */
+    /* surfaces. bg-3 / bg-4 stay solid: they colour popups, modals and settings */
+    --bg-1: hsla(0, 0%, 100%, 0.14); /* buttons when clicked */
+    --bg-2: hsla(0, 0%, 100%, 0.08); /* buttons */
+    --bg-3: hsl(0, 0%, 11%); /* popouts, tooltips */
+    --bg-4: hsl(0, 0%, 8%); /* modals, settings, the game page */
+    --bg-float: hsla(0, 0%, 7%, 0.7); /* glass menus and pickers: tint over the blur */
     --float-blur: 20px;
-    --glass: hsla(219, 28%, 88%, 0.04); /* inputs and cards sitting on the wallpaper */
-    --hover: hsla(219, 28%, 88%, 0.06);
-    --active: hsla(219, 28%, 88%, 0.1);
-    --active-2: hsla(219, 28%, 88%, 0.14);
-    --message-hover: hsla(219, 28%, 88%, 0.03);
+    --glass: hsla(0, 0%, 100%, 0.04); /* inputs and cards sitting on the wallpaper */
+    --hover: hsla(0, 0%, 100%, 0.06);
+    --active: hsla(0, 0%, 100%, 0.1);
+    --active-2: hsla(0, 0%, 100%, 0.14);
+    --message-hover: hsla(0, 0%, 100%, 0.03);
 
-    /* accent: frost */
-    --accent-1: var(--nord8); /* links */
-    --accent-2: var(--nord8); /* small accent bits, selected channel bar */
-    --accent-3: var(--nord8); /* accent buttons */
-    --accent-4: var(--nord7); /* ...hovered */
-    --accent-5: var(--nord9); /* ...clicked */
+    /* accent: light grey. Links keep a faint cool tint so they still read as links */
+    --accent-1: oklch(84% 0.035 250); /* links */
+    --accent-2: hsl(0, 0%, 84%); /* selected channel bar, open picker tab, hovered menu item */
+    --accent-3: hsl(0, 0%, 88%); /* accent buttons */
+    --accent-4: hsl(0, 0%, 80%); /* ...hovered */
+    --accent-5: hsl(0, 0%, 72%); /* ...clicked */
     --accent-new: var(--red-2);
-    --mention: linear-gradient(to right, color-mix(in hsl, var(--nord13), transparent 86%) 40%, transparent);
-    --mention-hover: linear-gradient(to right, color-mix(in hsl, var(--nord13), transparent 91%) 40%, transparent);
-    --reply: linear-gradient(to right, color-mix(in hsl, var(--nord8), transparent 90%) 40%, transparent);
-    --reply-hover: linear-gradient(to right, color-mix(in hsl, var(--nord8), transparent 94%) 40%, transparent);
+    --mention: linear-gradient(to right, color-mix(in hsl, var(--yellow-2), transparent 88%) 40%, transparent);
+    --mention-hover: linear-gradient(to right, color-mix(in hsl, var(--yellow-2), transparent 93%) 40%, transparent);
+    --reply: linear-gradient(to right, color-mix(in hsl, var(--text-3), transparent 90%) 40%, transparent);
+    --reply-hover: linear-gradient(to right, color-mix(in hsl, var(--text-3), transparent 94%) 40%, transparent);
 
     /* status */
     --online: var(--green-2);
@@ -171,41 +154,41 @@ body {
     --offline: var(--text-5);
 
     /* borders: barely there */
-    --border-light: hsla(219, 28%, 88%, 0.05);
-    --border: hsla(219, 28%, 88%, 0.08);
-    --border-hover: hsla(219, 28%, 88%, 0.14);
-    --button-border: hsla(219, 28%, 88%, 0.12);
+    --border-light: hsla(0, 0%, 100%, 0.05);
+    --border: hsla(0, 0%, 100%, 0.08);
+    --border-hover: hsla(0, 0%, 100%, 0.14);
+    --button-border: hsla(0, 0%, 100%, 0.12);
 
-    /* base colours: the aurora, lighter at 1 and darker at 5 */
-    --red-1: color-mix(in oklch, var(--nord11), white 18%);
-    --red-2: color-mix(in oklch, var(--nord11), white 8%);
-    --red-3: var(--nord11);
-    --red-4: color-mix(in oklch, var(--nord11), black 12%);
-    --red-5: color-mix(in oklch, var(--nord11), black 24%);
+    /* base colours, muted: only status dots, mentions, unread badges and danger buttons use them */
+    --red-1: oklch(75% 0.12 15);
+    --red-2: oklch(70% 0.12 15);
+    --red-3: oklch(65% 0.12 15);
+    --red-4: oklch(60% 0.12 15);
+    --red-5: oklch(55% 0.12 15);
 
-    --green-1: color-mix(in oklch, var(--nord14), white 15%);
-    --green-2: var(--nord14);
-    --green-3: color-mix(in oklch, var(--nord14), black 10%);
-    --green-4: color-mix(in oklch, var(--nord14), black 20%);
-    --green-5: color-mix(in oklch, var(--nord14), black 30%);
+    --green-1: oklch(78% 0.11 155);
+    --green-2: oklch(73% 0.11 155);
+    --green-3: oklch(68% 0.11 155);
+    --green-4: oklch(63% 0.11 155);
+    --green-5: oklch(58% 0.11 155);
 
-    --blue-1: color-mix(in oklch, var(--nord9), white 15%);
-    --blue-2: var(--nord9);
-    --blue-3: color-mix(in oklch, var(--nord9), black 10%);
-    --blue-4: color-mix(in oklch, var(--nord9), black 20%);
-    --blue-5: color-mix(in oklch, var(--nord9), black 30%);
+    --blue-1: oklch(78% 0.07 240);
+    --blue-2: oklch(73% 0.07 240);
+    --blue-3: oklch(68% 0.07 240);
+    --blue-4: oklch(63% 0.07 240);
+    --blue-5: oklch(58% 0.07 240);
 
-    --yellow-1: color-mix(in oklch, var(--nord13), white 15%);
-    --yellow-2: var(--nord13);
-    --yellow-3: color-mix(in oklch, var(--nord13), black 10%);
-    --yellow-4: color-mix(in oklch, var(--nord13), black 20%);
-    --yellow-5: color-mix(in oklch, var(--nord13), black 30%);
+    --yellow-1: oklch(82% 0.1 85);
+    --yellow-2: oklch(77% 0.1 85);
+    --yellow-3: oklch(72% 0.1 85);
+    --yellow-4: oklch(67% 0.1 85);
+    --yellow-5: oklch(62% 0.1 85);
 
-    --purple-1: color-mix(in oklch, var(--nord15), white 15%);
-    --purple-2: var(--nord15);
-    --purple-3: color-mix(in oklch, var(--nord15), black 10%);
-    --purple-4: color-mix(in oklch, var(--nord15), black 20%);
-    --purple-5: color-mix(in oklch, var(--nord15), black 30%);
+    --purple-1: oklch(76% 0.1 305);
+    --purple-2: oklch(71% 0.1 305);
+    --purple-3: oklch(66% 0.1 305);
+    --purple-4: oklch(61% 0.1 305);
+    --purple-5: oklch(56% 0.1 305);
 }
 
 /* ================================================================
@@ -432,7 +415,7 @@ body .videoControls_qOjco6 > * {
     content: '❯';
     align-self: center;
     padding-inline: 16px 4px;
-    color: var(--green-2);
+    color: var(--text-2);
     font-family: var(--font-code);
     font-size: 18px;
     font-weight: 600;
@@ -446,12 +429,15 @@ body .videoControls_qOjco6 > * {
     color: var(--text-0);
 }
 
-/* categories read like directories in ls: frost blue */
+/* categories read like directories in ls: brighter and bold */
 #app-mount .wrapper_yOdhm_ :is(.name_yOdhm_, .icon_yOdhm_) {
-    color: var(--nord9);
+    color: var(--text-2);
+}
+#app-mount .wrapper_yOdhm_ .name_yOdhm_ {
+    font-weight: 600;
 }
 #app-mount .wrapper_yOdhm_:hover :is(.name_yOdhm_, .icon_yOdhm_) {
-    color: var(--nord8);
+    color: var(--text-1);
 }
 
 /* message times in brackets, like an IRC log: [05/11/2026 21:41] */
@@ -464,7 +450,7 @@ body .videoControls_qOjco6 > * {
 
 /* floating windows: right-click menus, the GIF / sticker / emoji picker, inbox, autocomplete, search
    suggestions, small modals. Styled like rofi or a floating window in Hyprland: small corners, a thin
-   frost border instead of a drop shadow, flat inputs */
+   light border instead of a drop shadow, flat inputs */
 :is(.menu_M3qk4j, .contentWrapper_58b0l2, .autocomplete_rg6La1, .container_cbVzxY,
     .messagesPopoutWrap_6bgemo, .popout_j5xNzb, .root__KoJTP) {
     border: 1px solid var(--float-border) !important;
@@ -473,8 +459,8 @@ body .videoControls_qOjco6 > * {
     --input-background-default: transparent;
     --input-border-default: var(--line);
     --input-border-hover: var(--border-hover);
-    --input-border-active: var(--nord8);
-    --input-border-focused: var(--nord8);
+    --input-border-active: var(--line-focus);
+    --input-border-focused: var(--line-focus);
 }
 
 /* ...and frosted glass, so they have the same dark, misty look as the rest of the window: a see-through
@@ -496,9 +482,9 @@ body .videoControls_qOjco6 > * {
         --background-surface-higher: transparent;
         --background-surface-highest: var(--bg-2);
         --background-base-low: transparent;
-        --background-base-lower: hsla(220, 14%, 4%, 0.3);
-        --background-base-lowest: hsla(220, 14%, 4%, 0.3);
-        --background-secondary-alt: hsla(220, 14%, 4%, 0.3);
+        --background-base-lower: hsla(0, 0%, 0%, 0.3);
+        --background-base-lowest: hsla(0, 0%, 0%, 0.3);
+        --background-secondary-alt: hsla(0, 0%, 0%, 0.3);
 
         &::before {
             content: '';
@@ -513,7 +499,7 @@ body .videoControls_qOjco6 > * {
     }
 }
 
-/* picker tabs (GIFs / Stickers / Emoji): the open one is a frost bar, like the selected channel */
+/* picker tabs (GIFs / Stickers / Emoji): the open one is a light bar, like the selected channel */
 .navButton_58b0l2 {
     border-radius: var(--radius-xs);
     color: var(--text-4);
@@ -523,7 +509,7 @@ body .videoControls_qOjco6 > * {
     color: var(--text-0);
 }
 
-/* menu items: the one under the mouse is a frost bar with dark text, like rofi's selected entry.
+/* menu items: the one under the mouse is a light bar with dark text, like rofi's selected entry.
    Red for the dangerous ones (leave, delete...) */
 .colorDefault_M3qk4j.focused_M3qk4j {
     background-color: var(--accent-2);
@@ -544,6 +530,19 @@ body .videoControls_qOjco6 > * {
 .colorDanger_M3qk4j.focused_M3qk4j :is(.label_M3qk4j, .subtext_M3qk4j, .icon_M3qk4j, .check_M3qk4j),
 .colorDanger_M3qk4j.focused_M3qk4j {
     color: var(--text-0);
+}
+
+/* game page (what opens when you click the game you're playing): Discord fills the whole window with it,
+   and its close button ends up under the window dots. Make it a smaller window in the middle instead,
+   with the same thin border as the menus. Esc still closes it */
+.container_WtnPzl:has(.heroContent_3tF3Yo) {
+    width: min(1100px, 100% - 120px);
+    height: calc(100% - 96px);
+    margin: 48px auto;
+    background: var(--bg-4);
+    border: 1px solid var(--float-border);
+    border-radius: var(--radius-md);
+    box-sizing: border-box;
 }
 
 /* default wallpaper: misty forest, embedded so it works without hosting. Keep this block last. */
