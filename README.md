@@ -1,6 +1,6 @@
 # discord-rice
 
-Discord made to look like a tiling-WM Linux rice, for [Vencord](https://vencord.dev). It's a theme plus two small plugins.
+Discord made to look like a tiling-WM Linux rice, for [Vencord](https://vencord.dev). It's a theme plus three small plugins.
 
 ## The theme
 
@@ -24,7 +24,9 @@ This copies the theme into `%APPDATA%\Vencord\themes`. The first time, turn it o
 
 ### Options
 
-Everything is a CSS variable at the top of the theme file.
+The easy way is inside Discord: **Settings → discord-rice** (in the Vencord section) has switches for all of the options below, plus a short intro to the theme. It comes from the DiscordRice plugin, which also shows that page as a popup the first time you start Discord with it. Changes apply straight away.
+
+Without the plugin, every option is a CSS variable at the top of the theme file:
 
 | Variable | Default | What it does |
 | --- | --- | --- |
@@ -54,12 +56,19 @@ The wallpaper is embedded in the theme (the long line at the bottom), so it need
 
 ## The plugins
 
-Both are Vencord user plugins in `vencord-plugins/`. User plugins only run in a Vencord built from source, set up like this:
+All three are Vencord user plugins in `vencord-plugins/`. User plugins only run in a Vencord built from source, set up like this:
 
 - The source build is in `Documents\Vencord`, with each plugin copied to `src\userplugins\<name>`.
 - `%APPDATA%\Vencord\dist\patcher.js` (the file Discord loads) just points at that build. The installer's original is next to it as `patcher.js.official`. To undo, delete `patcher.js` and rename the original back.
 - Settings and themes stay in `%APPDATA%\Vencord`. **Settings → Vencord → Updater** still works: it pulls and rebuilds, and the plugins survive that.
 - After changing a plugin, copy it into `src\userplugins`, run `pnpm build` in `Documents\Vencord`, then fully restart Discord (quit from the tray, not just the window).
+
+### discord-rice options
+
+`discordRice` adds the **Settings → discord-rice** page: what the theme does, whether it and the other plugins are on, and switches for nameplates, quests, store tabs, chat bar buttons, plain folders, black-and-white icons, the Arch logo, font, corners, gaps, glass menus, wallpaper link, wallpaper dim and grain. There's a reset button too.
+
+- The same page opens as a popup the first time you start Discord with the plugin. Open it again from the Vencord toolbox, or from the plugin's entry in **Plugins**.
+- It works by setting the theme's CSS variables from a small style sheet, which beats the theme file's defaults. Turn the plugin off and the theme file's own values come back.
 
 ### Folder pictures
 
