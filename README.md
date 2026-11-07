@@ -7,7 +7,7 @@ A clean, Linux-rice-style Discord for Vencord: the **Chillnight** theme, plus tw
 A Linux-rice Discord theme for Vencord, built on [midnight](https://github.com/refact0r/midnight-discord)'s maintained layout. It started out as a [Chillax](https://github.com/warrayquipsome/Chillax) look-alike.
 
 - Tiled like i3 or Hyprland with no gaps: one misty forest wallpaper behind the whole window, the columns split by thin 1px lines. No floating panels, boxes or shadows.
-- Iosevka everywhere, greyscale colours to match a black-and-white desktop (only status dots, mentions and danger buttons keep a muted colour), small corners, the Arch logo on the home button.
+- Iosevka everywhere, greyscale colours to match a black-and-white desktop (only status dots, unread badges and danger buttons keep a muted colour; pings are a light grey band), small corners, the Arch logo on the home button.
 - Terminal touches: the chat bar is a prompt line (a `❯` in front, and its line lights up while you type), the selected channel is a solid bar like ranger's cursor, categories are bright and bold like directories in `ls`, and message times sit in `[brackets]` like an IRC log.
 - No top bar: the "Direct Messages" / server title, back/forward arrows and help button are gone. Inbox and window buttons sit in the channel header, as small grey dots that light up on hover.
 - Drag the window by the empty space in the channel header, next to the name.

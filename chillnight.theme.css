@@ -102,8 +102,8 @@ body {
     }
 }
 
-/* colours: greyscale, to match the black-and-white wallpaper and desktop. Only status dots, mentions and
-   red "danger" bits keep a muted colour. A touch brighter than usual because text sits on the wallpaper */
+/* colours: greyscale, to match the black-and-white wallpaper and desktop. Only status dots, unread badges
+   and red "danger" bits keep a muted colour. A touch brighter than usual because text sits on the wallpaper */
 :root {
     --colors: on;
     --custom-guild-list-padding: 6px; /* space left and right of the server icons (midnight: 12px) */
@@ -141,8 +141,9 @@ body {
     --accent-4: hsl(0, 0%, 80%); /* ...hovered */
     --accent-5: hsl(0, 0%, 72%); /* ...clicked */
     --accent-new: var(--red-2);
-    --mention: linear-gradient(to right, color-mix(in hsl, var(--yellow-2), transparent 88%) 40%, transparent);
-    --mention-hover: linear-gradient(to right, color-mix(in hsl, var(--yellow-2), transparent 93%) 40%, transparent);
+    /* messages that ping you: a light grey band, a step brighter than a reply */
+    --mention: linear-gradient(to right, color-mix(in hsl, var(--text-1), transparent 85%) 40%, transparent);
+    --mention-hover: linear-gradient(to right, color-mix(in hsl, var(--text-1), transparent 90%) 40%, transparent);
     --reply: linear-gradient(to right, color-mix(in hsl, var(--text-3), transparent 90%) 40%, transparent);
     --reply-hover: linear-gradient(to right, color-mix(in hsl, var(--text-3), transparent 94%) 40%, transparent);
 
@@ -159,7 +160,7 @@ body {
     --border-hover: hsla(0, 0%, 100%, 0.14);
     --button-border: hsla(0, 0%, 100%, 0.12);
 
-    /* base colours, muted: only status dots, mentions, unread badges and danger buttons use them */
+    /* base colours, muted: only status dots, unread badges and danger buttons use them */
     --red-1: oklch(75% 0.12 15);
     --red-2: oklch(70% 0.12 15);
     --red-3: oklch(65% 0.12 15);
