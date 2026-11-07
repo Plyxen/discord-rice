@@ -2,7 +2,7 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 3.2.0
+ * @version 3.2.1
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
@@ -86,6 +86,8 @@ body {
     --background-image: on;
     --background-image-url: var(--grain-layer), var(--wallpaper-shade), var(--wallpaper);
     --wallpaper-shade:
+        /* the misty sky is brightest top right, so shade it down to match the left */
+        radial-gradient(ellipse 60% 80% at 70% 0%, hsla(0, 0%, 0%, 0.4), transparent),
         radial-gradient(ellipse at 60% 40%, transparent 35%, hsla(0, 0%, 0%, 0.45) 100%),
         linear-gradient(90deg, hsla(0, 0%, 0%, 0.5) 0%, hsla(0, 0%, 0%, 0.3) 30%, transparent 50%),
         linear-gradient(hsla(0, 0%, 0%, var(--wallpaper-dim)), hsla(0, 0%, 0%, var(--wallpaper-dim)));
