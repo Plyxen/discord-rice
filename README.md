@@ -1,4 +1,8 @@
-# Chillnight
+# discord-rice
+
+A clean, Linux-rice-style Discord for Vencord: the **Chillnight** theme, plus a small plugin that adds a code block button.
+
+## Chillnight
 
 A [Chillax](https://github.com/warrayquipsome/Chillax)-style Discord theme for Vencord, built on [midnight](https://github.com/refact0r/midnight-discord)'s maintained layout.
 
