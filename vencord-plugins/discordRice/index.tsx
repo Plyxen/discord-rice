@@ -33,13 +33,12 @@ const ENTRY_KEY = "vencord_discord_rice";
 
 const HeaderBarIcon = findComponentByCodeLazy(".HEADER_BAR_BADGE_BOTTOM,", 'position:"bottom"');
 
-function SlidersIcon() {
+// a steaming bowl of rice, filled like Discord's own header icons
+function RiceIcon() {
     return (
-        <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
-            <path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1" />
-            <circle cx="15" cy="6" r="2" />
-            <circle cx="9" cy="12" r="2" />
-            <circle cx="17" cy="18" r="2" />
+        <svg viewBox="0 0 24 24" width={20} height={20}>
+            <path fill="currentColor" d="M2 12.5h20a10 8 0 0 1-20 0zM8 19.5h8V21a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1zM5 11a7 4 0 0 1 14 0z" />
+            <path fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" d="M9.5 1.8c-.9.9.9 1.8 0 2.7M14.5 1.8c-.9.9.9 1.8 0 2.7" />
         </svg>
     );
 }
@@ -50,7 +49,7 @@ function RiceButton() {
             className="vc-discord-rice-btn"
             onClick={openRicePopup}
             tooltip="discord-rice"
-            icon={SlidersIcon}
+            icon={RiceIcon}
         />
     );
 }

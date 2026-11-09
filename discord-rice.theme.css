@@ -2,7 +2,7 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 3.3.0
+ * @version 3.3.1
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
@@ -479,6 +479,22 @@ body .videoControls_qOjco6 > * {
 }
 .panels_pog62O /* user panel */ {
     box-shadow: inset 0 1px var(--line), inset -1px 0 var(--line);
+}
+/* Discord works out the user panel's padding from the server list padding, which the rice halves, so the
+   row lost its padding and ran past the panel, putting the settings cog on the edge. Pin the padding, and
+   let the name shrink (Discord only allows that under 260px) so the buttons always fit */
+.container_g6VwXp /* user panel row */ {
+    padding: 8px 5px 8px 8px; /* 5px on the right: the cog has its own room inside its button */
+    gap: 4px;
+}
+.accountPopoutButtonWrapper_g6VwXp /* avatar and name */ {
+    min-width: 0;
+    margin-inline-start: 0;
+    padding: 4px;
+}
+.buttons_g6VwXp /* mic, headphones, settings */ {
+    flex-shrink: 0;
+    gap: 4px;
 }
 .chat_z_gUBg > .subtitleContainer_z_gUBg /* chat header */,
 .container_zrUwGA > .container_ybUK7Z /* friends header */,

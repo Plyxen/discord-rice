@@ -249,7 +249,7 @@ function About() {
                 <li>right-click a server folder → <kbd>Folder look</kbd>, or use the folders tab here.</li>
                 <li>select text in the chat bar, then the <kbd>```</kbd> button wraps it in a code block.</li>
                 <li>drag the window by the empty space in the channel header, next to the channel name.</li>
-                <li>this window is behind the sliders button in the channel header, and in Settings → discord-rice.</li>
+                <li>this window is behind the rice bowl button in the channel header, and in Settings → discord-rice.</li>
             </ul>
         </>
     );

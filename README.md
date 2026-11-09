@@ -6,16 +6,16 @@ Discord made to look like a tiling-WM Linux rice, for [Vencord](https://vencord.
 
 ## The theme
 
-`discord-rice.theme.css`, built on [midnight](https://github.com/refact0r/midnight-discord)'s layout.
+`discord-rice.theme.css`. The look is all its own. Underneath, it loads [midnight](https://github.com/refact0r/midnight-discord) for the plumbing: where the panes and the user panel sit, and the window buttons.
 
-- **Tiled, no gaps.** One misty wallpaper behind the whole window, with the columns split by 1px lines. No floating panels, boxes or shadows, and no top bar.
+- **Tiled, no gaps.** One misty wallpaper behind the whole window, with the columns split by 1px lines. No floating panels, boxes or shadows, and no top bar. Calls show the wallpaper behind the tiles too, instead of black.
 - **Greyscale.** Made to sit on a black-and-white desktop. Server icons and folders are black-and-white too. Only status dots, unread badges and red "danger" buttons keep a muted colour.
 - **Terminal touches.** Iosevka everywhere, and the chat bar is a `❯` prompt whose line lights up while you type. The selected channel is a solid bar like ranger's cursor, categories are bold like directories in `ls`, and message times sit in `[brackets]`.
 - **Menus like rofi.** Right-click menus, the emoji/GIF picker and other popouts are dark frosted glass with a thin border.
 - **Plain folders.** A closed folder shows a folder icon instead of a 2×2 grid of tiny server icons. With the folder plugin it can show a picture, an icon or a bit of ASCII instead.
 - **ASCII wallpaper.** With the discord-rice plugin, the wallpaper can be redrawn out of characters, digits or 0s and 1s, like the fetch screenshots on r/unixporn.
-- **Less clutter.** Nitro, Shop and Quests are gone from the DM list, and so are the quest card above your user panel, nameplates behind names, the notification bell in the channel header, and the gift and apps buttons in the chat bar.
-- **Small fixes.** The game page (click the game you're playing) opens as a smaller centred window, so its close button isn't stuck under the window controls. Drag the window by the empty space in the channel header.
+- **Less clutter.** Nitro, Shop and Quests are gone from the DM list, and so are the quest card above your user panel, nameplates behind names, the notification bell in the channel header, the video call button in DMs (voice call stays), and the gift and apps buttons in the chat bar. The DM profile button hides while Discord has it greyed out.
+- **Small fixes.** The game page (click the game you're playing) opens as a smaller centred window, so its close button isn't stuck under the window controls. Drag the window by the empty space in the channel header. On small windows the header search box shrinks so the channel name stays readable.
 
 ### Install
 
@@ -39,13 +39,13 @@ Edits to the file show up live.
 
 ### Options
 
-The easy way is inside Discord: the **sliders button** in the channel header, where the inbox button used to be, opens the discord-rice window, a small terminal-style settings tool with every option below. The same window is under **Settings → discord-rice** (in the Vencord section). It comes from the DiscordRice plugin, which also opens it once the first time you start Discord with it. Changes apply straight away.
+The easy way is inside Discord: the **rice bowl button** in the channel header, where the inbox button used to be, opens the discord-rice window, a small terminal-style settings tool with every option below. The same window is under **Settings → discord-rice** (in the Vencord section). It comes from the DiscordRice plugin, which also opens it once the first time you start Discord with it. Changes apply straight away.
 
 Without the plugin, every option is a CSS variable at the top of the theme file:
 
 | Variable | Default | What it does |
 | --- | --- | --- |
-| `--wallpaper` | misty forest | Any image, e.g. `url('https://i.imgur.com/....jpg')`. imgur, github.io and raw.githubusercontent.com links work. |
+| `--wallpaper` | misty forest | Any image, e.g. `url('https://i.imgur.com/....jpg')`. imgur, Pinterest (`i.pinimg.com`), github.io and raw.githubusercontent.com links work. |
 | `--wallpaper-dim` | `0.5` | How dark the wallpaper is, from 0 to 1. Raise it if text is hard to read. |
 | `--grain` | `on` | Film grain over the wallpaper. |
 | `--font` | `'Iosevka'` | `'figtree'` for midnight's font, `''` for Discord's own. `--code-font` is the same for code blocks. |
@@ -68,6 +68,8 @@ Without the plugin, every option is a CSS variable at the top of the theme file:
 | `--small-user-panel` | `on` | User panel only under the channel list, so the server list runs full height. |
 | `--line`, `--line-focus`, `--float-border` | faint / light grey | The lines between panes, the chat bar's line while typing, and the border around menus (in the `:root` block). |
 | `--mention` | faint grey band | The background of messages that ping you (in the `:root` block). |
+
+The rest of the `:root` block is the colours: text, surfaces, the light-grey accent and the muted status colours, each with a comment saying where it shows up.
 
 The wallpaper is embedded in the theme (the long line at the bottom), so it needs no hosting. `wallpaper.jpg` is the same image, at only 736×414, so for a sharper look point `--wallpaper` at a bigger copy.
 
@@ -96,7 +98,7 @@ After changing a plugin, copy it in again, run `pnpm build`, and restart Discord
 
 ### discord-rice settings
 
-`discordRice` puts a sliders button in the channel header, in place of the inbox button (you can bring the inbox back with the "inbox button" switch). The button opens the discord-rice window: a small terminal-style settings tool, styled like the rest of the rice. The same window is under **Settings → discord-rice** and in the Vencord toolbox, and it opens by itself once, the first time you start Discord with the plugin.
+`discordRice` puts a rice bowl button in the channel header, in place of the inbox button (you can bring the inbox back with the "inbox button" switch). The button opens the discord-rice window: a small terminal-style settings tool, styled like the rest of the rice. The same window is under **Settings → discord-rice** and in the Vencord toolbox, and it opens by itself once, the first time you start Discord with the plugin.
 
 ![The discord-rice window on its look tab: a tab list on the left, font choices, block sliders for corners and gaps, and [x] switches](screenshots/settings.webp)
 
@@ -168,15 +170,15 @@ The presets come in pairs, the same name as ASCII and as an icon:
 
 ## When Discord updates break it
 
-Most of the layout comes from midnight's hosted build, and midnight's maintainer fixes it when Discord renames its classes, so those fixes arrive here automatically. The extras mostly match links, labels and class-name prefixes (`href`, `aria-label`, `[class*='folderPreview_']`), which usually survive renames.
+The layout plumbing comes from midnight's hosted build, and midnight's maintainer fixes it when Discord renames its classes, so those fixes arrive here automatically. The extras mostly match links, labels and class-name prefixes (`href`, `aria-label`, `[class*='folderPreview_']`), which usually survive renames.
 
-A few rules use Discord's exact class names and may need updating after a big update: the pane lines, the prompt, the selected channel bar, the timestamp brackets, menu styling, the game page window and the header search. If one stops working, the rest of the theme still works.
+A few rules use Discord's exact class names and may need updating after a big update: the pane lines, the prompt, the selected channel bar, the timestamp brackets, menu styling, the game page window, the header search and the user panel spacing. If one stops working, the rest of the theme still works.
 
 ## Credits and licence
 
 discord-rice is licensed under the [GPL-3.0-or-later](LICENSE), like Vencord. Third-party licence texts are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-- Layout: [midnight-discord](https://github.com/refact0r/midnight-discord) by refact0r (MIT), loaded from its hosted build.
+- Layout plumbing: [midnight-discord](https://github.com/refact0r/midnight-discord) by refact0r (MIT), loaded underneath from its hosted build.
 - Font: [Iosevka](https://github.com/be5invis/Iosevka) by Belleve Invis (OFL), via [Fontsource](https://fontsource.org) on jsDelivr.
 - Home icon: the Arch Linux logo from [Simple Icons](https://simpleicons.org) (CC0). The logo is a trademark of Arch Linux.
 - Folder icons: [Lucide](https://lucide.dev) (ISC; a few from [Feather](https://feathericons.com), MIT).
