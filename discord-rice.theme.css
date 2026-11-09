@@ -2,7 +2,7 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 3.2.1
+ * @version 3.3.0
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
@@ -76,6 +76,7 @@ body {
     --hide-apps-button: on; /* apps / activities launcher in the chat bar */
     --hide-sticker-button: off; /* sticker button in the chat bar */
     --hide-notification-button: on; /* the bell in the channel header (right-click a channel for its notification settings) */
+    --hide-video-call-button: on; /* the camera in the DM header. The voice call button stays, and you can turn the camera on in the call */
     --mono-window-controls: on; /* grey window dots that light up on hover */
     --mono-server-icons: on; /* off | on | hover: black-and-white server pictures. hover = colour under the mouse */
     --glass-menus: on; /* off | on: frosted-glass menus and pickers. off = solid dark */
@@ -257,6 +258,15 @@ body .videoControls_qOjco6 > * {
     scrollbar-width: none !important;
 }
 
+/* home button: Discord fills it with the accent when hovered or open, which is a bright light grey here.
+   Use the same faint tint as a selected DM instead, so the light logo stays on a dark button */
+.wrapper_JJ-hgR[data-list-item-id='guildsnav___home']:hover > .childWrapper_JJ-hgR {
+    background-color: var(--active);
+}
+.wrapper_JJ-hgR[data-list-item-id='guildsnav___home'].selected_JJ-hgR > .childWrapper_JJ-hgR {
+    background-color: var(--active-2);
+}
+
 /* ================================================================
    discord-rice additions
    Selectors lean on hrefs and aria-labels where possible, which survive Discord's class renames.
@@ -283,6 +293,11 @@ body .videoControls_qOjco6 > * {
     initial-value: off;
 }
 @property --hide-notification-button {
+    syntax: 'off | on';
+    inherits: false;
+    initial-value: on;
+}
+@property --hide-video-call-button {
     syntax: 'off | on';
     inherits: false;
     initial-value: on;
@@ -408,6 +423,17 @@ body .videoControls_qOjco6 > * {
     [class*='toolbar_'] [aria-label='Notification Settings'] {
         display: none;
     }
+}
+@container body style(--hide-video-call-button: on) {
+    [class*='toolbar_'] [aria-label='Start Video Call'] {
+        display: none;
+    }
+}
+
+/* the DM profile button greys out when the window is under 1132px wide or a call is open. It does nothing
+   then, so don't show it */
+[class*='toolbar_'] [aria-label='Show User Profile (Unavailable)'] {
+    display: none;
 }
 
 /* keep the DM / channel name visible in the header. Discord sizes the header search box as if the right
@@ -579,6 +605,12 @@ body .videoControls_qOjco6 > * {
             backdrop-filter: blur(var(--float-blur)) saturate(1.2);
             pointer-events: none;
         }
+    }
+    /* the search suggestion rows fade out on the right with a mask made from --background-surface-high.
+       That's see-through in here, so the mask hid the whole row. Same fade, solid mask */
+    .container_cbVzxY .item_lm2_KW {
+        -webkit-mask-image: linear-gradient(to right, #000 90%, transparent);
+        mask-image: linear-gradient(to right, #000 90%, transparent);
     }
 }
 
