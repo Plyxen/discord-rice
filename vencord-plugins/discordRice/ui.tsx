@@ -14,7 +14,7 @@ import { Button } from "@components/Button";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { Paragraph } from "@components/Paragraph";
 import { SettingsTab } from "@components/settings/tabs/BaseTab";
-import { openModal, SortedGuildStore, useEffect, useReducer, useRef, UserStore, useState } from "@webpack/common";
+import { GuildStore, IconUtils, openModal, SortedGuildStore, useEffect, useReducer, useRef, UserStore, useState } from "@webpack/common";
 import type { KeyboardEvent, ReactNode } from "react";
 
 import { FONTS, isOurLink, resetAll, set, settings, Store, THEME_FILE, THEME_LINK } from "./store";
@@ -274,15 +274,27 @@ const folderApi = () => isPluginEnabled("FolderPictures") ? (plugins.FolderPictu
 const describe = (look?: Look) =>
     !look ? "default" : look.kind === "ascii" ? `ascii ${look.text}` : look.kind === "icon" ? `icon ${look.icon}` : "picture";
 
-function Preview({ look, api }: { look?: Look; api: FolderApi; }) {
+function Preview({ look, api, guildIds }: { look?: Look; api: FolderApi; guildIds: string[]; }) {
+    const { plainFolders, monoServerIcons } = settings.use(["plainFolders", "monoServerIcons"]);
     if (look?.kind === "picture") return <span className="vc-rice-preview" style={{ backgroundImage: `url(${JSON.stringify(look.url)})` }} />;
     if (look?.kind === "icon") return <span className="vc-rice-preview"><span className="icon" style={{ mask: `${api.iconUrl(look.icon)} center / contain no-repeat` }} /></span>;
     if (look?.kind === "ascii") return <span className="vc-rice-preview" style={{ fontSize: look.text.length > 3 ? 9 : 12 }}>{look.text}</span>;
-    return <span className="vc-rice-preview" />;
+
+    // no look: what the server list shows, a folder icon or Discord's 2×2 grid of the first four servers
+    if (plainFolders) return <span className="vc-rice-preview"><span className="icon vc-rice-folder-glyph" /></span>;
+    return (
+        <span className={`vc-rice-preview vc-rice-grid${monoServerIcons === "off" ? "" : " mono"}`}>
+            {guildIds.slice(0, 4).map(id => {
+                const guild = GuildStore.getGuild(id);
+                const url = guild?.icon ? IconUtils.getGuildIconURL({ id, icon: guild.icon, size: 32, canAnimate: false }) : undefined;
+                return url ? <img key={id} src={url} alt="" /> : <span key={id}>{guild?.name?.[0] ?? ""}</span>;
+            })}
+        </span>
+    );
 }
 
-function FolderRow({ id, name, look, api, open, onToggle }: {
-    id: string; name: string; look?: Look; api: FolderApi; open: boolean; onToggle(): void;
+function FolderRow({ id, name, guildIds, look, api, open, onToggle }: {
+    id: string; name: string; guildIds: string[]; look?: Look; api: FolderApi; open: boolean; onToggle(): void;
 }) {
     const [text, setText] = useState(look?.kind === "ascii" ? look.text : "");
     const [link, setLink] = useState("");
@@ -307,7 +319,7 @@ function FolderRow({ id, name, look, api, open, onToggle }: {
     return (
         <div className="vc-rice-folder">
             <button className="vc-rice-folder-row" aria-expanded={open} aria-controls={editId} onClick={onToggle}>
-                <Preview look={look} api={api} />
+                <Preview look={look} api={api} guildIds={guildIds} />
                 <span className="vc-rice-folder-name">{name}</span>
                 <span className="vc-rice-folder-look">{describe(look)}</span>
                 <span className="vc-rice-folder-arrow" aria-hidden>{open ? "▾" : "▸"}</span>
@@ -382,7 +394,7 @@ function Folders() {
             {folders.map(f => {
                 const id = String(f.folderId);
                 return (
-                    <FolderRow key={id} id={id} name={api.folderLabel(f)} look={looks[id]} api={api}
+                    <FolderRow key={id} id={id} name={api.folderLabel(f)} guildIds={f.guildIds} look={looks[id]} api={api}
                         open={open === id} onToggle={() => setOpen(open === id ? null : id)} />
                 );
             })}
