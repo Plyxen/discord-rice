@@ -1,0 +1,593 @@
+/* The discord-rice settings window: a floating terminal window, like a TUI config tool in a tiling WM.
+   Colours come from the theme's variables, with fallbacks so it still reads with the theme off. */
+
+.vc-rice-win {
+    --r-t1: var(--text-1, hsl(0 0% 98%));
+    --r-t2: var(--text-2, hsl(0 0% 92%));
+    --r-t3: var(--text-3, hsl(0 0% 84%));
+    --r-t4: var(--text-4, hsl(0 0% 64%));
+    --r-t5: var(--text-5, hsl(0 0% 50%));
+    --r-line: var(--line, hsl(0 0% 100% / 0.12));
+    --r-border: var(--float-border, hsl(0 0% 100% / 0.2));
+    --r-focus: var(--line-focus, hsl(0 0% 100% / 0.6));
+    --r-sel: var(--accent-2, hsl(0 0% 84%));
+    --r-sel-text: var(--text-0, hsl(0 0% 8%));
+    --r-hover: var(--hover, hsl(0 0% 100% / 0.06));
+    --r-tint: var(--active, hsl(0 0% 100% / 0.1));
+    --r-red: var(--red-2, hsl(355 65% 70%));
+    --r-green: var(--green-2, hsl(95 38% 62%));
+    --r-radius: var(--radius-sm, 3px);
+
+    container-type: inline-size;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    width: min(880px, 94vw);
+    height: min(600px, 88vh);
+    overflow: hidden;
+    border: 1px solid var(--r-border);
+    border-radius: var(--r-radius);
+    background: var(--bg-float, hsl(0 0% 7% / 0.88));
+    backdrop-filter: blur(var(--float-blur, 20px)) saturate(1.2);
+    color: var(--r-t3);
+    font-family: var(--code-font, 'Iosevka'), ui-monospace, monospace;
+    font-size: 13px;
+    line-height: 1.45;
+    pointer-events: auto;
+    text-align: left;
+}
+.vc-rice-win:focus {
+    outline: none;
+}
+.vc-rice-win.inline {
+    width: 100%;
+    height: 640px;
+}
+/* in the popup: centred over Discord's dark backdrop, whatever the modal layer does with its children */
+.vc-rice-layer {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+}
+
+.vc-rice-win :is(button, input) {
+    font: inherit;
+    color: inherit;
+}
+.vc-rice-win button {
+    cursor: pointer;
+}
+.vc-rice-win :is(button, [tabindex]):focus-visible {
+    outline: 1px dashed var(--r-focus);
+    outline-offset: -1px;
+}
+
+/* ---- title bar: name, the file you're "editing", close ---- */
+.vc-rice-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 8px 7px 14px;
+    border-bottom: 1px solid var(--r-line);
+    white-space: nowrap;
+}
+.vc-rice-bar b {
+    color: var(--r-t1);
+    font-weight: 600;
+}
+.vc-rice-path {
+    overflow: hidden;
+    color: var(--r-t5);
+    text-overflow: ellipsis;
+}
+.vc-rice-close {
+    margin-left: auto;
+    padding: 0 8px;
+    border: 0;
+    border-radius: var(--r-radius);
+    background: none;
+    color: var(--r-t4) !important;
+    font-size: 15px !important;
+}
+.vc-rice-close:hover {
+    background: var(--r-hover);
+    color: var(--r-t1) !important;
+}
+
+/* ---- body: tab list on the left, the open tab on the right ---- */
+.vc-rice-body {
+    display: grid;
+    grid-template-columns: 168px minmax(0, 1fr);
+    min-height: 0;
+}
+.vc-rice-side {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 8px 0;
+    border-right: 1px solid var(--r-line);
+}
+.vc-rice-tab {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    padding: 4px 14px;
+    border: 0;
+    background: none;
+    color: var(--r-t4) !important;
+    text-align: left;
+}
+.vc-rice-tab i {
+    color: var(--r-t5);
+    font-style: normal;
+}
+.vc-rice-tab:hover {
+    background: var(--r-hover);
+    color: var(--r-t2) !important;
+}
+.vc-rice-tab[aria-selected='true'] {
+    background: var(--r-sel);
+    color: var(--r-sel-text) !important;
+    font-weight: 600;
+}
+.vc-rice-tab[aria-selected='true'] i {
+    color: inherit;
+    opacity: 0.55;
+}
+.vc-rice-reset {
+    margin: auto 14px 0;
+    padding: 3px 0;
+    border: 0;
+    background: none;
+    color: var(--r-t5) !important;
+    text-align: left;
+}
+.vc-rice-reset:hover {
+    color: var(--r-t2) !important;
+}
+.vc-rice-reset.armed {
+    color: var(--r-red) !important;
+}
+
+.vc-rice-pane {
+    overflow-y: auto;
+    padding: 14px 22px 22px;
+    scrollbar-color: var(--r-line) transparent;
+    scrollbar-width: thin;
+}
+.vc-rice-title {
+    margin: 0 0 2px;
+    color: var(--r-t1);
+    font-size: 15px;
+    font-weight: 600;
+}
+.vc-rice-title::before {
+    content: '# ';
+    color: var(--r-t5);
+}
+.vc-rice-lead {
+    margin: 0 0 10px;
+    color: var(--r-t5);
+}
+
+/* a group heading: ── header ───────── */
+.vc-rice-h {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 0 4px;
+    color: var(--r-t5);
+    font-size: 12px;
+}
+.vc-rice-h::before {
+    content: '──';
+}
+.vc-rice-h::after {
+    content: '';
+    flex: 1;
+    border-top: 1px solid var(--r-line);
+}
+
+.vc-rice-desc {
+    display: block;
+    color: var(--r-t5);
+    font-size: 12px;
+}
+
+/* ---- [x] switches: the whole row is the button ---- */
+.vc-rice-check {
+    display: grid;
+    grid-template-columns: 4ch minmax(0, 1fr);
+    width: calc(100% + 16px);
+    margin: 0 -8px;
+    padding: 5px 8px;
+    border: 0;
+    border-radius: var(--r-radius);
+    background: none;
+    text-align: left;
+}
+.vc-rice-check:hover {
+    background: var(--r-hover);
+}
+.vc-rice-box {
+    color: var(--r-t5);
+}
+.vc-rice-check[aria-checked='true'] .vc-rice-box {
+    color: var(--r-t1);
+    font-weight: 600;
+}
+.vc-rice-label {
+    color: var(--r-t2);
+}
+.vc-rice-check[aria-checked='false'] .vc-rice-label {
+    color: var(--r-t4);
+}
+.vc-rice-check .vc-rice-desc {
+    grid-column: 2;
+}
+
+/* ---- fields with a control: label on the left, control on the right ---- */
+.vc-rice-field {
+    display: grid;
+    grid-template-columns: 17ch minmax(0, 1fr);
+    align-items: center;
+    gap: 3px 14px;
+    padding: 7px 0;
+}
+.vc-rice-field > .vc-rice-label {
+    align-self: start;
+    padding-top: 2px;
+}
+.vc-rice-field .vc-rice-desc {
+    grid-column: 2;
+}
+
+/* one-of-several: [ iosevka ] figtree  discord */
+.vc-rice-seg {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.vc-rice-opt {
+    padding: 1px 9px;
+    border: 1px solid var(--r-line);
+    border-radius: var(--r-radius);
+    background: none;
+    color: var(--r-t4) !important;
+}
+.vc-rice-opt:hover {
+    border-color: var(--r-border);
+    color: var(--r-t2) !important;
+}
+.vc-rice-opt[aria-checked='true'] {
+    border-color: var(--r-sel);
+    background: var(--r-sel);
+    color: var(--r-sel-text) !important;
+    font-weight: 600;
+}
+
+/* sliders as a row of blocks: ‹ ▮▮▮▮▯▯▯ › 3px */
+.vc-rice-range {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: fit-content;
+    border-radius: var(--r-radius);
+}
+.vc-rice-cells {
+    display: flex;
+    gap: 2px;
+}
+.vc-rice-cell {
+    width: 9px;
+    height: 16px;
+    padding: 0;
+    border: 0;
+    border-radius: 1px;
+    background: var(--r-line);
+}
+.vc-rice-cell.on {
+    background: var(--r-t4);
+}
+.vc-rice-cell.cur {
+    background: var(--r-t1);
+}
+.vc-rice-cell:hover {
+    background: var(--r-t2);
+}
+.vc-rice-step {
+    padding: 0 3px;
+    border: 0;
+    background: none;
+    color: var(--r-t5) !important;
+}
+.vc-rice-step:hover {
+    color: var(--r-t1) !important;
+}
+.vc-rice-value {
+    min-width: 5ch;
+    color: var(--r-t2);
+}
+
+/* text fields: a prompt line */
+.vc-rice-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+    border-bottom: 1px solid var(--r-line);
+}
+.vc-rice-input:focus-within {
+    border-color: var(--r-focus);
+}
+.vc-rice-input > span {
+    color: var(--r-t4);
+}
+.vc-rice-input input {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: none;
+    color: var(--r-t1);
+}
+.vc-rice-input input::placeholder {
+    color: var(--r-t5);
+}
+
+.vc-rice-btn {
+    padding: 1px 10px;
+    border: 1px solid var(--r-line);
+    border-radius: var(--r-radius);
+    background: none;
+    color: var(--r-t3) !important;
+    white-space: nowrap;
+}
+.vc-rice-btn:hover:not(:disabled) {
+    border-color: var(--r-border);
+    background: var(--r-hover);
+    color: var(--r-t1) !important;
+}
+.vc-rice-btn:disabled {
+    cursor: default;
+    opacity: 0.45;
+}
+.vc-rice-btn.danger {
+    color: var(--r-red) !important;
+}
+
+.vc-rice-error {
+    margin: 4px 0 0;
+    color: var(--r-red);
+    font-size: 12px;
+}
+
+/* ---- about: neofetch, status, tips ---- */
+.vc-rice-fetch {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 28px;
+    margin-bottom: 4px;
+}
+.vc-rice-fetch pre {
+    margin: 0;
+    color: var(--r-t5);
+    font: inherit;
+    font-size: 12px;
+    line-height: 1.25;
+}
+.vc-rice-fetch .k {
+    display: inline-block;
+    width: 11ch;
+    color: var(--r-t1);
+    font-weight: 600;
+}
+.vc-rice-fetch .who {
+    color: var(--r-t1);
+    font-weight: 600;
+}
+.vc-rice-palette {
+    display: flex;
+    margin-top: 8px;
+}
+.vc-rice-palette span {
+    width: 18px;
+    height: 12px;
+}
+
+.vc-rice-plugin {
+    display: grid;
+    grid-template-columns: 4ch 17ch minmax(0, 1fr);
+    padding: 3px 0;
+}
+.vc-rice-plugin .dot {
+    color: var(--r-t5);
+}
+.vc-rice-plugin .dot.on {
+    color: var(--r-green);
+}
+.vc-rice-plugin b {
+    color: var(--r-t2);
+    font-weight: 400;
+}
+
+.vc-rice-tips {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.vc-rice-tips li {
+    padding: 2px 0 2px 3ch;
+    text-indent: -3ch;
+    color: var(--r-t4);
+}
+.vc-rice-tips li::before {
+    content: ' - ';
+    color: var(--r-t5);
+    white-space: pre;
+}
+.vc-rice-tips kbd {
+    color: var(--r-t2);
+    font: inherit;
+}
+
+/* ---- folders: one row each, opens to the looks ---- */
+.vc-rice-folder {
+    border-bottom: 1px solid var(--r-line);
+}
+.vc-rice-folder-row {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) auto 2ch;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 6px 4px;
+    border: 0;
+    background: none;
+    text-align: left;
+}
+.vc-rice-folder-row:hover {
+    background: var(--r-hover);
+}
+.vc-rice-folder-name {
+    overflow: hidden;
+    color: var(--r-t2);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.vc-rice-folder-look,
+.vc-rice-folder-arrow {
+    color: var(--r-t5);
+}
+.vc-rice-preview {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--r-tint) center / cover no-repeat;
+    color: var(--r-t1);
+    font-weight: 600;
+    white-space: pre;
+}
+.vc-rice-edit {
+    display: grid;
+    grid-template-columns: 8ch minmax(0, 1fr);
+    align-items: center;
+    gap: 10px 12px;
+    padding: 8px 4px 14px 48px;
+}
+.vc-rice-edit > span {
+    align-self: start;
+    padding-top: 4px;
+    color: var(--r-t5);
+}
+.vc-rice-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.vc-rice-chip {
+    display: inline-grid;
+    place-items: center;
+    min-width: 34px;
+    height: 28px;
+    padding: 0 6px;
+    border: 1px solid var(--r-line);
+    border-radius: var(--r-radius);
+    background: none;
+    color: var(--r-t3) !important;
+    font-weight: 600 !important;
+    white-space: pre;
+}
+.vc-rice-chip:hover {
+    border-color: var(--r-border);
+    color: var(--r-t1) !important;
+}
+.vc-rice-chip[aria-pressed='true'] {
+    border-color: var(--r-sel);
+    background: var(--r-sel);
+    color: var(--r-sel-text) !important;
+}
+.vc-rice-chip .icon,
+.vc-rice-preview .icon {
+    width: 16px;
+    height: 16px;
+    background: currentColor;
+}
+.vc-rice-preview .icon {
+    width: 18px;
+    height: 18px;
+}
+.vc-rice-inline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+.vc-rice-inline .vc-rice-input {
+    flex: 1;
+    min-width: 14ch;
+}
+
+/* ---- status line, like tmux or vim's ---- */
+.vc-rice-status {
+    display: flex;
+    align-items: stretch;
+    border-top: 1px solid var(--r-line);
+    color: var(--r-t5);
+    font-size: 12px;
+    white-space: nowrap;
+}
+.vc-rice-status > span {
+    padding: 3px 12px;
+}
+.vc-rice-mode {
+    background: var(--r-sel);
+    color: var(--r-sel-text);
+    font-weight: 600;
+}
+.vc-rice-keys {
+    margin-left: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.vc-rice-keys kbd {
+    color: var(--r-t3);
+    font: inherit;
+}
+
+/* narrow (the plugin's own settings, a small window): tabs go on top */
+@container (max-width: 620px) {
+    .vc-rice-body {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+    }
+    .vc-rice-side {
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 6px;
+        border-right: 0;
+        border-bottom: 1px solid var(--r-line);
+    }
+    .vc-rice-tab {
+        width: auto;
+        padding: 2px 10px;
+    }
+    .vc-rice-reset {
+        margin: 0 0 0 auto;
+    }
+    .vc-rice-keys {
+        display: none;
+    }
+    .vc-rice-field {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .vc-rice-field .vc-rice-desc {
+        grid-column: 1;
+    }
+}

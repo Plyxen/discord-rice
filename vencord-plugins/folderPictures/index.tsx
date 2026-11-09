@@ -378,6 +378,22 @@ export function FolderList() {
     );
 }
 
+// what the discord-rice settings window uses to list and edit folder looks (it reaches this through
+// plugins.FolderPictures.api, so DiscordRice still works without this plugin)
+export const api = {
+    presets: PRESETS,
+    iconUrl,
+    getLooks,
+    setLook,
+    pickFile,
+    folderLabel,
+    setFromLink: async (folderId: string, link: string) => setLook(folderId, { kind: "picture", url: await linkToPicture(link) }),
+    subscribe(listener: () => void) {
+        listeners.add(listener);
+        return () => void listeners.delete(listener);
+    }
+};
+
 export default definePlugin({
     name: "FolderPictures",
     description: "Give server folders their own look instead of the 2x2 grid of their servers: a picture (file or link), an ASCII preset or an icon. Right-click a folder → Folder look.",
@@ -396,6 +412,7 @@ export default definePlugin({
     ],
 
     settingsAboutComponent: FolderList,
+    api,
 
     async start() {
         let saved = await DataStore.get<Record<string, Look>>(STORE_KEY);

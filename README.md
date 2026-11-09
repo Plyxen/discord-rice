@@ -39,7 +39,7 @@ Edits to the file show up live.
 
 ### Options
 
-The easy way is inside Discord: the **sliders button** in the channel header, where the inbox button used to be, opens a panel with switches for all of the options below, plus a short intro to the theme. The same panel is under **Settings → discord-rice** (in the Vencord section). It comes from the DiscordRice plugin, which also shows it as a popup the first time you start Discord with it. Changes apply straight away.
+The easy way is inside Discord: the **sliders button** in the channel header, where the inbox button used to be, opens the discord-rice window, a small terminal-style settings tool with every option below. The same window is under **Settings → discord-rice** (in the Vencord section). It comes from the DiscordRice plugin, which also opens it once the first time you start Discord with it. Changes apply straight away.
 
 Without the plugin, every option is a CSS variable at the top of the theme file:
 
@@ -94,16 +94,23 @@ For **Vesktop**, skip `pnpm inject` and point Vesktop at the build instead: **Se
 
 After changing a plugin, copy it in again, run `pnpm build`, and restart Discord.
 
-### discord-rice options
+### discord-rice settings
 
-`discordRice` puts a sliders button in the channel header, in place of the inbox button (nobody uses the inbox; you can bring it back with the "Inbox button" switch). The button opens the discord-rice panel, which is also under **Settings → discord-rice**.
+`discordRice` puts a sliders button in the channel header, in place of the inbox button (you can bring the inbox back with the "inbox button" switch). The button opens the discord-rice window: a small terminal-style settings tool, styled like the rest of the rice. The same window is under **Settings → discord-rice** and in the Vencord toolbox, and it opens by itself once, the first time you start Discord with the plugin.
 
-- The top of the panel is a neofetch-style block: your name `@discord`, the theme, font, corners, wallpaper, how many folders have a look, which plugins are on, and a colour row.
-- Below that: whether the theme and the other plugins are on, your folders with their looks, and switches for the inbox button, notification bell, video call button, nameplates, quests, store tabs, chat bar buttons, plain folders, black-and-white icons, the Arch logo, font, corners, gaps, glass menus, window dots, wallpaper link, ASCII wallpaper, wallpaper dim and grain. There's a reset button too.
-![The discord-rice panel: a neofetch-style block, status, tips and folder looks](screenshots/panel.webp)
+![The discord-rice window on its look tab: a tab list on the left, font choices, block sliders for corners and gaps, and [x] switches](screenshots/settings.webp)
 
-- The panel opens as a popup the first time you start Discord with the plugin, and never again on its own. It's also in the Vencord toolbox.
-- The **Theme** switch at the top turns the theme on or off, whether you installed it as a file or as the online link.
+| Tab | What's in it |
+| --- | --- |
+| about | A neofetch-style summary (your name `@discord`, theme, font, corners, wallpaper, folders, plugins and a colour row), the **theme** switch, which plugins are on, and tips. |
+| look | Font, corners, gaps, frosted-glass menus and grey window dots. |
+| wallpaper | The wallpaper link, how dark it is, film grain, and the ASCII wallpaper. |
+| hide | The inbox button, notification bell, video call button, chat bar buttons, nameplates, quests and store tabs. |
+| servers | Plain folders, black-and-white icons and the Arch logo. |
+| folders | Every server folder with its look. Open one to pick an ASCII or icon preset, type your own text, or set a picture from a link or a file. Needs FolderPictures. |
+
+- The number keys 1–6 switch tabs, space flips a switch, the arrow keys move a slider, and Esc closes the window. **↺ reset defaults** (click it twice) puts every option back.
+- The **theme** switch turns the theme on or off, whether you installed it as a file or as the online link.
 - It works by setting the theme's CSS variables from a small style sheet, which beats the theme file's defaults. Turn the plugin off and the theme file's own values come back.
 
 **ASCII wallpaper** redraws the wallpaper (yours or the default one) out of text, sized to your screen:
@@ -145,7 +152,7 @@ The presets come in pairs, the same name as ASCII and as an icon:
 | Art | `*~` | Terminal | `>_` |
 | Memes | `:P` | Fast | `/!\` |
 
-- The discord-rice panel (and **Settings → Vencord → Plugins → FolderPictures**) lists every folder with a preset picker and File / Link / Text / Reset buttons.
+- The **folders** tab of the discord-rice window lists every folder with its look; open one to change it. **Settings → Vencord → Plugins → FolderPictures** has a plainer list with a preset picker and File / Link / Text / Reset buttons.
 - Looks are stored locally and never uploaded.
 - With `--mono-server-icons` on, pictures are black-and-white like everything else in the server list.
 
