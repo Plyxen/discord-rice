@@ -4,7 +4,7 @@ discord-rice is licensed under the GPL-3.0-or-later (see `LICENSE`). It builds o
 
 ## midnight-discord
 
-The theme loads midnight's hosted build and follows the structure of its theme file. https://github.com/refact0r/midnight-discord
+The theme loads midnight's hosted build underneath for its layout plumbing, and its options block follows the layout of midnight's theme file. https://github.com/refact0r/midnight-discord
 
 ```
 MIT License
