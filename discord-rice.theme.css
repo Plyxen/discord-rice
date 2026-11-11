@@ -2,7 +2,7 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 4.0.0
+ * @version 4.0.1
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
@@ -681,8 +681,18 @@ body,
 .blocked_7NOr2f {
     color: var(--fg);
 }
-/* ...and the small preview window of a call or stream: its title, back arrow and buttons sit on the video,
-   so "white" is light again in there (also on themed elements inside it, which the rule above would darken) */
+/* ...and text Discord means to be "always white": channel and user names over video. It is dark in this
+   theme because the same colour is also written on light pills and buttons. On the call screen and in the
+   small preview window it is light again (also on themed elements inside them, which the colour names
+   above would darken) */
+.wrapper_hbKzX7,
+.callContainer_hbKzX7,
+.callContainer_DwQMm_,
+.pictureInPictureWindow_69M0s9,
+:is(.wrapper_hbKzX7, .callContainer_hbKzX7, .callContainer_DwQMm_, .pictureInPictureWindow_69M0s9) :is(.theme-dark, .theme-darker, .theme-midnight, .theme-light) {
+    --text-overlay-light: var(--fg-bright);
+}
+/* the preview window's back arrow and buttons, which use plain "white" */
 .pictureInPictureWindow_69M0s9,
 .pictureInPictureWindow_69M0s9 :is(.theme-dark, .theme-darker, .theme-midnight, .theme-light) {
     --white: var(--fg-bright);
