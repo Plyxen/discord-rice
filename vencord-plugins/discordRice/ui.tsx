@@ -49,7 +49,7 @@ function Field({ label, desc, children }: { label: string; desc?: string; childr
     );
 }
 
-// one of a few: [ iosevka ] figtree discord
+// one of a few: [ iosevka ] discord
 function Choice({ k, label, desc, options }: { k: Key; label: string; desc?: string; options: [value: string, text: string][]; }) {
     const value = settings.use([k])[k];
     return (
@@ -146,7 +146,7 @@ const BOWL = [
     "     '-._________.-'"
 ];
 
-const PALETTE = ["--text-5", "--text-4", "--text-3", "--text-2", "--text-1", "--red-2", "--yellow-2", "--green-2", "--blue-2", "--purple-2"];
+const PALETTE = ["--fg-faint", "--fg-dim", "--fg", "--fg-strong", "--fg-bright", "--red", "--yellow", "--green", "--blue", "--purple"];
 
 const PLUGINS: [name: string, what: string][] = [
     ["DiscordRice", "this window, the switches, the ascii wallpaper"],
@@ -172,7 +172,7 @@ function Fetch() {
     const title = `${user?.username ?? "you"}@discord`;
     const rows: [string, string][] = [
         ["theme", on ? "discord-rice" : "off"],
-        ["wm", s.gap ? `tiled, ${s.gap}px gaps` : "tiled, no gaps"],
+        ["wm", "tiled, no gaps"],
         ["font", FONTS[s.font]?.[2] ?? "Iosevka"],
         ["colors", "greyscale"],
         ["corners", `${s.corners}px`],
@@ -407,12 +407,10 @@ function Folders() {
 function Look() {
     return (
         <>
-            <Choice k="font" label="font" desc="figtree is midnight's font. code stays in iosevka." options={[
-                ["iosevka", "iosevka"], ["figtree", "figtree"], ["discord", "discord's own"]
+            <Choice k="font" label="font" desc="iosevka is the terminal font the theme is drawn for." options={[
+                ["iosevka", "iosevka"], ["discord", "discord's own"]
             ]} />
             <Range k="corners" label="corners" values={[0, 1, 2, 3, 4, 6, 8, 10, 12]} show={v => `${v}px`} desc="avatars and pills stay round." />
-            <Range k="gap" label="gaps" values={[0, 2, 4, 6, 8, 10, 12]} show={v => v ? `${v}px` : "tiled"}
-                desc="space between the columns. tiled = no gaps, just thin lines." />
             <Heading>floating windows</Heading>
             <Check k="glassMenus" label="frosted glass" desc="menus and pickers are see-through with a blur. off makes them solid." />
             <Check k="monoWindowControls" label="grey window dots" desc="instead of red / yellow / green. they light up on hover." />
@@ -473,7 +471,7 @@ function Servers() {
 
 const TABS = [
     { id: "about", lead: "what's running, and a few tips.", Pane: About },
-    { id: "look", lead: "font, corners, gaps and floating windows. changes show straight away.", Pane: Look },
+    { id: "look", lead: "font, corners and floating windows. changes show straight away.", Pane: Look },
     { id: "wallpaper", lead: "the picture behind everything.", Pane: Wallpaper },
     { id: "hide", lead: "[x] = hidden. the bell, video call, gift and sticker switches need discord in english.", Pane: Hide },
     { id: "servers", lead: "the server list on the left.", Pane: Servers },

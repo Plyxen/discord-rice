@@ -2,21 +2,22 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 3.3.4
+ * @version 4.0.0
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
 
-/* Layout plumbing comes from midnight by refact0r (MIT): https://github.com/refact0r/midnight-discord
-   Its maintainer fixes it when Discord renames its classes, so this theme picks those fixes up on its own.
-   Everything below turns its panels off and restyles it. */
-@import url('https://refact0r.github.io/midnight-discord/build/midnight.css');
 /* Iosevka, the usual rice terminal font. 400 for text, 600 for names and headings */
 @import url('https://cdn.jsdelivr.net/npm/@fontsource/iosevka@5.3.0/400.css');
 @import url('https://cdn.jsdelivr.net/npm/@fontsource/iosevka@5.3.0/600.css');
 
+/* ================================================================
+   options
+   The DiscordRice plugin sets these from its settings window. Without the plugin, edit them here.
+   The on / off ones are read further down with style queries: @container style(--name: on)
+   ================================================================ */
 body {
-    /* font: 'Iosevka' for the terminal look, 'figtree' for midnight's, '' for Discord's own */
+    /* font: 'Iosevka' for the terminal look, '' for Discord's own */
     --font: 'Iosevka';
     --code-font: 'Iosevka';
     font-weight: 400;
@@ -30,43 +31,12 @@ body {
     --wallpaper-dim: 0.5; /* 0 = raw wallpaper, 1 = black. Raise it if text is hard to read */
     --grain: on; /* off | on: film grain over the wallpaper */
 
-    /* spacing: tiled, so no gaps and no boxes. The columns touch and a 1px line (--line in :root) splits
-       them. Server icon padding is --custom-guild-list-padding in the :root block below */
-    --gap: 0px;
-    --border-thickness: 0px;
-    --divider-thickness: 3px;
-
-    /* animations */
-    --animations: on;
-    --list-item-transition: 0.2s ease;
-    --dms-icon-svg-transition: 0.4s ease;
-    --border-hover-transition: 0.2s ease;
-
-    /* top bar: gone. No "Direct Messages" title, arrows or help button; inbox and window buttons sit in
-       the channel header */
-    --top-bar-height: var(--gap);
-    --top-bar-button-position: titlebar; /* off | hide | titlebar */
-    --top-bar-title-position: hide; /* off | hide | left */
-    --subtle-top-bar-title: off;
+    /* home (DMs) button: arch = the Arch logo, discord = Discord's own */
+    --home-icon: arch;
 
     /* window buttons: small dots instead of Windows' - [] x */
-    --custom-window-controls: on;
-    --window-control-size: 13px;
-
-    /* home (DMs) button: the Arch logo in light grey. off = Discord's logo, or point --dms-icon-svg-url at any svg */
-    --custom-dms-icon: custom;
-    --dms-icon-svg-url: var(--arch-logo);
-    --dms-icon-svg-size: 100%;
-    --dms-icon-color-before: var(--text-3);
-    --dms-icon-color-after: var(--text-1);
-    --custom-dms-background: off;
-
-    /* chat bar sits in the chat, no separate box */
-    --custom-chatbar: off;
-    --chatbar-height: 47px;
-
-    /* user panel under the channel list; server list runs full height */
-    --small-user-panel: on;
+    --dot-size: 13px;
+    --mono-window-controls: on; /* off | on: grey dots that light up on hover */
 
     /* ---- declutter (on = hidden) ---- */
     --hide-store-tabs: on; /* Nitro Home, Shop and Quests at the top of the DM list */
@@ -77,128 +47,709 @@ body {
     --hide-sticker-button: off; /* sticker button in the chat bar */
     --hide-notification-button: on; /* the bell in the channel header (right-click a channel for its notification settings) */
     --hide-video-call-button: on; /* the camera in the DM header. The voice call button stays, and you can turn the camera on in the call */
-    --mono-window-controls: on; /* grey window dots that light up on hover */
+
+    /* ---- look ---- */
     --mono-server-icons: on; /* off | on | hover: black-and-white server pictures. hover = colour under the mouse */
     --glass-menus: on; /* off | on: frosted-glass menus and pickers. off = solid dark */
     --plain-folders: on; /* off | on: a closed folder shows a folder icon instead of a 2x2 grid of its servers.
                             A picture set with the FolderPictures plugin takes the icon's place */
 
     /* ---- internals, no need to touch ---- */
-    --background-image: on;
-    --background-image-url: var(--grain-layer), var(--wallpaper-shade), var(--wallpaper);
+    /* the wallpaper is three layers: grain, a shade, the picture */
+    --wallpaper-layers: var(--grain-layer), var(--wallpaper-shade), var(--wallpaper);
     --wallpaper-shade:
         /* the misty sky is brightest top right, so shade it down to match the left */
         radial-gradient(ellipse 60% 80% at 70% 0%, hsla(0, 0%, 0%, 0.4), transparent),
         radial-gradient(ellipse at 60% 40%, transparent 35%, hsla(0, 0%, 0%, 0.45) 100%),
         linear-gradient(90deg, hsla(0, 0%, 0%, 0.5) 0%, hsla(0, 0%, 0%, 0.3) 30%, transparent 50%),
         linear-gradient(hsla(0, 0%, 0%, var(--wallpaper-dim)), hsla(0, 0%, 0%, var(--wallpaper-dim)));
+    --grain-layer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 0 .07'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    /* Discord's own corner sizes and fonts, from the options above */
     --radius-xs: min(var(--corners), 4px);
     --radius-sm: var(--corners);
     --radius-md: calc(var(--corners) * 1.34);
     --radius-lg: calc(var(--corners) * 1.34);
     --radius-xl: calc(var(--corners) * 2);
     --radius-xxl: calc(var(--corners) * 2);
-    --grain-layer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 0 .07'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    --transparency-tweaks: on;
-    --remove-bg-layer: off;
-    --panel-blur: off;
+    --font-primary: var(--font), 'gg sans', 'Noto Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --font-display: var(--font-primary);
+    --font-code: var(--code-font), 'gg mono', 'Source Code Pro', Consolas, Monaco, monospace;
 }
 
-/* a container query can't restyle body itself, so drop the grain one level down */
-@container body style(--grain: off) {
+/* a style query can't restyle the element it asks about, so drop the grain one level down */
+@container style(--grain: off) {
     #app-mount {
-        --background-image-url: var(--wallpaper-shade), var(--wallpaper);
+        --wallpaper-layers: var(--wallpaper-shade), var(--wallpaper);
     }
 }
 
 /* colours: greyscale, to match the black-and-white wallpaper and desktop. Only status dots, unread badges
    and red "danger" bits keep a muted colour. A touch brighter than usual because text sits on the wallpaper */
 :root {
-    --colors: on;
-    --custom-guild-list-padding: 6px; /* space left and right of the server icons (midnight: 12px) */
+    /* text, brightest to faintest */
+    --ink: hsl(0, 0%, 8%); /* dark text on the light selection bars and buttons */
+    --fg-bright: hsl(0, 0%, 98%);
+    --fg-strong: hsl(0, 0%, 92%); /* headings, names */
+    --fg: hsl(0, 0%, 84%); /* message text */
+    --fg-dim: hsl(0, 0%, 64%); /* icons, channels */
+    --fg-faint: hsl(0, 0%, 50%); /* muted channels, timestamps */
 
-    /* the lines between the panes. --line-focus lights the chat bar's line while you type */
-    --line: hsla(0, 0%, 100%, 0.12);
-    --line-focus: hsla(0, 0%, 100%, 0.6);
+    /* see-through white layers, for things that sit on the wallpaper */
+    --message-hover: hsla(0, 0%, 100%, 0.03);
+    --glass: hsla(0, 0%, 100%, 0.04); /* inputs and cards */
+    --hover: hsla(0, 0%, 100%, 0.06);
+    --raised: hsla(0, 0%, 100%, 0.08); /* buttons */
+    --active: hsla(0, 0%, 100%, 0.1);
+    --pressed: hsla(0, 0%, 100%, 0.14);
+
+    /* solid surfaces, for what floats above the app */
+    --popup: hsl(0, 0%, 11%); /* popouts, tooltips */
+    --panel: hsl(0, 0%, 8%); /* modals, settings, the game page */
+    --float-tint: hsla(0, 0%, 7%, 0.7); /* glass menus and pickers: tint over the blur */
+    --float-blur: 20px;
     --float-border: hsla(0, 0%, 100%, 0.2); /* border of menus and pickers */
 
-    /* text */
-    --text-0: hsl(0, 0%, 8%); /* text on the light selection bars and buttons */
-    --text-1: hsl(0, 0%, 98%);
-    --text-2: hsl(0, 0%, 92%); /* headings, names */
-    --text-3: hsl(0, 0%, 84%); /* message text */
-    --text-4: hsl(0, 0%, 64%); /* icons, channels */
-    --text-5: hsl(0, 0%, 50%); /* muted channels, timestamps */
+    /* lines. --line splits the panes, --line-focus lights the chat bar's line while you type */
+    --line: hsla(0, 0%, 100%, 0.12);
+    --line-focus: hsla(0, 0%, 100%, 0.6);
+    --edge-faint: hsla(0, 0%, 100%, 0.05); /* borders: barely there */
+    --edge: hsla(0, 0%, 100%, 0.08);
+    --edge-strong: hsla(0, 0%, 100%, 0.14);
+    --button-edge: hsla(0, 0%, 100%, 0.12);
 
-    /* surfaces. bg-3 / bg-4 stay solid: they colour popups, modals and settings */
-    --bg-1: hsla(0, 0%, 100%, 0.14); /* buttons when clicked */
-    --bg-2: hsla(0, 0%, 100%, 0.08); /* buttons */
-    --bg-3: hsl(0, 0%, 11%); /* popouts, tooltips */
-    --bg-4: hsl(0, 0%, 8%); /* modals, settings, the game page */
-    --bg-float: hsla(0, 0%, 7%, 0.7); /* glass menus and pickers: tint over the blur */
-    --float-blur: 20px;
-    --glass: hsla(0, 0%, 100%, 0.04); /* inputs and cards sitting on the wallpaper */
-    --hover: hsla(0, 0%, 100%, 0.06);
-    --active: hsla(0, 0%, 100%, 0.1);
-    --active-2: hsla(0, 0%, 100%, 0.14);
-    --message-hover: hsla(0, 0%, 100%, 0.03);
+    /* light greys where Discord uses its blurple. Links keep a faint cool tint so they still read as links */
+    --link: oklch(84% 0.035 250);
+    --bar: hsl(0, 0%, 84%); /* selected channel bar, open picker tab, hovered menu item, ticked switches */
+    --button: hsl(0, 0%, 88%);
+    --button-hover: hsl(0, 0%, 80%);
+    --button-press: hsl(0, 0%, 72%);
 
-    /* accent: light grey. Links keep a faint cool tint so they still read as links */
-    --accent-1: oklch(84% 0.035 250); /* links */
-    --accent-2: hsl(0, 0%, 84%); /* selected channel bar, open picker tab, hovered menu item */
-    --accent-3: hsl(0, 0%, 88%); /* accent buttons */
-    --accent-4: hsl(0, 0%, 80%); /* ...hovered */
-    --accent-5: hsl(0, 0%, 72%); /* ...clicked */
-    --accent-new: var(--red-2);
+    /* the only colours, muted */
+    --red: oklch(70% 0.12 15);
+    --green: oklch(73% 0.11 155);
+    --yellow: oklch(77% 0.1 85);
+    --blue: oklch(73% 0.07 240);
+    --purple: oklch(71% 0.1 305);
+    --online: var(--green);
+    --idle: var(--yellow);
+    --dnd: var(--red);
+    --streaming: var(--purple);
+    --offline: var(--fg-faint);
+
     /* messages that ping you: a faint grey band that fades out to the right */
-    --mention: linear-gradient(to right, color-mix(in hsl, var(--text-1), transparent 93%) 30%, transparent);
-    --mention-hover: linear-gradient(to right, color-mix(in hsl, var(--text-1), transparent 95%) 30%, transparent);
-    --reply: linear-gradient(to right, color-mix(in hsl, var(--text-3), transparent 90%) 40%, transparent);
-    --reply-hover: linear-gradient(to right, color-mix(in hsl, var(--text-3), transparent 94%) 40%, transparent);
+    --mention: linear-gradient(to right, color-mix(in hsl, var(--fg-bright), transparent 93%) 30%, transparent);
+    --mention-hover: linear-gradient(to right, color-mix(in hsl, var(--fg-bright), transparent 95%) 30%, transparent);
+    --reply: linear-gradient(to right, color-mix(in hsl, var(--fg), transparent 90%) 40%, transparent);
+    --reply-hover: linear-gradient(to right, color-mix(in hsl, var(--fg), transparent 94%) 40%, transparent);
 
-    /* status */
-    --online: var(--green-2);
-    --dnd: var(--red-2);
-    --idle: var(--yellow-2);
-    --streaming: var(--purple-2);
-    --offline: var(--text-5);
+    /* sizes Discord reads */
+    --custom-guild-list-padding: 6px; /* space left and right of the server icons (Discord: 12px) */
+    --custom-app-top-bar-height: 0px; /* the title bar row: gone, see "layout" */
+    --custom-channel-header-height: 48px;
+    --custom-channel-textarea-text-area-height: 47px; /* so the chat bar's line is level with the user panel's */
+    --corner-room: 168px; /* room kept free at the right end of the channel header for the buttons parked
+                             there (see "layout"). Raise it if a plugin adds more buttons */
+}
 
-    /* borders: barely there */
-    --border-light: hsla(0, 0%, 100%, 0.05);
-    --border: hsla(0, 0%, 100%, 0.08);
-    --border-hover: hsla(0, 0%, 100%, 0.14);
-    --button-border: hsla(0, 0%, 100%, 0.12);
+/* ================================================================
+   Discord's colour names
+   Discord builds its look from about a thousand named colours, set on whatever element carries a theme
+   class. These are the ones the rice changes, by what they are for. Anything not listed keeps Discord's
+   own dark-theme colour.
+   ================================================================ */
+.theme-dark,
+.theme-darker,
+.theme-midnight,
+.theme-light {
+    /* text */
+    --content-inventory-overlay-text-secondary: var(--fg);
+    --input-text-default: var(--fg);
+    --input-text-error-default: var(--fg);
+    --reaction-text-default: var(--fg);
+    --text-default: var(--fg);
+    --app-message-embed-secondary-text: var(--fg-strong);
+    --content-inventory-overlay-text-primary: var(--fg-strong);
+    --reaction-text-active: var(--fg-strong);
+    --reaction-text-hover: var(--fg-strong);
+    --text-strong: var(--fg-strong);
+    --channels-default: var(--fg-dim);
+    --text-subtle: var(--fg-dim);
+    --textbox-markdown-syntax: var(--fg-dim);
+    --channel-text-area-placeholder: var(--fg-faint);
+    --chat-text-muted: var(--fg-faint);
+    --input-placeholder-text-default: var(--fg-faint);
+    --text-muted: var(--fg-faint);
+    --mention-foreground: var(--link);
+    --text-brand: var(--link);
+    --text-feedback-info: var(--link);
+    --text-link: var(--link);
+    --button-outline-primary-text: var(--fg-bright);
+    --reaction-text-reacted-default: var(--fg-bright);
+    --notice-text-critical: var(--ink);
+    --notice-text-info: var(--ink);
+    --notice-text-positive: var(--ink);
+    --notice-text-warning: var(--ink);
+    --text-overlay-light: var(--ink);
 
-    /* base colours, muted: only status dots, unread badges and danger buttons use them */
-    --red-1: oklch(75% 0.12 15);
-    --red-2: oklch(70% 0.12 15);
-    --red-3: oklch(65% 0.12 15);
-    --red-4: oklch(60% 0.12 15);
-    --red-5: oklch(55% 0.12 15);
+    /* icons, and text you can click */
+    --channel-icon: var(--fg-dim);
+    --control-icon-only-icon-default: var(--fg-dim);
+    --icon-default: var(--fg-dim);
+    --icon-link: var(--fg-dim);
+    --icon-subtle: var(--fg-dim);
+    --interactive-icon-default: var(--fg-dim);
+    --interactive-text-default: var(--fg-dim);
+    --control-icon-only-icon-active: var(--fg);
+    --control-icon-only-icon-hover: var(--fg);
+    --icon-strong: var(--fg);
+    --interactive-icon-active: var(--fg);
+    --interactive-icon-hover: var(--fg);
+    --interactive-text-active: var(--fg);
+    --interactive-text-hover: var(--fg);
+    --gradient-progress-pill-background: var(--fg-faint);
+    --icon-muted: var(--fg-faint);
+    --interactive-muted: var(--fg-faint);
+    --spine-default: var(--fg-faint);
 
-    --green-1: oklch(78% 0.11 155);
-    --green-2: oklch(73% 0.11 155);
-    --green-3: oklch(68% 0.11 155);
-    --green-4: oklch(63% 0.11 155);
-    --green-5: oklch(58% 0.11 155);
+    /* hover and selection tints */
+    --message-background-hover: var(--message-hover);
+    --background-mod-muted: var(--hover);
+    --background-mod-subtle: var(--hover);
+    --control-icon-only-background-hover: var(--hover);
+    --interactive-background-hover: var(--hover);
+    --reaction-background-default: var(--hover);
+    --user-profile-background-hover: var(--hover);
+    --user-profile-overlay-background-hover: var(--hover);
+    --background-accent: var(--raised);
+    --background-mod-normal: var(--raised);
+    --channeltextarea-background: var(--raised);
+    --control-icon-only-background-active: var(--active);
+    --interactive-background-active: var(--active);
+    --interactive-background-selected: var(--active);
+    --reaction-background-active: var(--active);
+    --reaction-background-hover: var(--active);
+    --background-mod-strong: var(--pressed);
+    --content-inventory-media-seekbar-container: var(--pressed);
+    --scrollbar-auto-thumb: var(--pressed);
+    --scrollbar-thin-thumb: var(--pressed);
+    --scrollbar-auto-track: transparent;
+    --scrollbar-thin-track: transparent;
 
-    --blue-1: oklch(78% 0.07 240);
-    --blue-2: oklch(73% 0.07 240);
-    --blue-3: oklch(68% 0.07 240);
-    --blue-4: oklch(63% 0.07 240);
-    --blue-5: oklch(58% 0.07 240);
+    /* solid surfaces: popouts and tooltips, then modals and settings */
+    --background-secondary-alt: var(--popup);
+    --background-surface-high: var(--popup);
+    --background-surface-higher: var(--popup);
+    --background-surface-highest: var(--popup);
+    --bg-surface-raised: var(--popup);
+    --notice-background-critical: var(--popup);
+    --user-profile-toolbar-background: var(--popup);
+    --modal-background: var(--panel);
+    --modal-footer-background: var(--panel);
+    --user-profile-note-background-focus: var(--panel);
+    --user-profile-overlay-background: var(--panel);
+    --background-scrim: hsla(0, 0%, 0%, 0.7);
+    --background-scrim-lightbox: hsla(0, 0%, 0%, 0.9);
+    --elevation-high: none;
+    --elevation-low: none;
+    --elevation-medium: none;
 
-    --yellow-1: oklch(82% 0.1 85);
-    --yellow-2: oklch(77% 0.1 85);
-    --yellow-3: oklch(72% 0.1 85);
-    --yellow-4: oklch(67% 0.1 85);
-    --yellow-5: oklch(62% 0.1 85);
+    /* borders */
+    --app-frame-border: var(--edge);
+    --border-feedback-critical: var(--edge);
+    --border-focus: var(--edge);
+    --border-normal: var(--edge);
+    --border-strong: var(--edge);
+    --border-subtle: var(--edge);
+    --user-profile-border: var(--edge);
+    --user-profile-toolbar-border: var(--edge);
+    --border-muted: var(--edge-faint);
 
-    --purple-1: oklch(76% 0.1 305);
-    --purple-2: oklch(71% 0.1 305);
-    --purple-3: oklch(66% 0.1 305);
-    --purple-4: oklch(61% 0.1 305);
-    --purple-5: oklch(56% 0.1 305);
+    /* buttons: the filled ones are light with dark text */
+    --control-primary-background-default: var(--button);
+    --control-primary-background-hover: var(--button-hover);
+    --control-primary-background-active: var(--button-press);
+    --control-expressive-background-default: var(--fg-bright);
+    --control-overlay-primary-background-default: var(--fg-bright);
+    --control-expressive-background-hover: var(--fg-strong);
+    --control-overlay-primary-background-hover: var(--fg-strong);
+    --control-expressive-background-active: var(--fg);
+    --control-overlay-primary-background-active: var(--fg);
+    --control-critical-primary-background-default: oklch(from var(--red) calc(l - 0.05) c h);
+    --control-critical-primary-background-hover: oklch(from var(--red) calc(l - 0.1) c h);
+    --control-critical-primary-background-active: oklch(from var(--red) calc(l - 0.15) c h);
+    --control-critical-primary-icon-active: var(--ink);
+    --control-critical-primary-icon-default: var(--ink);
+    --control-critical-primary-icon-hover: var(--ink);
+    --control-critical-primary-text-active: var(--ink);
+    --control-critical-primary-text-default: var(--ink);
+    --control-critical-primary-text-hover: var(--ink);
+    --control-expressive-icon-active: var(--ink);
+    --control-expressive-icon-default: var(--ink);
+    --control-expressive-icon-hover: var(--ink);
+    --control-expressive-text-active: var(--ink);
+    --control-expressive-text-default: var(--ink);
+    --control-expressive-text-hover: var(--ink);
+    --control-overlay-primary-icon-active: var(--ink);
+    --control-overlay-primary-icon-default: var(--ink);
+    --control-overlay-primary-icon-hover: var(--ink);
+    --control-overlay-primary-text-active: var(--ink);
+    --control-overlay-primary-text-default: var(--ink);
+    --control-overlay-primary-text-hover: var(--ink);
+    --control-primary-icon-active: var(--ink);
+    --control-primary-icon-default: var(--ink);
+    --control-primary-icon-hover: var(--ink);
+    --control-primary-text-active: var(--ink);
+    --control-primary-text-default: var(--ink);
+    --control-primary-text-hover: var(--ink);
+    --control-critical-primary-border-active: var(--button-edge);
+    --control-critical-primary-border-default: var(--button-edge);
+    --control-critical-primary-border-hover: var(--button-edge);
+    --control-expressive-border-active: var(--button-edge);
+    --control-expressive-border-default: var(--button-edge);
+    --control-expressive-border-hover: var(--button-edge);
+    --control-overlay-primary-border-active: var(--button-edge);
+    --control-overlay-primary-border-default: var(--button-edge);
+    --control-overlay-primary-border-hover: var(--button-edge);
+    --control-primary-border-active: var(--button-edge);
+    --control-primary-border-default: var(--button-edge);
+    --control-primary-border-hover: var(--button-edge);
+    --control-critical-secondary-background-default: var(--raised);
+    --control-secondary-background-default: var(--raised);
+    --control-critical-secondary-background-hover: var(--pressed);
+    --control-secondary-background-hover: var(--pressed);
+    --control-critical-secondary-background-active: hsla(0, 0%, 100%, 0.2);
+    --control-secondary-background-active: hsla(0, 0%, 100%, 0.2);
+    --control-overlay-secondary-icon-active: var(--fg);
+    --control-overlay-secondary-icon-default: var(--fg);
+    --control-overlay-secondary-icon-hover: var(--fg);
+    --control-overlay-secondary-text-active: var(--fg);
+    --control-overlay-secondary-text-default: var(--fg);
+    --control-overlay-secondary-text-hover: var(--fg);
+    --control-secondary-icon-active: var(--fg);
+    --control-secondary-icon-default: var(--fg);
+    --control-secondary-icon-hover: var(--fg);
+    --control-secondary-text-active: var(--fg);
+    --control-secondary-text-default: var(--fg);
+    --control-secondary-text-hover: var(--fg);
+    --control-critical-secondary-icon-active: var(--red);
+    --control-critical-secondary-icon-default: var(--red);
+    --control-critical-secondary-icon-hover: var(--red);
+    --control-critical-secondary-text-active: var(--red);
+    --control-critical-secondary-text-default: var(--red);
+    --control-critical-secondary-text-hover: var(--red);
+    --control-critical-secondary-border-active: var(--edge-faint);
+    --control-critical-secondary-border-default: var(--edge-faint);
+    --control-critical-secondary-border-hover: var(--edge-faint);
+    --control-icon-only-border-active: var(--edge-faint);
+    --control-icon-only-border-hover: var(--edge-faint);
+    --control-overlay-secondary-border-active: var(--edge-faint);
+    --control-overlay-secondary-border-default: var(--edge-faint);
+    --control-overlay-secondary-border-hover: var(--edge-faint);
+    --control-secondary-border-active: var(--edge-faint);
+    --control-secondary-border-default: var(--edge-faint);
+    --control-secondary-border-hover: var(--edge-faint);
+    --control-overlay-secondary-background-default: hsla(0, 0%, 0%, 0.5);
+    --control-overlay-secondary-background-hover: hsla(0, 0%, 0%, 0.6);
+    --control-overlay-secondary-background-active: hsla(0, 0%, 0%, 0.4);
+    --control-brand-foreground: var(--bar);
+
+    /* text boxes */
+    --input-border-default: var(--edge-faint);
+    --input-border-hover: var(--edge);
+    --input-border-active: var(--fg);
+    --input-border-error-default: var(--red);
+    --input-background-error-default: oklch(from var(--red) l c h / 0.1);
+
+    /* checkboxes, radio buttons, switches: light grey when on */
+    --checkbox-background-default: var(--raised);
+    --radio-background-default: var(--raised);
+    --switch-background-default: var(--raised);
+    --switch-background-hover: var(--raised);
+    --checkbox-background-hover: var(--pressed);
+    --radio-background-active: var(--pressed);
+    --radio-background-hover: var(--pressed);
+    --checkbox-background-selected-default: var(--bar);
+    --radio-background-selected-default: var(--bar);
+    --switch-background-selected-default: var(--bar);
+    --switch-background-selected-hover: var(--bar);
+    --checkbox-background-selected-hover: var(--button);
+    --radio-background-selected-hover: var(--button);
+    --checkbox-border-active: var(--edge);
+    --checkbox-border-default: var(--edge);
+    --checkbox-border-hover: var(--edge);
+    --radio-border-active: var(--edge);
+    --radio-border-default: var(--edge);
+    --radio-border-hover: var(--edge);
+    --switch-border-default: var(--edge);
+    --checkbox-border-selected-default: var(--button-edge);
+    --checkbox-border-selected-hover: var(--button-edge);
+    --radio-border-selected-default: var(--button-edge);
+    --radio-border-selected-hover: var(--button-edge);
+    --switch-border-selected-default: var(--edge-faint);
+    --switch-border-hover: var(--edge-strong);
+    --switch-border-selected-hover: var(--edge-strong);
+    --checkbox-icon-active: var(--ink);
+    --radio-thumb-background-active: var(--ink);
+
+    /* badges, reactions, progress bars */
+    --background-brand: var(--bar);
+    --badge-primary-background: var(--bar);
+    --badge-primary-border: var(--bar);
+    --progressbar-indicator-background: var(--bar);
+    --badge-expressive-background: var(--fg-bright);
+    --background-feedback-notification: var(--red);
+    --badge-critical-background: var(--red);
+    --badge-notification-background: var(--red);
+    --badge-success-background: var(--green);
+    --badge-warning-background: var(--yellow);
+    --badge-critical-text: var(--ink);
+    --badge-expressive-text: var(--ink);
+    --badge-notification-text: var(--ink);
+    --badge-primary-text: var(--ink);
+    --badge-success-text: var(--ink);
+    --badge-warning-text: var(--ink);
+    --badge-secondary-background: var(--raised);
+    --badge-secondary-text: var(--fg);
+    --reaction-border-default: var(--edge-faint);
+    --reaction-border-hover: var(--edge-faint);
+    --reaction-border-active: var(--edge);
+    --reaction-border-reacted-default: var(--fg);
+    --reaction-background-reacted-default: color-mix(in srgb, var(--fg) 20%, transparent);
+    --reaction-background-reacted-hover: color-mix(in srgb, var(--fg) 30%, transparent);
+    --progressbar-track-background: var(--raised);
+    --slider-track-background: var(--raised);
+
+    /* pings and replies */
+    --mention-background: color-mix(in srgb, var(--fg) 10%, transparent);
+    --polls-voted-fill: color-mix(in srgb, var(--fg) 10%, transparent);
+    --message-mentioned-background-default: var(--mention);
+    --message-mentioned-background-hover: var(--mention-hover);
+    --message-highlight-background-default: var(--reply);
+    --message-highlight-background-hover: var(--reply-hover);
+
+    /* status and feedback: the muted colours */
+    --icon-status-online: var(--online);
+    --status-online: var(--online);
+    --status-positive: var(--online);
+    --status-positive-background: var(--online);
+    --status-speaking: var(--online);
+    --text-status-online: var(--online);
+    --icon-status-idle: var(--idle);
+    --status-warning: var(--idle);
+    --text-status-idle: var(--idle);
+    --icon-status-dnd: var(--dnd);
+    --icon-voice-muted: var(--dnd);
+    --status-danger: var(--dnd);
+    --text-status-dnd: var(--dnd);
+    --icon-status-offline: var(--offline);
+    --text-status-offline: var(--offline);
+    --icon-feedback-critical: oklch(from var(--red) calc(l + 0.05) c h);
+    --text-feedback-critical: oklch(from var(--red) calc(l + 0.05) c h);
+    --icon-feedback-positive: oklch(from var(--green) calc(l + 0.05) c h);
+    --text-feedback-positive: oklch(from var(--green) calc(l + 0.05) c h);
+    --icon-feedback-warning: oklch(from var(--yellow) calc(l + 0.05) c h);
+    --text-feedback-warning: oklch(from var(--yellow) calc(l + 0.05) c h);
+    --icon-feedback-info: oklch(from var(--blue) calc(l + 0.05) c h);
+    --background-code-deletion: oklch(from var(--red) l c h / 0.2);
+    --background-feedback-critical: oklch(from var(--red) l c h / 0.2);
+    --background-code-addition: oklch(from var(--green) l c h / 0.2);
+    --background-feedback-positive: oklch(from var(--green) l c h / 0.2);
+    --background-feedback-warning: oklch(from var(--yellow) l c h / 0.2);
+    --background-feedback-info: oklch(from var(--blue) l c h / 0.2);
+    --polls-victor-fill: oklch(from var(--green) l c h / 0.1);
+    --notice-background-info: oklch(from var(--blue) calc(l - 0.05) c h);
+    --notice-background-positive: oklch(from var(--green) calc(l - 0.05) c h);
+    --notice-background-warning: oklch(from var(--yellow) calc(l - 0.05) c h);
+}
+
+/* These sit on body and on themed elements inside it, but not on <html>, so that the named colours above
+   (which Discord works out on <html>) are still built from the real values.
+   - The base backgrounds: solid and dark for whatever is outside the main app layer (settings, popups). Inside
+     that layer they are see-through, see "no panels" below.
+   - A few colours of Discord's base palette that parts of it read directly. "White" is dark here: it is what
+     Discord writes on its blurple, and blurple is light grey in this theme. */
+body,
+body :is(.theme-dark, .theme-darker, .theme-midnight, .theme-light) {
+    --background-base-low: var(--panel);
+    --background-base-lower: var(--panel);
+    --background-base-lowest: var(--panel);
+    --white: var(--ink);
+    --white-500: var(--ink);
+    --blurple-50: var(--bar);
+    --brand-260: var(--bar);
+    --brand-360: var(--bar);
+    --brand-500: var(--bar);
+    --red-400: var(--red);
+    --red-500: oklch(from var(--red) calc(l - 0.05) c h);
+    --green-360: var(--green);
+    --yellow-300: var(--yellow);
+    --primary-300: var(--fg-bright);
+    --primary-400: var(--fg-dim);
+}
+
+/* ================================================================
+   layout
+   ================================================================ */
+
+/* the wallpaper goes on the layer behind the whole app, and nothing in front of it gets a fill */
+body,
+#app-mount,
+.app_QbT-Jy {
+    background: transparent;
+}
+#app-mount .bg_Fd0FEH {
+    background: var(--wallpaper-layers);
+    background-size: cover;
+    background-position: center;
+}
+
+/* no title bar. Discord's window is a grid with a title bar row on top. That row is 0 high here
+   (--custom-app-top-bar-height above), and the bar itself floats over the right end of the channel header,
+   carrying only what is still wanted from it: the inbox and plugin buttons, and the window buttons */
+.bar_3zSH5d /* title bar */ {
+    position: absolute;
+    top: 0;
+    inset-inline-end: 0;
+    z-index: 101;
+    height: var(--custom-channel-header-height);
+    min-height: 0;
+    padding: 0;
+    gap: 0;
+    -webkit-app-region: no-drag;
+}
+.bar_3zSH5d > :is(.title_3zSH5d, .leading_3zSH5d) /* window title, back and forward arrows */,
+.trailing_3zSH5d > a /* help */ {
+    display: none;
+}
+/* the buttons parked there are the size and colour of the channel header's own */
+.trailing_3zSH5d {
+    gap: 8px;
+    padding-inline-end: 8px;
+}
+.trailing_3zSH5d > div {
+    display: flex;
+}
+.trailing_3zSH5d .clickable_fErCLM {
+    width: 32px;
+    height: 32px;
+    color: var(--fg-dim);
+}
+.trailing_3zSH5d .clickable_fErCLM > svg {
+    width: 20px;
+    height: 20px;
+}
+/* ...and the channel header keeps that corner free */
+.toolbar_ybUK7Z /* buttons at the right of a channel header */ {
+    padding-inline-end: var(--corner-room);
+}
+.clickable_ybUK7Z .icon_ybUK7Z /* its icons: a step brighter than Discord's muted grey, so they read on the wallpaper */ {
+    color: var(--fg-dim);
+}
+/* Discord sizes the header search box as if the header ended at the window edge (100cqi - 320px), so on
+   smaller windows the channel name got squeezed to nothing. Let the box shrink a little earlier */
+.search_bWCaDq {
+    flex: 0 1 auto;
+    width: clamp(var(--space-64), 100cqi - 360px, 244px);
+}
+
+/* window buttons: three dots. Each button is twice as wide as its dot, so it stays easy to hit */
+.winButtons_3zSH5d {
+    gap: 0;
+    padding-inline-start: 8px;
+}
+.winButtons_3zSH5d::before /* a divider line */,
+.winButtons_3zSH5d > .winButton_3zSH5d > svg {
+    display: none;
+}
+.winButtons_3zSH5d > .winButton_3zSH5d {
+    width: calc(var(--dot-size) * 2);
+    height: calc(var(--dot-size) * 2);
+    background: none;
+    --dot: var(--online);
+}
+.winButtons_3zSH5d > .winButton_3zSH5d::after {
+    content: '';
+    width: var(--dot-size);
+    height: var(--dot-size);
+    border-radius: 50%;
+    background-color: var(--dot);
+    transition: background-color 0.15s ease;
+}
+.winButtons_3zSH5d > .winButtonMinMax_3zSH5d:nth-child(1) /* minimise */ {
+    --dot: var(--idle);
+}
+.winButtons_3zSH5d > .winButtonClose_3zSH5d {
+    --dot: var(--dnd);
+}
+@container style(--mono-window-controls: on) {
+    .winButton_3zSH5d:not(:hover)::after {
+        background-color: var(--fg-faint);
+    }
+}
+
+/* the user panel sits under the channel list only, and the server list runs the full height. Discord
+   floats the panel across both columns, in a box with a gap around it, and has the lists run on underneath
+   it. Here the channel list simply ends where the panel starts: Discord tells the page how tall the panel
+   is (--custom-app-panels-height), so keep that for the list's bottom margin, and tell the list's insides
+   there is no panel to leave room for */
+.sidebar_pog62O {
+    --panels-height: var(--custom-app-panels-height, 0px);
+}
+.panels_pog62O /* user panel */ {
+    inset-inline-start: var(--custom-guild-list-width);
+    bottom: 0;
+    width: calc(100% - var(--custom-guild-list-width));
+    border: none;
+    border-radius: 0;
+    background: none;
+}
+.wrapper_5dqHTG /* server list */ {
+    margin-bottom: 0;
+    -webkit-mask: none;
+    mask: none;
+}
+.scroller_5dqHTG /* its scrolling part: a little room above the home button, now that no title bar gives it */ {
+    padding-top: var(--custom-guild-list-padding) !important;
+}
+.sidebar_pog62O::after /* a strip Discord draws under the floating panel */ {
+    display: none;
+}
+/* Discord frames the channel list and the chat with 1px borders. The panes get their own lines further
+   down, so these go, and nothing shifts by a pixel */
+.sidebarList_pog62O /* channel / DM list */ {
+    border: none;
+    border-radius: 0;
+    margin-bottom: var(--panels-height);
+    --custom-app-panels-height: 0px;
+}
+/* ...which leaves three leftovers of Discord's "room for the panel" sums */
+.scroller_Bce46W /* DM list */,
+.scroller_ysO7Gy /* channel list */ {
+    margin-bottom: 0;
+}
+.bottom_t1P8Sn /* "new mentions" bar at the bottom of the channel list */ {
+    bottom: 0;
+}
+/* the stream and voice panels above the user row sit on the wallpaper like everything else */
+.panels_pog62O {
+    --background-surface-high: transparent;
+}
+.chat_z_gUBg[data-has-border='true'] /* chat column */ {
+    border-top: none;
+}
+
+/* server list: the unread pill is a thin rounded bar next to the icon, not a tab stuck to the window edge */
+.item__o8_Xq {
+    width: 4px;
+    margin-inline-start: 1px;
+    border-radius: 4px;
+}
+/* ...and the "new" markers at its top and bottom fit the narrow column */
+.unreadMentionsIndicatorTop_5dqHTG,
+.unreadMentionsIndicatorBottom_5dqHTG {
+    padding: 3px;
+}
+.bar_oJAkDB {
+    color: var(--fg-dim);
+}
+
+/* home button: Discord writes "white" on it when it is hovered or open, which is dark in this theme (see
+   the colour names above). Keep the icon light: it sits on a faint tint here, not on blurple */
+[data-list-item-id='guildsnav___home']:is(:hover, .selected_JJ-hgR) > .childWrapper_JJ-hgR {
+    color: var(--fg-bright);
+}
+/* ...and with the Arch logo, drawn with a mask so it takes the button's text colour */
+@container style(--home-icon: arch) {
+    [data-list-item-id='guildsnav___home'] > .childWrapper_JJ-hgR > svg {
+        display: none;
+    }
+    [data-list-item-id='guildsnav___home'] > .childWrapper_JJ-hgR::before {
+        content: '';
+        width: 26px;
+        height: 26px;
+        background-color: currentColor;
+        mask: var(--arch-logo) center / contain no-repeat;
+    }
+}
+
+/* calls: a few icons that Discord draws in "white" over video and dark overlays. White is dark in this theme
+   (see the colour names above), so give them a light colour of their own */
+.iconContainer_1uD6uZ > svg /* buttons in the call's header */,
+.qualityIndicatorFullQuality__be5Bx,
+.premiumStreamIcon__be5Bx,
+.selectedIcon_7NOr2f,
+.blocked_7NOr2f {
+    color: var(--fg);
+}
+/* ...and the small preview window of a call or stream: its title, back arrow and buttons sit on the video,
+   so "white" is light again in there (also on themed elements inside it, which the rule above would darken) */
+.pictureInPictureWindow_69M0s9,
+.pictureInPictureWindow_69M0s9 :is(.theme-dark, .theme-darker, .theme-midnight, .theme-light) {
+    --white: var(--fg-bright);
+    --white-500: var(--fg-bright);
+    --interactive-text-default: var(--fg-strong);
+    --interactive-text-active: var(--fg-bright);
+}
+
+/* status dots and the "playing" icon: Discord paints these from script, with its own green, yellow and red,
+   so the colour names above don't reach them. The dot is told apart by the mask that cuts its shape */
+rect[mask*='status-online'] {
+    fill: var(--online);
+}
+rect[mask*='status-idle'] {
+    fill: var(--idle);
+}
+rect[mask*='status-dnd'] {
+    fill: var(--dnd);
+}
+rect[mask*='status-offline'] {
+    fill: var(--offline);
+}
+rect[mask*='status-streaming'] {
+    fill: var(--streaming);
+}
+.icon_HigqCD > path[fill='#45a366' i] /* "playing a game", next to a name */ {
+    fill: var(--online);
+}
+
+/* member list: Discord fills each row from script too (it is what a nameplate picture sits on). No fill:
+   the rows sit on the wallpaper. The hover tint is on an inner element and still works */
+.member_Iy0c7A {
+    background: none !important;
+}
+
+/* chat: the bar is lower than Discord's (47px, see the sizes above), so centre its attach button, and
+   don't let the bar ride up over the last message */
+.attachWrapper_7TM4SO {
+    display: flex;
+    align-items: center;
+    padding-block: 0;
+}
+.form_z_gUBg {
+    margin-top: 0;
+}
+/* messages: the hover band stops short of the left edge and has the small corners */
+.message_SY_P2T {
+    margin-inline-start: 4px;
+    border-radius: var(--radius-md);
+}
+/* reactions: a slightly heavier outline */
+.reaction_MmKct8,
+.reactionBtn_MmKct8,
+.reactionBtn_MmKct8.forceShow_MmKct8 {
+    border-width: 2px;
+}
+/* pictures in chat get the same corners as everything else (Discord fixes them at 3px) */
+.imageWrapper_W6wEGA {
+    border-radius: var(--radius-md);
+}
+/* the line between days, and the "new messages" line: thicker and softer */
+.divider_SY_P2T {
+    border-top-width: 3px;
+    border-radius: 3px;
+}
+.divider_SY_P2T > .content_4TfzT5 /* its label */ {
+    margin-top: -3px;
 }
 
 /* ================================================================
@@ -222,7 +773,7 @@ body {
 }
 
 /* calls: drop the black backdrop behind the tiles so the wallpaper shows. Video and screen share tiles
-   keep their own background. Classes are midnight's (it maintains them); the [class*] one is a fallback. */
+   keep their own background. The [class*] one is a fallback for when the exact names change. */
 [class*='baseLayer_']
     :is(.wrapper_hbKzX7, .callContainer_hbKzX7, .callContainer_hbKzX7 > [class*='root_'], .callContainer_DwQMm_, [class*='callContainer_']) {
     background: transparent !important;
@@ -264,86 +815,26 @@ body .videoControls_qOjco6 > * {
     background-color: var(--active);
 }
 .wrapper_JJ-hgR[data-list-item-id='guildsnav___home'].selected_JJ-hgR > .childWrapper_JJ-hgR {
-    background-color: var(--active-2);
+    background-color: var(--pressed);
 }
 
 /* ================================================================
-   discord-rice additions
+   declutter and switches
    Selectors lean on hrefs and aria-labels where possible, which survive Discord's class renames.
    ================================================================ */
 
-@property --hide-store-tabs {
-    syntax: 'off | on';
-    inherits: false;
-    initial-value: on;
-}
-@property --hide-gift-button {
-    syntax: 'off | on';
-    inherits: false;
-    initial-value: on;
-}
-@property --hide-apps-button {
-    syntax: 'off | on';
-    inherits: false;
-    initial-value: on;
-}
-@property --hide-sticker-button {
-    syntax: 'off | on';
-    inherits: false;
-    initial-value: off;
-}
-@property --hide-notification-button {
-    syntax: 'off | on';
-    inherits: false;
-    initial-value: on;
-}
-@property --hide-video-call-button {
-    syntax: 'off | on';
-    inherits: false;
-    initial-value: on;
-}
-@property --mono-window-controls {
-    syntax: 'off | on';
-    inherits: false;
-    initial-value: on;
-}
-@property --grain {
-    syntax: 'off | on';
-    inherits: false;
-    initial-value: on;
-}
-@property --mono-server-icons {
-    syntax: 'off | on | hover';
-    inherits: false;
-    initial-value: on;
-}
-@property --plain-folders {
-    syntax: 'off | on';
-    inherits: false;
-    initial-value: on;
-}
-@property --hide-quests {
-    syntax: 'off | on';
-    inherits: false;
-    initial-value: on;
-}
-@property --hide-nameplates {
-    syntax: 'off | on';
-    inherits: false;
-    initial-value: on;
-}
 
 /* black-and-white server pictures (and the DM avatars that pop into the server list), plus folders: the
    mini icons in a closed folder, the folder colour and the open-folder glyph and tint. Only pictures and
    folders are greyed: unread, mention and voice badges keep their colour. */
-@container body style(--mono-server-icons: on) or style(--mono-server-icons: hover) {
+@container style(--mono-server-icons: on) or style(--mono-server-icons: hover) {
     :is(.guilds_pog62O, nav[class*='guilds_'])
         :is(img, [class*='folderPreviewWrapper_'], [class*='folderIcon_'], [class*='folderGroupBackground_']) {
         filter: grayscale(1);
         transition: filter 0.2s ease;
     }
 }
-@container body style(--mono-server-icons: hover) {
+@container style(--mono-server-icons: hover) {
     :is(.guilds_pog62O, nav[class*='guilds_'])
         :is([class*='listItem_'], [class*='folderHeader_']):hover
         :is(img, [class*='folderPreviewWrapper_'], [class*='folderIcon_']) {
@@ -353,7 +844,7 @@ body .videoControls_qOjco6 > * {
 
 /* plain folders: a closed folder is its colour with a folder icon on it, like an open one, instead of a
    2x2 grid of its servers. The FolderPictures plugin puts a picture in the same spot and hides the icon */
-@container body style(--plain-folders: on) {
+@container style(--plain-folders: on) {
     /* exact class names: a rule ending in "*" under a loose [class*=] match is checked against every
        element in the window */
     .folderPreviewWrapper_RTMSuZ > .folderPreview_RTMSuZ {
@@ -369,7 +860,7 @@ body .videoControls_qOjco6 > * {
         margin: auto;
         width: 20px;
         height: 20px;
-        background-color: color-mix(in srgb, var(--custom-folder-color, var(--text-4)), white 30%);
+        background-color: color-mix(in srgb, var(--custom-folder-color, var(--fg-dim)), white 30%);
         mask: var(--folder-glyph) center / contain no-repeat;
     }
 }
@@ -378,7 +869,7 @@ body .videoControls_qOjco6 > * {
    that also holds the user panel), and quest embeds in chat. The Quests tab goes with --hide-store-tabs.
    Speed: exact class names inside :has(). With loose [class*=] matches in there, any class change anywhere
    in the window made Discord check this rule again (about 10 ms per click, measured) */
-@container body style(--hide-quests: on) {
+@container style(--hide-quests: on) {
     .panels_pog62O
         *:has(:is(.questPromoContent_ZzrVHV, .questAcceptedContent_ZzrVHV, .contentCollapsedBackground_ZzrVHV, .contentCollapsedBackgroundWrapper_ZzrVHV,
                 .postEnrollmentBackground_ZzrVHV, .postEnrollmentBackgroundCollapsed_ZzrVHV, .postEnrollmentBackgroundExpanded_ZzrVHV)):not(:has(.accountPopoutButtonWrapper_g6VwXp)),
@@ -389,7 +880,7 @@ body .videoControls_qOjco6 > * {
 
 /* nameplates: the picture strips behind names in the member list, DM list and user panel. The previews
    in the shop and in profile settings stay, so you can still see what one looks like */
-@container body style(--hide-nameplates: on) {
+@container style(--hide-nameplates: on) {
     .container_AFi54G:not(:has(:is(.preview_AFi54G, .mini_preview_AFi54G))),
     :is(aside, nav, [class*='membersWrap_'], [class*='members_'], [class*='panels_']) :is(img, video)[src*='collectibles/nameplates'] {
         display: none !important;
@@ -397,7 +888,7 @@ body .videoControls_qOjco6 > * {
 }
 
 /* Nitro Home / Shop / Quests rows above the DM list */
-@container body style(--hide-store-tabs: on) {
+@container style(--hide-store-tabs: on) {
     nav :is(li, [role='listitem'], .channel_zln_tS):has(a:is([href='/store'], [href='/shop'], [href='/quest-home'])),
     nav a:is([href='/store'], [href='/shop'], [href='/quest-home']) {
         display: none;
@@ -405,18 +896,18 @@ body .videoControls_qOjco6 > * {
 }
 
 /* chat bar buttons */
-@container body style(--hide-gift-button: on) {
+@container style(--hide-gift-button: on) {
     /* the label varies ("Send a gift", "Send a gift to <name>"...), so match any gift button */
     [class*='channelTextArea'] :is(button, [role='button'])[aria-label*='gift' i] {
         display: none;
     }
 }
-@container body style(--hide-apps-button: on) {
+@container style(--hide-apps-button: on) {
     [class*='channelTextArea'] :is([class*='channelAppLauncher_'], .app-launcher-entrypoint) {
         display: none;
     }
 }
-@container body style(--hide-sticker-button: on) {
+@container style(--hide-sticker-button: on) {
     [class*='channelTextArea'] .expression-picker-chat-input-button:has([aria-label='Open sticker picker']) {
         display: none;
     }
@@ -424,12 +915,12 @@ body .videoControls_qOjco6 > * {
 
 /* the notification bell in the channel and thread header. The same settings are a right-click away on the
    channel, so it only takes room up there */
-@container body style(--hide-notification-button: on) {
+@container style(--hide-notification-button: on) {
     [class*='toolbar_'] [aria-label='Notification Settings'] {
         display: none;
     }
 }
-@container body style(--hide-video-call-button: on) {
+@container style(--hide-video-call-button: on) {
     [class*='toolbar_'] [aria-label='Start Video Call'] {
         display: none;
     }
@@ -441,36 +932,6 @@ body .videoControls_qOjco6 > * {
     display: none;
 }
 
-/* keep the DM / channel name visible in the header. Discord sizes the header search box as if the right
-   edge were free (100cqi - 320px), but in titlebar mode midnight parks the inbox and window buttons there,
-   so on smaller windows the name got squeezed to nothing. Shrink the search box by that space instead. */
-@container body style(--top-bar-button-position: titlebar) {
-    .search_bWCaDq {
-        flex: 0 1 auto;
-        width: clamp(var(--space-64), 100cqi - 360px - var(--top-bar-right-margin, 0px), 244px);
-    }
-}
-
-/* grey window dots, coloured on hover */
-@container body style(--mono-window-controls: on) and style(--custom-window-controls: on) {
-    /* midnight colours these with !important at (0,2,1), so match that and come later */
-    [class*='winButtons_'] > [class*='winButton_']::after {
-        background-color: var(--text-5) !important;
-        transition: background-color 0.15s ease;
-    }
-    [class*='winButtons_'] > [class*='winButton_']:hover::after {
-        filter: none;
-    }
-    [class*='winButtons_'] > [class*='winButtonClose_']:hover::after {
-        background-color: var(--dnd) !important;
-    }
-    [class*='winButtons_'] > [class*='winButtonMinMax_']:nth-child(1):hover::after {
-        background-color: var(--idle) !important;
-    }
-    [class*='winButtons_'] > [class*='winButtonMinMax_']:nth-child(2):hover::after {
-        background-color: var(--online) !important;
-    }
-}
 
 /* ================================================================
    rice: tiled panes, a terminal prompt, ranger-style selection
@@ -486,7 +947,7 @@ body .videoControls_qOjco6 > * {
     box-shadow: inset 0 1px var(--line), inset -1px 0 var(--line);
     /* Discord works out the padding of everything in here (the stream and voice panels during a call, the
        user row) from the server list padding. The rice halves that, so they came out at 2px, or 0 at the
-       top, and looked cramped. Give the panels midnight's 12px back, which makes their padding 8px */
+       top, and looked cramped. Give the panels Discord's own 12px back, which makes their padding 8px */
     --custom-guild-list-padding: 12px;
 }
 /* the user row: pin the padding so the settings cog keeps its room at the edge, and let the name shrink
@@ -494,6 +955,7 @@ body .videoControls_qOjco6 > * {
 .container_g6VwXp /* user panel row */ {
     padding: 8px 5px 8px 8px; /* 5px on the right: the cog has its own room inside its button */
     gap: 4px;
+    margin-inline-start: 0;
 }
 .accountPopoutButtonWrapper_g6VwXp /* avatar and name */ {
     min-width: 0;
@@ -542,7 +1004,7 @@ body .videoControls_qOjco6 > * {
     content: '❯';
     align-self: center;
     padding-inline: 16px 4px;
-    color: var(--text-2);
+    color: var(--fg-strong);
     font-family: var(--font-code);
     font-size: 18px;
     font-weight: 600;
@@ -550,35 +1012,34 @@ body .videoControls_qOjco6 > * {
 
 /* selected channel: a solid bar with dark text, like the cursor line in ranger */
 #app-mount .modeSelected_TNyK-N .link_TNyK-N {
-    background: var(--accent-2);
+    background: var(--bar);
 }
 #app-mount .modeSelected_TNyK-N .link_TNyK-N :is(.name_TNyK-N, .icon_TNyK-N, .actionIcon_Wx6SnQ, .iconItem_Wx6SnQ) {
-    color: var(--text-0);
+    color: var(--ink);
 }
-/* a voice channel is two rows (its name and call timer, then its status), so the solid bar made a big
-   bright block while you're in the call. It gets the faint tint of a selected DM instead.
-   Speed: only the bar itself uses :has(). The text and icons are found through the top row they sit in,
-   with exact class names. A :has() in the middle of a selector that ends in a loose [class*=] match made
-   Discord restyle the whole window on every click (about 70 ms each, measured) */
-#app-mount .modeSelected_TNyK-N .link_TNyK-N:has(.linkTop_TNyK-N) {
-    background: var(--active-2);
+/* a channel with a second row (a voice channel you are in: its name and call timer, then its status) made
+   the solid bar a big bright block. It gets the faint tint of a selected DM instead.
+   Speed: exact class names only. A :has() in front of a loose [class*=] match made Discord restyle the
+   whole window on every click (about 70 ms each, measured) */
+#app-mount .modeSelected_TNyK-N .link_TNyK-N:has(.linkBottom_TNyK-N) {
+    background: var(--pressed);
 }
-#app-mount .modeSelected_TNyK-N .linkTop_TNyK-N .name_TNyK-N {
-    color: var(--text-1);
+#app-mount .modeSelected_TNyK-N .link_TNyK-N:has(.linkBottom_TNyK-N) .name_TNyK-N {
+    color: var(--fg-bright);
 }
-#app-mount .modeSelected_TNyK-N .linkTop_TNyK-N :is(.icon_TNyK-N, .actionIcon_Wx6SnQ, .iconItem_Wx6SnQ) {
-    color: var(--text-2);
+#app-mount .modeSelected_TNyK-N .link_TNyK-N:has(.linkBottom_TNyK-N) :is(.icon_TNyK-N, .actionIcon_Wx6SnQ, .iconItem_Wx6SnQ) {
+    color: var(--fg-strong);
 }
 
 /* categories read like directories in ls: brighter and bold */
 #app-mount .wrapper_yOdhm_ :is(.name_yOdhm_, .icon_yOdhm_) {
-    color: var(--text-2);
+    color: var(--fg-strong);
 }
 #app-mount .wrapper_yOdhm_ .name_yOdhm_ {
     font-weight: 600;
 }
 #app-mount .wrapper_yOdhm_:hover :is(.name_yOdhm_, .icon_yOdhm_) {
-    color: var(--text-1);
+    color: var(--fg-bright);
 }
 
 /* message times in brackets, like an IRC log: [05/11/2026 21:41] */
@@ -599,7 +1060,7 @@ body .videoControls_qOjco6 > * {
     box-shadow: none !important;
     --input-background-default: transparent;
     --input-border-default: var(--line);
-    --input-border-hover: var(--border-hover);
+    --input-border-hover: var(--edge-strong);
     --input-border-active: var(--line-focus);
     --input-border-focused: var(--line-focus);
 }
@@ -608,12 +1069,7 @@ body .videoControls_qOjco6 > * {
    dark tint with whatever is behind blurred, like Hyprland's blur. The glass sits on a layer behind the
    content (a blur straight on a menu would break its submenus). Their inner panels (sticker sidebar,
    picker footer) go see-through too, slightly darker. --glass-menus: off gives solid dark menus instead */
-@property --glass-menus {
-    syntax: 'off | on';
-    inherits: false;
-    initial-value: on;
-}
-@container body style(--glass-menus: on) {
+@container style(--glass-menus: on) {
     /* the glass layer needs a positioned parent. :where() has no weight, so popups Discord already
        positions keep theirs: the autocomplete above the chat bar (emoji, @, /) is position: absolute,
        and making it relative pushes the chat bar up the screen */
@@ -627,7 +1083,7 @@ body .videoControls_qOjco6 > * {
         background: transparent !important;
         --background-surface-high: transparent;
         --background-surface-higher: transparent;
-        --background-surface-highest: var(--bg-2);
+        --background-surface-highest: var(--raised);
         --background-base-low: transparent;
         --background-base-lower: hsla(0, 0%, 0%, 0.3);
         --background-base-lowest: hsla(0, 0%, 0%, 0.3);
@@ -639,7 +1095,7 @@ body .videoControls_qOjco6 > * {
             inset: 0;
             z-index: -1;
             border-radius: inherit;
-            background: var(--bg-float);
+            background: var(--float-tint);
             backdrop-filter: blur(var(--float-blur)) saturate(1.2);
             pointer-events: none;
         }
@@ -655,34 +1111,34 @@ body .videoControls_qOjco6 > * {
 /* picker tabs (GIFs / Stickers / Emoji): the open one is a light bar, like the selected channel */
 .navButton_58b0l2 {
     border-radius: var(--radius-xs);
-    color: var(--text-4);
+    color: var(--fg-dim);
 }
 :is(.navButtonActive_58b0l2, .navButtonActive_58b0l2:hover, .navButtonActive_58b0l2:active) {
-    background-color: var(--accent-2);
-    color: var(--text-0);
+    background-color: var(--bar);
+    color: var(--ink);
 }
 
 /* menu items: the one under the mouse is a light bar with dark text, like rofi's selected entry.
    Red for the dangerous ones (leave, delete...) */
 .colorDefault_M3qk4j.focused_M3qk4j {
-    background-color: var(--accent-2);
+    background-color: var(--bar);
     border-radius: var(--radius-xs);
-    color: var(--text-0);
+    color: var(--ink);
 }
 .colorDefault_M3qk4j.focused_M3qk4j
     :is(.label_M3qk4j, .subtext_M3qk4j, .caret_M3qk4j, .icon_M3qk4j, .check_M3qk4j, .radioSelection_M3qk4j) {
-    color: var(--text-0);
+    color: var(--ink);
 }
 .colorDefault_M3qk4j.focused_M3qk4j:not(.checkboxContainer_M3qk4j) path {
-    fill: var(--text-0);
+    fill: var(--ink);
 }
 .colorDanger_M3qk4j.focused_M3qk4j {
-    background-color: var(--red-2);
+    background-color: var(--red);
     border-radius: var(--radius-xs);
 }
 .colorDanger_M3qk4j.focused_M3qk4j :is(.label_M3qk4j, .subtext_M3qk4j, .icon_M3qk4j, .check_M3qk4j),
 .colorDanger_M3qk4j.focused_M3qk4j {
-    color: var(--text-0);
+    color: var(--ink);
 }
 
 /* game page (what opens when you click the game you're playing): Discord fills the whole window with it,
@@ -692,7 +1148,7 @@ body .videoControls_qOjco6 > * {
     width: min(1100px, 100% - 120px);
     height: calc(100% - 96px);
     margin: 48px auto;
-    background: var(--bg-4);
+    background: var(--panel);
     border: 1px solid var(--float-border);
     border-radius: var(--radius-md);
     box-sizing: border-box;

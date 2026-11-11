@@ -42,12 +42,10 @@ export const settings = definePluginSettings({
         type: OptionType.SELECT, description: "Font", hidden: true,
         options: [
             { label: "Iosevka", value: "iosevka", default: true },
-            { label: "Figtree (midnight's font)", value: "figtree" },
             { label: "Discord's own", value: "discord" }
         ]
     },
     corners: { type: OptionType.SLIDER, description: "Corners", markers: [0, 1, 2, 3, 4, 6, 8, 10, 12], default: 3, hidden: true },
-    gap: { type: OptionType.SLIDER, description: "Gaps", markers: [0, 2, 4, 6, 8, 10, 12], default: 0, hidden: true },
     wallpaper: { type: OptionType.STRING, description: "Wallpaper link", default: "", hidden: true },
     wallpaperDim: { type: OptionType.SLIDER, description: "Wallpaper dim", markers: [0, 0.25, 0.5, 0.75, 1], default: 0.5, hidden: true },
     asciiWallpaper: {
@@ -68,7 +66,7 @@ export type Store = typeof settings.store;
 export const DEFAULTS: Partial<Store> = {
     hideInbox: true, hideNameplates: true, hideQuests: true, hideStoreTabs: true, hideGiftButton: true,
     hideAppsButton: true, hideStickerButton: false, hideNotificationButton: true, hideVideoCallButton: true, plainFolders: true, monoServerIcons: "on", glassMenus: true,
-    archLogo: true, monoWindowControls: true, grain: true, font: "iosevka", corners: 3, gap: 0, wallpaper: "",
+    archLogo: true, monoWindowControls: true, grain: true, font: "iosevka", corners: 3, wallpaper: "",
     wallpaperDim: 0.5, asciiWallpaper: "off", asciiSize: 10
 };
 
@@ -77,7 +75,6 @@ const onOff = (b: boolean) => b ? "on" : "off";
 
 export const FONTS: Record<string, [string, string, string]> = {
     iosevka: ["'Iosevka'", "'Iosevka'", "Iosevka"],
-    figtree: ["'figtree'", "'Iosevka'", "Figtree"],
     discord: ["''", "''", "Discord's own"]
 };
 
@@ -252,13 +249,12 @@ export function applyStyle(checkAscii = true) {
         "--plain-folders": onOff(s.plainFolders),
         "--mono-server-icons": s.monoServerIcons,
         "--glass-menus": onOff(s.glassMenus),
-        "--custom-dms-icon": s.archLogo ? "custom" : "off",
+        "--home-icon": s.archLogo ? "arch" : "discord",
         "--mono-window-controls": onOff(s.monoWindowControls),
         "--grain": onOff(s.grain),
         "--font": font,
         "--code-font": codeFont,
         "--corners": `${s.corners}px`,
-        "--gap": `${s.gap}px`,
         "--wallpaper-dim": String(s.wallpaperDim)
     };
     const wallpaper = s.wallpaper.trim();

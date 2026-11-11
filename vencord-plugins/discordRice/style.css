@@ -2,20 +2,20 @@
    Colours come from the theme's variables, with fallbacks so it still reads with the theme off. */
 
 .vc-rice-win {
-    --r-t1: var(--text-1, hsl(0 0% 98%));
-    --r-t2: var(--text-2, hsl(0 0% 92%));
-    --r-t3: var(--text-3, hsl(0 0% 84%));
-    --r-t4: var(--text-4, hsl(0 0% 64%));
-    --r-t5: var(--text-5, hsl(0 0% 50%));
+    --r-t1: var(--fg-bright, hsl(0 0% 98%));
+    --r-t2: var(--fg-strong, hsl(0 0% 92%));
+    --r-t3: var(--fg, hsl(0 0% 84%));
+    --r-t4: var(--fg-dim, hsl(0 0% 64%));
+    --r-t5: var(--fg-faint, hsl(0 0% 50%));
     --r-line: var(--line, hsl(0 0% 100% / 0.12));
     --r-border: var(--float-border, hsl(0 0% 100% / 0.2));
     --r-focus: var(--line-focus, hsl(0 0% 100% / 0.6));
-    --r-sel: var(--accent-2, hsl(0 0% 84%));
-    --r-sel-text: var(--text-0, hsl(0 0% 8%));
+    --r-sel: var(--bar, hsl(0 0% 84%));
+    --r-sel-text: var(--ink, hsl(0 0% 8%));
     --r-hover: var(--hover, hsl(0 0% 100% / 0.06));
     --r-tint: var(--active, hsl(0 0% 100% / 0.1));
-    --r-red: var(--red-2, hsl(355 65% 70%));
-    --r-green: var(--green-2, hsl(95 38% 62%));
+    --r-red: var(--red, hsl(355 65% 70%));
+    --r-green: var(--green, hsl(95 38% 62%));
     --r-radius: var(--radius-sm, 3px);
 
     container-type: inline-size;
@@ -26,7 +26,7 @@
     overflow: hidden;
     border: 1px solid var(--r-border);
     border-radius: var(--r-radius);
-    background: var(--bg-float, hsl(0 0% 7% / 0.88));
+    background: var(--float-tint, hsl(0 0% 7% / 0.88));
     backdrop-filter: blur(var(--float-blur, 20px)) saturate(1.2);
     color: var(--r-t3);
     font-family: var(--code-font, 'Iosevka'), ui-monospace, monospace;
@@ -243,7 +243,7 @@
     grid-column: 2;
 }
 
-/* one-of-several: [ iosevka ] figtree  discord */
+/* one-of-several: [ iosevka ] discord */
 .vc-rice-seg {
     display: flex;
     flex-wrap: wrap;

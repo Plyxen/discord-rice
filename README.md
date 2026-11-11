@@ -6,7 +6,7 @@ Discord made to look like a tiling-WM Linux rice, for [Vencord](https://vencord.
 
 ## The theme
 
-`discord-rice.theme.css`. The look is all its own. Underneath, it loads [midnight](https://github.com/refact0r/midnight-discord) for the plumbing: where the panes and the user panel sit, and the window buttons.
+`discord-rice.theme.css`. One file, written against Discord's own styles. It loads nothing else but the font.
 
 - **Tiled, no gaps.** One misty wallpaper behind the whole window, with the columns split by 1px lines. No floating panels, boxes or shadows, and no top bar. Calls show the wallpaper behind the tiles too, instead of black.
 - **Greyscale.** Made to sit on a black-and-white desktop. Server icons and folders are black-and-white too. Only status dots, unread badges and red "danger" buttons keep a muted colour.
@@ -16,6 +16,7 @@ Discord made to look like a tiling-WM Linux rice, for [Vencord](https://vencord.
 - **ASCII wallpaper.** With the discord-rice plugin, the wallpaper can be redrawn out of characters, digits or 0s and 1s, like the fetch screenshots on r/unixporn.
 - **Less clutter.** Nitro, Shop and Quests are gone from the DM list, and so are the quest card above your user panel, nameplates behind names, the notification bell in the channel header, the video call button in DMs (voice call stays), and the gift and apps buttons in the chat bar. The DM profile button hides while Discord has it greyed out.
 - **Small fixes.** The game page (click the game you're playing) opens as a smaller centred window, so its close button isn't stuck under the window controls. Drag the window by the empty space in the channel header. On small windows the header search box shrinks so the channel name stays readable.
+- **Light on Discord.** No other theme is loaded underneath, and the rules are written and measured so that clicking around and switching channels costs about the same as with no theme at all.
 
 ### Install
 
@@ -48,12 +49,11 @@ Without the plugin, every option is a CSS variable at the top of the theme file:
 | `--wallpaper` | misty forest | Any image, e.g. `url('https://i.imgur.com/....jpg')`. imgur, Pinterest (`i.pinimg.com`), github.io and raw.githubusercontent.com links work. |
 | `--wallpaper-dim` | `0.5` | How dark the wallpaper is, from 0 to 1. Raise it if text is hard to read. |
 | `--grain` | `on` | Film grain over the wallpaper. |
-| `--font` | `'Iosevka'` | `'figtree'` for midnight's font, `''` for Discord's own. `--code-font` is the same for code blocks. |
+| `--font` | `'Iosevka'` | `''` for Discord's own. `--code-font` is the same for code blocks. |
 | `--corners` | `3px` | Corner size. `0px` for dead sharp. Avatars and pills stay round. |
-| `--gap` | `0px` | Space between the columns. Raise it for i3-style gaps. |
 | `--plain-folders` | `on` | Closed folders show a folder icon. `off` brings back the 2×2 grid. |
 | `--mono-server-icons` | `on` | Black-and-white server icons and folders. `hover` shows colour under the mouse; `off` keeps colour. |
-| `--glass-menus` | `on` | Frosted-glass menus and pickers. `off` makes them solid. The tint and blur are `--bg-float` and `--float-blur`. |
+| `--glass-menus` | `on` | Frosted-glass menus and pickers. `off` makes them solid. The tint and blur are `--float-tint` and `--float-blur` (in the `:root` block). |
 | `--hide-quests` | `on` | The quest card above your user panel, and quest embeds in chat. |
 | `--hide-nameplates` | `on` | The picture strips behind names in the member list, DM list and user panel. Shop and settings previews stay. |
 | `--hide-store-tabs` | `on` | Nitro Home, Shop and Quests in the DM list. |
@@ -62,14 +62,13 @@ Without the plugin, every option is a CSS variable at the top of the theme file:
 | `--hide-sticker-button` | `off` | Sticker button in the chat bar. |
 | `--hide-notification-button` | `on` | The bell in the channel header. Right-click a channel for the same settings. |
 | `--hide-video-call-button` | `on` | The camera in the DM header. The voice call button stays, and you can turn your camera on once in the call. |
-| `--custom-dms-icon` | `custom` | Arch logo on the home button. `off` brings back Discord's logo, and `--dms-icon-svg-url` takes any svg. |
-| `--mono-window-controls` | `on` | Grey window dots instead of red / yellow / green. |
-| `--top-bar-button-position` | `titlebar` | Where the inbox and window buttons go: `titlebar` puts them in the channel header, `hide` keeps a top bar without them, `off` is Discord's default. |
-| `--small-user-panel` | `on` | User panel only under the channel list, so the server list runs full height. |
+| `--home-icon` | `arch` | Arch logo on the home button. `discord` brings back Discord's logo. |
+| `--mono-window-controls` | `on` | Grey window dots instead of red / yellow / green. `--dot-size` is their size. |
+| `--corner-room` | `168px` | Room kept free at the right end of the channel header, where the inbox, plugin buttons and window dots sit now that there is no top bar (in the `:root` block). Raise it if a plugin adds more buttons there. |
 | `--line`, `--line-focus`, `--float-border` | faint / light grey | The lines between panes, the chat bar's line while typing, and the border around menus (in the `:root` block). |
 | `--mention` | faint grey band | The background of messages that ping you (in the `:root` block). |
 
-The rest of the `:root` block is the colours: text, surfaces, the light-grey accent and the muted status colours, each with a comment saying where it shows up.
+The rest of the `:root` block is the colours: text, the see-through layers and solid surfaces, the light greys that stand in for Discord's blurple, and the muted status colours, each with a comment saying where it shows up.
 
 The wallpaper is embedded in the theme (the long line at the bottom), so it needs no hosting. `wallpaper.jpg` is the same image, at only 736×414, so for a sharper look point `--wallpaper` at a bigger copy.
 
@@ -170,15 +169,14 @@ The presets come in pairs, the same name as ASCII and as an icon:
 
 ## When Discord updates break it
 
-The layout plumbing comes from midnight's hosted build, and midnight's maintainer fixes it when Discord renames its classes, so those fixes arrive here automatically. The extras mostly match links, labels and class-name prefixes (`href`, `aria-label`, `[class*='folderPreview_']`), which usually survive renames.
+The theme stands on its own, so a fix has to land here: when Discord renames its classes, the rules that use exact class names stop working until the theme is updated. The colours come from Discord's named colour variables, and most switches match links and labels (`href`, `aria-label`), which usually survive renames.
 
-A few rules use Discord's exact class names and may need updating after a big update: the pane lines, the prompt, the selected channel bar, plain folders, the quest card, the timestamp brackets, menu styling, the game page window, the header search and the user panel spacing. If one stops working, the rest of the theme still works.
+The rules that use exact class names, and may need updating after a big update: the layout (no top bar, the user panel under the channel list, the window dots), the pane lines, the prompt, the selected channel bar, plain folders, the quest card, the timestamp brackets, menu styling, the game page window, the header search and the user panel spacing. If one stops working, the rest of the theme still works.
 
 ## Credits and licence
 
 discord-rice is licensed under the [GPL-3.0-or-later](LICENSE), like Vencord. Third-party licence texts are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-- Layout plumbing: [midnight-discord](https://github.com/refact0r/midnight-discord) by refact0r (MIT), loaded underneath from its hosted build.
 - Font: [Iosevka](https://github.com/be5invis/Iosevka) by Belleve Invis (OFL), via [Fontsource](https://fontsource.org) on jsDelivr.
 - Home icon: the Arch Linux logo from [Simple Icons](https://simpleicons.org) (CC0). The logo is a trademark of Arch Linux.
 - Folder icons: [Lucide](https://lucide.dev) (ISC; a few from [Feather](https://feathericons.com), MIT).
