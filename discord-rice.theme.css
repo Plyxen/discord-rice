@@ -2,7 +2,7 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 4.0.1
+ * @version 4.0.2
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
@@ -360,7 +360,12 @@ body {
     --input-border-error-default: var(--red);
     --input-background-error-default: oklch(from var(--red) l c h / 0.1);
 
-    /* checkboxes, radio buttons, switches: light grey when on */
+    /* checkboxes, radio buttons, switches: light grey when on. A switch that is on is a dark knob
+       on the light track; off, a grey knob on a dark track */
+    --switch-thumb-background-default: var(--fg-dim);
+    --switch-thumb-background-selected-default: var(--ink);
+    --switch-thumb-icon-default: var(--ink);
+    --switch-thumb-icon-active: var(--bar);
     --checkbox-background-default: var(--raised);
     --radio-background-default: var(--raised);
     --switch-background-default: var(--raised);
