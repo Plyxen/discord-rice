@@ -70,24 +70,34 @@ const asciiSize = (text: string) => [0, 17, 16, 14, 12, 10][Math.min(text.length
 // the text and icon colour: the folder's own colour, lifted so it reads on the folder's tinted background
 const INK = "color-mix(in srgb, var(--custom-folder-color, #fff), white 55%)";
 
+// Speed: every rule here ends in a tag or in the folder's own data attribute, and no rule looks at class
+// names with [class*=]. Discord checks rules that end in "*" or in [class*=] against every element in the
+// window each time something changes, which added up with one set of rules per folder. So the servers in
+// the tile are hidden through their parent (visibility) instead of one by one, and the look is drawn in
+// the parent's ::before, which is switched back to visible.
 function lookCss(id: string, look: Look) {
-    const tile = `:is([data-vc-folder-id=${cssString(id)}], [data-list-item-id=${cssString("guildsnav___" + id)}] [class*="folderPreviewWrapper_"])`;
-    const inner = `${tile} > [class*="folderPreview_"]`;
-    const base = `${inner} { position: relative; }\n${inner} > * { visibility: hidden; }\n`;
+    // the tile is tagged with its folder id by the patch below. The second form is a fallback for when the
+    // patch stops matching after a Discord update
+    const tile = `:is([data-vc-folder-id=${cssString(id)}], [data-list-item-id=${cssString("guildsnav___" + id)}] .folderPreviewWrapper_RTMSuZ)`;
+    const inner = `${tile} > div`;
+    const base = `${inner} { position: relative; visibility: hidden; }\n`
+        + `${inner}::before { visibility: visible; position: absolute; inset: 0 !important; mask: none !important; }\n`;
 
     switch (look.kind) {
         case "picture":
             return base
-                + `${inner} { background: center / cover no-repeat url(${cssString(look.url)}); border-radius: max(2px, calc(var(--radius-lg, 12px) - var(--custom-folder-preview-padding, 4px))); }\n`
-                + `${inner}::before, ${inner}::after { content: none !important; }`;
+                + `${inner}::before { content: "" !important; width: auto !important; height: auto !important; margin: 0 !important;`
+                + ` background: center / cover no-repeat url(${cssString(look.url)}) !important;`
+                + " border-radius: max(2px, calc(var(--radius-lg, 12px) - var(--custom-folder-preview-padding, 4px))); }\n"
+                + `${inner}::after { content: none !important; }`;
         case "ascii":
             return base
-                + `${inner}::before { content: ${cssString(look.text)} !important; position: absolute; inset: 0 !important; width: auto !important; height: auto !important; margin: 0 !important;`
-                + " display: flex; align-items: center; justify-content: center; white-space: pre; text-align: center; mask: none !important; background: none !important;"
+                + `${inner}::before { content: ${cssString(look.text)} !important; width: auto !important; height: auto !important; margin: 0 !important;`
+                + " display: flex; align-items: center; justify-content: center; white-space: pre; text-align: center; background: none !important;"
                 + ` color: ${INK}; font-family: var(--code-font, 'Iosevka'), ui-monospace, monospace; font-weight: 600; font-size: ${asciiSize(look.text)}px; line-height: 1; letter-spacing: -0.03em; }`;
         case "icon":
             return base
-                + `${inner}::before { content: "" !important; position: absolute; inset: 0 !important; margin: auto !important; width: 22px !important; height: 22px !important;`
+                + `${inner}::before { content: "" !important; margin: auto !important; width: 22px !important; height: 22px !important;`
                 + ` background: ${INK} !important; mask: ${iconUrl(look.icon)} center / contain no-repeat !important; }`;
     }
 }

@@ -2,7 +2,7 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 3.3.3
+ * @version 3.3.4
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
@@ -354,13 +354,15 @@ body .videoControls_qOjco6 > * {
 /* plain folders: a closed folder is its colour with a folder icon on it, like an open one, instead of a
    2x2 grid of its servers. The FolderPictures plugin puts a picture in the same spot and hides the icon */
 @container body style(--plain-folders: on) {
-    [class*='folderPreviewWrapper_'] > [class*='folderPreview_'] {
+    /* exact class names: a rule ending in "*" under a loose [class*=] match is checked against every
+       element in the window */
+    .folderPreviewWrapper_RTMSuZ > .folderPreview_RTMSuZ {
         position: relative;
     }
-    [class*='folderPreviewWrapper_'] > [class*='folderPreview_'] > * {
+    .folderPreviewWrapper_RTMSuZ > .folderPreview_RTMSuZ > * {
         display: none;
     }
-    [class*='folderPreviewWrapper_'] > [class*='folderPreview_']::before {
+    .folderPreviewWrapper_RTMSuZ > .folderPreview_RTMSuZ::before {
         content: '';
         position: absolute;
         inset: 0;
@@ -373,10 +375,13 @@ body .videoControls_qOjco6 > * {
 }
 
 /* quests: the quest card that sits on top of the user panel (hidden from the outside in, but never a box
-   that also holds the user panel), and quest embeds in chat. The Quests tab goes with --hide-store-tabs */
+   that also holds the user panel), and quest embeds in chat. The Quests tab goes with --hide-store-tabs.
+   Speed: exact class names inside :has(). With loose [class*=] matches in there, any class change anywhere
+   in the window made Discord check this rule again (about 10 ms per click, measured) */
 @container body style(--hide-quests: on) {
-    [class*='panels_']
-        *:has(:is([class*='questPromoContent_'], [class*='questAcceptedContent_'], [class*='contentCollapsedBackground'], [class*='postEnrollmentBackground'])):not(:has([class*='accountPopoutButtonWrapper_'])),
+    .panels_pog62O
+        *:has(:is(.questPromoContent_ZzrVHV, .questAcceptedContent_ZzrVHV, .contentCollapsedBackground_ZzrVHV, .contentCollapsedBackgroundWrapper_ZzrVHV,
+                .postEnrollmentBackground_ZzrVHV, .postEnrollmentBackgroundCollapsed_ZzrVHV, .postEnrollmentBackgroundExpanded_ZzrVHV)):not(:has(.accountPopoutButtonWrapper_g6VwXp)),
     :is([class*='questsEmbed_'], [class*='questEmbedCard_']) {
         display: none !important;
     }
@@ -547,18 +552,21 @@ body .videoControls_qOjco6 > * {
 #app-mount .modeSelected_TNyK-N .link_TNyK-N {
     background: var(--accent-2);
 }
-#app-mount .modeSelected_TNyK-N .link_TNyK-N :is(.name_TNyK-N, .icon_TNyK-N, [class*='actionIcon_'], [class*='iconItem_']) {
+#app-mount .modeSelected_TNyK-N .link_TNyK-N :is(.name_TNyK-N, .icon_TNyK-N, .actionIcon_Wx6SnQ, .iconItem_Wx6SnQ) {
     color: var(--text-0);
 }
 /* a voice channel is two rows (its name and call timer, then its status), so the solid bar made a big
-   bright block while you're in the call. It gets the faint tint of a selected DM instead */
+   bright block while you're in the call. It gets the faint tint of a selected DM instead.
+   Speed: only the bar itself uses :has(). The text and icons are found through the top row they sit in,
+   with exact class names. A :has() in the middle of a selector that ends in a loose [class*=] match made
+   Discord restyle the whole window on every click (about 70 ms each, measured) */
 #app-mount .modeSelected_TNyK-N .link_TNyK-N:has(.linkTop_TNyK-N) {
     background: var(--active-2);
 }
-#app-mount .modeSelected_TNyK-N .link_TNyK-N:has(.linkTop_TNyK-N) .name_TNyK-N {
+#app-mount .modeSelected_TNyK-N .linkTop_TNyK-N .name_TNyK-N {
     color: var(--text-1);
 }
-#app-mount .modeSelected_TNyK-N .link_TNyK-N:has(.linkTop_TNyK-N) :is(.icon_TNyK-N, [class*='actionIcon_'], [class*='iconItem_']) {
+#app-mount .modeSelected_TNyK-N .linkTop_TNyK-N :is(.icon_TNyK-N, .actionIcon_Wx6SnQ, .iconItem_Wx6SnQ) {
     color: var(--text-2);
 }
 

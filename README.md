@@ -172,7 +172,7 @@ The presets come in pairs, the same name as ASCII and as an icon:
 
 The layout plumbing comes from midnight's hosted build, and midnight's maintainer fixes it when Discord renames its classes, so those fixes arrive here automatically. The extras mostly match links, labels and class-name prefixes (`href`, `aria-label`, `[class*='folderPreview_']`), which usually survive renames.
 
-A few rules use Discord's exact class names and may need updating after a big update: the pane lines, the prompt, the selected channel bar, the timestamp brackets, menu styling, the game page window, the header search and the user panel spacing. If one stops working, the rest of the theme still works.
+A few rules use Discord's exact class names and may need updating after a big update: the pane lines, the prompt, the selected channel bar, plain folders, the quest card, the timestamp brackets, menu styling, the game page window, the header search and the user panel spacing. If one stops working, the rest of the theme still works.
 
 ## Credits and licence
 
