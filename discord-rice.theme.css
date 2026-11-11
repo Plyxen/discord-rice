@@ -2,7 +2,7 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 3.3.1
+ * @version 3.3.2
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
@@ -479,10 +479,13 @@ body .videoControls_qOjco6 > * {
 }
 .panels_pog62O /* user panel */ {
     box-shadow: inset 0 1px var(--line), inset -1px 0 var(--line);
+    /* Discord works out the padding of everything in here (the stream and voice panels during a call, the
+       user row) from the server list padding. The rice halves that, so they came out at 2px, or 0 at the
+       top, and looked cramped. Give the panels midnight's 12px back, which makes their padding 8px */
+    --custom-guild-list-padding: 12px;
 }
-/* Discord works out the user panel's padding from the server list padding, which the rice halves, so the
-   row lost its padding and ran past the panel, putting the settings cog on the edge. Pin the padding, and
-   let the name shrink (Discord only allows that under 260px) so the buttons always fit */
+/* the user row: pin the padding so the settings cog keeps its room at the edge, and let the name shrink
+   (Discord only allows that under 260px) so the buttons always fit */
 .container_g6VwXp /* user panel row */ {
     padding: 8px 5px 8px 8px; /* 5px on the right: the cog has its own room inside its button */
     gap: 4px;
