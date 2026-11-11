@@ -2,7 +2,7 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 3.3.2
+ * @version 3.3.3
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
@@ -549,6 +549,17 @@ body .videoControls_qOjco6 > * {
 }
 #app-mount .modeSelected_TNyK-N .link_TNyK-N :is(.name_TNyK-N, .icon_TNyK-N, [class*='actionIcon_'], [class*='iconItem_']) {
     color: var(--text-0);
+}
+/* a voice channel is two rows (its name and call timer, then its status), so the solid bar made a big
+   bright block while you're in the call. It gets the faint tint of a selected DM instead */
+#app-mount .modeSelected_TNyK-N .link_TNyK-N:has(.linkTop_TNyK-N) {
+    background: var(--active-2);
+}
+#app-mount .modeSelected_TNyK-N .link_TNyK-N:has(.linkTop_TNyK-N) .name_TNyK-N {
+    color: var(--text-1);
+}
+#app-mount .modeSelected_TNyK-N .link_TNyK-N:has(.linkTop_TNyK-N) :is(.icon_TNyK-N, [class*='actionIcon_'], [class*='iconItem_']) {
+    color: var(--text-2);
 }
 
 /* categories read like directories in ls: brighter and bold */
