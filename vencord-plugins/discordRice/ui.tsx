@@ -151,7 +151,8 @@ const PALETTE = ["--fg-faint", "--fg-dim", "--fg", "--fg-strong", "--fg-bright",
 const PLUGINS: [name: string, what: string][] = [
     ["DiscordRice", "this window, the switches, the ascii wallpaper"],
     ["FolderPictures", "folder looks: pictures, ascii and icons"],
-    ["CodeBlockButton", "the ``` button when you select text in the chat bar"]
+    ["CodeBlockButton", "the ``` button when you select text in the chat bar"],
+    ["RiceUpdater", "keeps the theme file and these plugins up to date from github"]
 ];
 
 function useThemeOn() {
