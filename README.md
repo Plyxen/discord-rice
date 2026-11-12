@@ -70,7 +70,7 @@ Without the plugin, every option is a CSS variable at the top of the theme file:
 
 The rest of the `:root` block is the colours: text, the see-through layers and solid surfaces, the light greys that stand in for Discord's blurple, and the muted status colours, each with a comment saying where it shows up.
 
-The wallpaper is embedded in the theme (the long line at the bottom), so it needs no hosting. `wallpaper.jpg` is the same image, at only 736×414, so for a sharper look point `--wallpaper` at a bigger copy.
+The wallpaper is embedded in the theme (the long line at the bottom), so it needs no hosting. `background.jpg` is the same image, at only 736×414, so for a sharper look point `--wallpaper` at a bigger copy.
 
 ## The plugins
 
