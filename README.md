@@ -1,6 +1,6 @@
 # discord-rice
 
-Discord made to look like a tiling-WM Linux rice, for [Vencord](https://vencord.dev). It's a theme plus three small plugins.
+Discord made to look like a tiling-WM Linux rice. The theme works in [Vencord](https://vencord.dev) and [BetterDiscord](https://betterdiscord.app); the three small plugins that come with it are for Vencord.
 
 ![discord-rice: tiled panes on a misty wallpaper, Iosevka, a fetch code block, folder icons in the server list](screenshots/discord-rice.webp)
 
@@ -20,9 +20,9 @@ Discord made to look like a tiling-WM Linux rice, for [Vencord](https://vencord.
 
 ### Install
 
-You need [Vencord](https://vencord.dev) (or [Vesktop](https://github.com/Vencord/Vesktop), which has Vencord built in). The theme works on its own; the plugins below are optional extras.
+You need [Vencord](https://vencord.dev) (or [Vesktop](https://github.com/Vencord/Vesktop), which has Vencord built in) or [BetterDiscord](https://betterdiscord.app). The theme works on its own; the plugins below are optional extras for Vencord.
 
-**Online link (any OS, updates itself).** In Discord, open **Settings → Vencord → Themes → Online Themes** and paste:
+**Vencord: online link (any OS, updates itself).** In Discord, open **Settings → Vencord → Themes → Online Themes** and paste:
 
 ```
 https://cdn.jsdelivr.net/gh/Plyxen/discord-rice@main/discord-rice.theme.css
@@ -30,7 +30,11 @@ https://cdn.jsdelivr.net/gh/Plyxen/discord-rice@main/discord-rice.theme.css
 
 jsDelivr can take up to a day to pick up a new version.
 
-**Or as a file.** Download `discord-rice.theme.css`, open **Settings → Vencord → Themes → Open Themes Folder**, drop the file in, and turn on **discord-rice** in the list. On Windows, `install.ps1` does the copying for Vencord and Vesktop:
+**Vencord: as a file.** Download `discord-rice.theme.css`, open **Settings → Vencord → Themes → Open Themes Folder**, drop the file in, and turn on **discord-rice** in the list.
+
+**BetterDiscord.** Download `discord-rice.theme.css`, open **Settings → Themes → Open Themes Folder** (under BetterDiscord), drop the file in, and turn on **discord-rice**.
+
+On Windows, `install.ps1` does the copying for Vencord, Vesktop and BetterDiscord, whichever it finds:
 
 ```powershell
 .\install.ps1
@@ -42,7 +46,7 @@ Edits to the file show up live.
 
 The easy way is inside Discord: the **rice bowl button** in the channel header, where the inbox button used to be, opens the discord-rice window, a small terminal-style settings tool with every option below. The same window is under **Settings → discord-rice** (in the Vencord section). It comes from the DiscordRice plugin, which also opens it once the first time you start Discord with it. Changes apply straight away.
 
-Without the plugin, every option is a CSS variable at the top of the theme file:
+Without the plugin (and in BetterDiscord, which the plugins don't run in), every option is a CSS variable at the top of the theme file. You can edit the file, or leave it alone and put your changes in the mod's own CSS box, which is read after the theme: **Settings → Vencord → Themes → Edit QuickCSS**, or BetterDiscord's **Custom CSS**. For example `body { --hide-sticker-button: on; --corners: 0px; }`.
 
 | Variable | Default | What it does |
 | --- | --- | --- |
@@ -165,6 +169,7 @@ The presets come in pairs, the same name as ASCII and as an icon:
 
 - The **notification bell**, **video call**, **sticker button** and **gift button** switches, and the hiding of the greyed-out DM profile button, find those buttons by their English labels, so they do nothing when Discord is set to another language. Everything else works in any language.
 - The theme is made for Discord's dark mode on desktop.
+- The plugins are Vencord only. In BetterDiscord you get the whole look, but not the settings window, folder looks, ASCII wallpaper or code block button.
 - The ASCII wallpaper needs a picture the page is allowed to read: the default one and imgur links work; some sites don't allow it.
 
 ## When Discord updates break it

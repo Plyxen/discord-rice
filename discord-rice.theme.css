@@ -2,7 +2,7 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 4.0.3
+ * @version 4.1.0
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
@@ -720,6 +720,10 @@ body,
     --white: var(--ink);
 }
 
+/* ---- the mod's own interface ----
+   The theme works in Vencord and in BetterDiscord. Each draws its own settings screens, with its own
+   switches and accent colour, so each gets a few rules to look like the rest. */
+
 /* Vencord's own switches (plugin and theme lists), which don't use Discord's switch colours: the same look
    as Discord's here. Off is a grey knob with a dark cross, on a dark knob with a light tick on the light track */
 .vc-switch-slider > rect {
@@ -732,6 +736,48 @@ body,
     fill: var(--ink);
 }
 .vc-switch-checked .vc-switch-slider path {
+    fill: var(--bar);
+}
+
+/* BetterDiscord has a blue accent and writes white on it. Here the accent is the theme's light grey. Its
+   filled buttons take their text from Discord's "white", which is dark in this theme, so those already
+   read right; the rest follows */
+:root {
+    --bd-brand: var(--button);
+    --bd-brand-hover: var(--button-hover);
+    --bd-brand-active: var(--button-press);
+}
+.bd-addon-controls .bd-button.selected svg,
+.bd-controls-basic .bd-button:active svg /* icons it draws in white on the accent */,
+.bd-checkbox-input:checked + .bd-checkbox-box /* the tick of a ticked checkbox */ {
+    color: var(--ink);
+}
+.bd-button-filled.bd-button-color-blurple {
+    background-color: var(--button);
+}
+/* ...and where it uses "white" for text on something dark, or for a white button, it is light again */
+.bd-button-color-white,
+.bd-button-link.bd-button-color-primary,
+.bd-text-white {
+    --white-500: var(--fg-bright);
+}
+.bd-notice /* its notice bar: dark like a popup, not blurple */ {
+    background: var(--color, var(--popup));
+}
+/* its switches: the same look as Discord's and Vencord's here */
+.bd-switch-body {
+    --switch-color: var(--raised);
+}
+.bd-switch .bd-switch-handle {
+    fill: var(--fg-dim);
+}
+.bd-switch .bd-switch-symbol path {
+    fill: var(--ink);
+}
+.bd-switch input:checked + .bd-switch-body .bd-switch-handle {
+    fill: var(--ink);
+}
+.bd-switch input:checked + .bd-switch-body .bd-switch-symbol path {
     fill: var(--bar);
 }
 
