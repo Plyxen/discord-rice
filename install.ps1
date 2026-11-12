@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Installs discord-rice on Windows: the theme for Vencord, Vesktop and BetterDiscord, and the plugins for Vencord.
+    Installs discord-rice on Windows: the theme and the plugins, for Vencord, Vesktop and BetterDiscord.
 
 .DESCRIPTION
     Run it from a copy of the repo, or straight from GitHub:
@@ -9,7 +9,8 @@
 
     What it does, in this order:
       1. Copies the theme into the themes folder of every mod it finds (Vencord, Vesktop, BetterDiscord).
-      2. BetterDiscord: also copies the small plugin that keeps the theme up to date.
+      2. BetterDiscord: also copies its plugins (the settings window, folder looks, the code block button
+         and the updater). They are single files, so there is nothing more to it.
       3. Vencord, if you say yes: sets up the plugins. Vencord only takes extra plugins when it is built
          from its source, so this finds your source build or downloads one (git clone), copies the plugin
          folders into it, builds it, and points Discord at the build with Vencord's own installer.
@@ -18,7 +19,8 @@
     Run it again whenever you like: it replaces what it installed and leaves everything else alone.
 
 .PARAMETER ThemeOnly
-    Steps 1 and 2 only, without asking about the plugins.
+    The theme only, without asking about the plugins. BetterDiscord still gets the updater plugin, so the
+    theme keeps itself up to date.
 
 .PARAMETER Plugins
     Also do step 3, without asking.
@@ -31,8 +33,8 @@
     Build Vencord with the plugins, but don't point Discord at the build.
 
 .PARAMETER Uninstall
-    Remove what this script installed: the theme files, the BetterDiscord updater, and the plugin folders
-    (Vencord is rebuilt without them). Vencord and BetterDiscord themselves stay.
+    Remove what this script installed: the theme files, the BetterDiscord plugins, and the Vencord plugin
+    folders (Vencord is rebuilt without them). Vencord and BetterDiscord themselves stay.
 
 .EXAMPLE
     .\install.ps1 -Plugins
@@ -54,7 +56,7 @@ $ProgressPreference = 'SilentlyContinue' # the download bar makes Windows PowerS
 
 $Repo = 'Plyxen/discord-rice'
 $ThemeFile = 'discord-rice.theme.css'
-$BdUpdater = 'DiscordRiceUpdater.plugin.js'
+$BdUpdater = 'DiscordRiceUpdater.plugin.js' # the one BetterDiscord plugin that also goes in with -ThemeOnly
 $VencordRepo = 'https://github.com/Vendicated/Vencord'
 $TempDir = $null
 $BuiltDir = $null # the Vencord folder, once the plugins are in and built
@@ -190,8 +192,11 @@ function Install-Theme([string]$Source, $Mods) {
         if ($mod.Name -eq 'BetterDiscord') {
             $plugins = Join-Path $mod.Dir 'plugins'
             New-Item -ItemType Directory -Force -Path $plugins | Out-Null
-            Copy-Item -Path (Join-Path $Source "betterdiscord\$BdUpdater") -Destination $plugins -Force
-            Info "$($mod.Name): updater plugin in $plugins"
+            foreach ($plugin in Get-ChildItem (Join-Path $Source 'betterdiscord') -Filter '*.plugin.js') {
+                if ($ThemeOnly -and $plugin.Name -ne $BdUpdater) { continue }
+                Copy-Item -Path $plugin.FullName -Destination $plugins -Force
+                Info "$($mod.Name): plugin $($plugin.BaseName -replace '\.plugin$', '')"
+            }
         }
     }
 }
@@ -290,7 +295,10 @@ function Uninstall-All([string]$Source) {
     foreach ($mod in Get-Mods) {
         $files = @((Join-Path $mod.Dir "themes\$ThemeFile"), (Join-Path $mod.Dir "themes\$ThemeFile.bak"))
         if ($mod.Name -eq 'BetterDiscord') {
-            $files += (Join-Path $mod.Dir "plugins\$BdUpdater"), (Join-Path $mod.Dir "plugins\$BdUpdater.bak"), (Join-Path $mod.Dir 'plugins\DiscordRiceUpdater.config.json')
+            foreach ($plugin in Get-ChildItem (Join-Path $Source 'betterdiscord') -Filter '*.plugin.js') {
+                $name = $plugin.BaseName -replace '\.plugin$', ''
+                $files += (Join-Path $mod.Dir "plugins\$($plugin.Name)"), (Join-Path $mod.Dir "plugins\$($plugin.Name).bak"), (Join-Path $mod.Dir "plugins\$name.config.json")
+            }
         } else {
             $files += (Join-Path $mod.Dir 'discord-rice-updater.json')
         }
@@ -364,8 +372,8 @@ try {
         }
     }
     if ($mods | Where-Object { $_.Name -eq 'BetterDiscord' }) {
-        Info 'BetterDiscord: turn on discord-rice under Settings > Themes, and DiscordRiceUpdater under'
-        Info 'Settings > Plugins so the theme keeps itself up to date.'
+        Info 'BetterDiscord: turn on discord-rice under Settings > Themes, and the plugins under Settings >'
+        Info 'Plugins. DiscordRiceUpdater is the one that keeps the theme and the others up to date.'
     }
 } finally {
     if ($TempDir -and (Test-Path $TempDir)) { Remove-Item $TempDir -Recurse -Force -ErrorAction SilentlyContinue }

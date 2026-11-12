@@ -1,0 +1,124 @@
+/* The plain interface pieces from shims/ui.tsx, in the theme's colours (with stand-ins for when the theme
+   is off). */
+
+.rice-bd-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: grid;
+    place-items: center;
+    background: hsla(0, 0%, 0%, 0.6);
+}
+
+.rice-bd-dialog {
+    box-sizing: border-box;
+    width: min(440px, calc(100vw - 32px));
+    padding: 16px;
+    border: 1px solid var(--float-border, hsla(0, 0%, 100%, 0.2));
+    border-radius: var(--corners, 8px);
+    background: var(--popup, #1c1c1c);
+    color: var(--fg, #dbdbdb);
+    font-family: var(--font-primary, inherit);
+}
+.rice-bd-dialog h2 {
+    margin: 0 0 4px;
+    color: var(--fg-bright, #fafafa);
+    font-size: 16px;
+    font-weight: 600;
+}
+.rice-bd-dialog p {
+    margin: 0 0 12px;
+    color: var(--fg-dim, #a3a3a3);
+    font-size: 13px;
+    line-height: 1.4;
+}
+.rice-bd-notice {
+    color: var(--red, #e08a8a) !important;
+}
+.rice-bd-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.rice-bd-input {
+    box-sizing: border-box;
+    width: 100%;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid var(--edge-strong, hsla(0, 0%, 100%, 0.14));
+    border-radius: var(--corners, 4px);
+    outline: none;
+    background: var(--glass, hsla(0, 0%, 100%, 0.04));
+    color: var(--fg-bright, #fafafa);
+    font: inherit;
+    font-size: 14px;
+}
+.rice-bd-input:focus {
+    border-color: var(--line-focus, hsla(0, 0%, 100%, 0.6));
+}
+select.rice-bd-input option {
+    background: var(--popup, #1c1c1c);
+    color: var(--fg, #dbdbdb);
+}
+
+.rice-bd-btn {
+    height: 32px;
+    padding: 0 14px;
+    border: 1px solid transparent;
+    border-radius: var(--corners, 4px);
+    background: var(--button, #e0e0e0);
+    color: var(--ink, #141414);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.rice-bd-btn:hover {
+    background: var(--button-hover, #cccccc);
+}
+.rice-bd-btn.small {
+    height: 28px;
+    padding: 0 10px;
+}
+.rice-bd-btn:is(.secondary, .dangerSecondary) {
+    border-color: var(--button-edge, hsla(0, 0%, 100%, 0.12));
+    background: var(--raised, hsla(0, 0%, 100%, 0.08));
+    color: var(--fg-strong, #ebebeb);
+}
+.rice-bd-btn:is(.secondary, .dangerSecondary):hover {
+    background: var(--pressed, hsla(0, 0%, 100%, 0.14));
+}
+.rice-bd-btn.dangerSecondary {
+    color: var(--red, #e08a8a);
+}
+.rice-bd-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.rice-bd-p {
+    margin: 0;
+    color: var(--fg, #dbdbdb);
+    font-size: 14px;
+}
+
+/* the rice bowl button in the channel header corner. The theme sizes and colours the buttons there; these
+   are the same values for when it is off */
+.rice-bd-header {
+    display: flex;
+}
+.rice-bd-header > .vc-discord-rice-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    color: var(--fg-dim, #b5bac1);
+    cursor: pointer;
+    -webkit-app-region: no-drag;
+}
+.rice-bd-header > .vc-discord-rice-btn:hover {
+    color: var(--fg-bright, #ffffff);
+}

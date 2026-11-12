@@ -1,8 +1,8 @@
 /**
  * @name DiscordRiceUpdater
  * @author Pota
- * @description Keeps the discord-rice theme file up to date from github.com/Plyxen/discord-rice. A theme file you edited yourself is left alone.
- * @version 1.0.0
+ * @description Keeps the discord-rice theme file and plugins up to date from github.com/Plyxen/discord-rice. A file you edited yourself is left alone.
+ * @version 1.1.0
  * @source https://github.com/Plyxen/discord-rice
  * @website https://github.com/Plyxen/discord-rice
  */
@@ -16,7 +16,8 @@
  * Shortly after Discord starts, and every six hours after that, it asks GitHub whether the repo has a
  * new commit (free when nothing changed). If the theme changed, the new file is fetched by that commit's
  * id, checked against GitHub's file listing, and written over the one in the themes folder; BetterDiscord
- * reloads it on the spot. This file is kept up to date the same way.
+ * reloads it on the spot. The discord-rice plugins in the plugins folder, this one included, are kept up
+ * to date the same way.
  *
  * A file is replaced when the repo changed it and nobody changed it on this PC since the plugin last
  * looked. One you edited is left alone and you get a message instead; "Replace my changes" in the
@@ -46,10 +47,12 @@ module.exports = class DiscordRiceUpdater {
     /** the files looked after: path in the repo -> file on this PC */
     files() {
         const path = require("path");
-        return {
-            "discord-rice.theme.css": path.join(BdApi.Themes.folder, "discord-rice.theme.css"),
-            "betterdiscord/DiscordRiceUpdater.plugin.js": path.join(BdApi.Plugins.folder, "DiscordRiceUpdater.plugin.js")
-        };
+        const files = { "discord-rice.theme.css": path.join(BdApi.Themes.folder, "discord-rice.theme.css") };
+        // only the ones that are installed here get updated; a plugin you left out stays out
+        for (const name of ["DiscordRiceUpdater", "DiscordRice", "FolderPictures", "CodeBlockButton"]) {
+            files[`betterdiscord/${name}.plugin.js`] = path.join(BdApi.Plugins.folder, `${name}.plugin.js`);
+        }
+        return files;
     }
 
     /** the id git gives a file's contents. The repo has LF line ends, a file saved on Windows may not */

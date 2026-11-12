@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# Installs discord-rice on Linux and macOS: the theme for Vencord, Vesktop and BetterDiscord, and the
-# plugins for Vencord. Run it from a copy of the repo, or straight from GitHub:
+# Installs discord-rice on Linux and macOS: the theme and the plugins, for Vencord, Vesktop and
+# BetterDiscord. Run it from a copy of the repo, or straight from GitHub:
 #
 #   curl -fsSL https://raw.githubusercontent.com/Plyxen/discord-rice/main/install.sh | bash
 #   curl -fsSL https://raw.githubusercontent.com/Plyxen/discord-rice/main/install.sh | bash -s -- --plugins
 #
 # What it does, in this order:
 #   1. Copies the theme into the themes folder of every mod it finds (Vencord, Vesktop, BetterDiscord).
-#   2. BetterDiscord: also copies the small plugin that keeps the theme up to date.
+#   2. BetterDiscord: also copies its plugins (the settings window, folder looks, the code block button and
+#      the updater). They are single files, so there is nothing more to it.
 #   3. Vencord, if you say yes: sets up the plugins. Vencord only takes extra plugins when it is built from
 #      its source, so this finds your source build or downloads one (git clone), copies the plugin folders
 #      into it, builds it, and points Discord at the build with Vencord's own installer. That needs git
@@ -19,7 +20,7 @@ set -eo pipefail
 
 REPO="Plyxen/discord-rice"
 THEME_FILE="discord-rice.theme.css"
-BD_UPDATER="DiscordRiceUpdater.plugin.js"
+BD_UPDATER="DiscordRiceUpdater.plugin.js" # the one BetterDiscord plugin that also goes in with --theme-only
 VENCORD_REPO="https://github.com/Vendicated/Vencord"
 
 theme_only=0
@@ -35,7 +36,8 @@ usage() {
     cat <<'EOF'
 Usage: install.sh [options]
 
-  --theme-only        the theme (and the BetterDiscord updater) only, without asking about the plugins
+  --theme-only        the theme only, without asking about the plugins (BetterDiscord still gets
+                      the updater plugin, so the theme keeps itself up to date)
   --plugins           also set up the Vencord plugins, without asking
   --vencord-dir DIR   where the Vencord source is, or where to download it to
                       (default: the build that is already in use, otherwise ~/Vencord)
@@ -211,7 +213,7 @@ run_pnpm() {
 build_vencord() { (cd "$1" && node --require=./scripts/suppressExperimentalWarnings.js scripts/build/build.mjs); }
 
 install_theme() {
-    local i themes plugins
+    local i themes plugins plugin
     step "Theme"
     for i in "${!mod_names[@]}"; do
         themes="${mod_dirs[$i]}/themes"
@@ -221,8 +223,11 @@ install_theme() {
         if [ "${mod_names[$i]}" = "BetterDiscord" ]; then
             plugins="${mod_dirs[$i]}/plugins"
             mkdir -p "$plugins"
-            cp "$src/betterdiscord/$BD_UPDATER" "$plugins/"
-            info "${mod_names[$i]}: updater plugin in $plugins"
+            for plugin in "$src"/betterdiscord/*.plugin.js; do
+                if [ "$theme_only" = 1 ] && [ "$(basename "$plugin")" != "$BD_UPDATER" ]; then continue; fi
+                cp "$plugin" "$plugins/"
+                info "${mod_names[$i]}: plugin $(basename "$plugin" .plugin.js)"
+            done
         fi
     done
 }
@@ -318,12 +323,20 @@ uninstall_all() {
     step "Removing discord-rice"
     for i in "${!mod_names[@]}"; do
         dir="${mod_dirs[$i]}"
-        for file in "$dir/themes/$THEME_FILE" "$dir/themes/$THEME_FILE.bak" "$dir/discord-rice-updater.json" \
-            "$dir/plugins/$BD_UPDATER" "$dir/plugins/$BD_UPDATER.bak" "$dir/plugins/DiscordRiceUpdater.config.json"; do
+        for file in "$dir/themes/$THEME_FILE" "$dir/themes/$THEME_FILE.bak" "$dir/discord-rice-updater.json"; do
             if [ -f "$file" ]; then
                 rm -f "$file"
                 info "removed $file"
             fi
+        done
+        for plugin in "$src"/betterdiscord/*.plugin.js; do
+            name="$(basename "$plugin" .plugin.js)"
+            for file in "$dir/plugins/$name.plugin.js" "$dir/plugins/$name.plugin.js.bak" "$dir/plugins/$name.config.json"; do
+                if [ -f "$file" ]; then
+                    rm -f "$file"
+                    info "removed $file"
+                fi
+            done
         done
     done
 
@@ -397,6 +410,6 @@ if [ "$for_vencord" = 1 ]; then
     fi
 fi
 if [ "$for_bd" = 1 ]; then
-    info "BetterDiscord: turn on discord-rice under Settings > Themes, and DiscordRiceUpdater under"
-    info "Settings > Plugins so the theme keeps itself up to date."
+    info "BetterDiscord: turn on discord-rice under Settings > Themes, and the plugins under Settings >"
+    info "Plugins. DiscordRiceUpdater is the one that keeps the theme and the others up to date."
 fi

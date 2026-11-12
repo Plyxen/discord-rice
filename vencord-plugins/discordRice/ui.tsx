@@ -17,6 +17,7 @@ import { SettingsTab } from "@components/settings/tabs/BaseTab";
 import { GuildStore, IconUtils, openModal, SortedGuildStore, useEffect, useReducer, useRef, UserStore, useState } from "@webpack/common";
 import type { KeyboardEvent, ReactNode } from "react";
 
+import { MOD } from "./mod";
 import { FONTS, isOurLink, resetAll, set, settings, Store, THEME_FILE, THEME_LINK } from "./store";
 
 type Key = keyof Store;
@@ -222,7 +223,7 @@ function ThemeCheck() {
         <button role="switch" aria-checked={on} className="vc-rice-check" onClick={toggle}>
             <span className="vc-rice-box" aria-hidden>{on ? "[x]" : "[ ]"}</span>
             <span className="vc-rice-label">theme</span>
-            <span className="vc-rice-desc">from the themes folder or the online link. everything here needs it on.</span>
+            <span className="vc-rice-desc">{MOD.themeFrom}</span>
         </button>
     );
 }
@@ -240,7 +241,7 @@ function About() {
                         <div key={name} className="vc-rice-plugin">
                             <span className={"dot" + (on ? " on" : "")} aria-hidden>{on ? "●" : "○"}</span>
                             <b>{name}</b>
-                            <span className="vc-rice-desc">{on ? what : "off: turn it on in Vencord → Plugins, then restart Discord"}</span>
+                            <span className="vc-rice-desc">{on ? what : MOD.pluginOff}</span>
                         </div>
                     );
                 })}
@@ -250,7 +251,7 @@ function About() {
                 <li>right-click a server folder → <kbd>Folder look</kbd>, or use the folders tab here.</li>
                 <li>select text in the chat bar, then the <kbd>```</kbd> button wraps it in a code block.</li>
                 <li>drag the window by the empty space in the channel header, next to the channel name.</li>
-                <li>this window is behind the rice bowl button in the channel header, and in Settings → discord-rice.</li>
+                <li>{MOD.whereElse}</li>
             </ul>
         </>
     );
@@ -385,7 +386,7 @@ function Folders() {
     const [open, setOpen] = useState<string | null>(null);
     useEffect(() => api?.subscribe(rerender), [api]);
 
-    if (!api) return <p className="vc-rice-lead">turn on the FolderPictures plugin (then restart discord) to give folders a look.</p>;
+    if (!api) return <p className="vc-rice-lead">{MOD.foldersOff}</p>;
     const folders = SortedGuildStore.getGuildFolders().filter(f => f.folderId != null);
     if (!folders.length) return <p className="vc-rice-lead">no server folders yet. drag one server onto another to make one.</p>;
 

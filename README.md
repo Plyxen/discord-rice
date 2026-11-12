@@ -1,6 +1,6 @@
 # discord-rice
 
-Discord made to look like a tiling-WM Linux rice. The theme works in [Vencord](https://vencord.dev) and [BetterDiscord](https://betterdiscord.app); the small plugins that come with it are for Vencord. One installer sets up all of it, and it keeps itself up to date.
+Discord made to look like a tiling-WM Linux rice: a theme and a few small plugins, for [Vencord](https://vencord.dev) and [BetterDiscord](https://betterdiscord.app). One installer sets up all of it, and it keeps itself up to date.
 
 ![discord-rice: tiled panes on a misty wallpaper, Iosevka, a fetch code block, folder icons in the server list](screenshots/discord-rice.webp)
 
@@ -20,7 +20,7 @@ Discord made to look like a tiling-WM Linux rice. The theme works in [Vencord](h
 
 ### Install
 
-You need [Vencord](https://vencord.dev) (or [Vesktop](https://github.com/Vencord/Vesktop), which has Vencord built in) or [BetterDiscord](https://betterdiscord.app). The theme works on its own; the plugins below are optional extras for Vencord.
+You need [Vencord](https://vencord.dev) (or [Vesktop](https://github.com/Vencord/Vesktop), which has Vencord built in) or [BetterDiscord](https://betterdiscord.app). The theme works on its own; the plugins below are optional extras.
 
 **The installer.** It finds the mods you have, copies the theme into each one, and offers to set up the Vencord plugins too.
 
@@ -39,14 +39,14 @@ curl -fsSL https://raw.githubusercontent.com/Plyxen/discord-rice/main/install.sh
 If you'd rather read a script before running it, download the repo and run `install.ps1` or `install.sh` from its folder; they do the same from the local files. What they do:
 
 - **Vencord and Vesktop:** the theme file goes into the themes folder.
-- **BetterDiscord:** the theme file, and `DiscordRiceUpdater`, a small plugin that keeps the theme up to date.
+- **BetterDiscord:** the theme file and the plugins, which are single files that go into its plugins folder.
 - **The Vencord plugins,** after asking: see [The plugins](#the-plugins). This is the only part that needs anything installed (git and Node.js), and the script only tells you if they are missing.
 
-Then turn the theme on in Discord: **Settings → Vencord → Themes** (or **Settings → Themes** under BetterDiscord) **→ discord-rice**. In BetterDiscord, also turn on **DiscordRiceUpdater** under **Plugins**.
+Then turn the theme on in Discord: **Settings → Vencord → Themes** (or **Settings → Themes** under BetterDiscord) **→ discord-rice**. In BetterDiscord, also turn the plugins on under **Settings → Plugins**.
 
 | Windows | Linux, macOS | |
 | --- | --- | --- |
-| `-ThemeOnly` | `--theme-only` | The theme (and the BetterDiscord updater) only, without asking about the plugins. |
+| `-ThemeOnly` | `--theme-only` | The theme only, without asking about the plugins. BetterDiscord still gets its updater plugin. |
 | `-Plugins` | `--plugins` | Set up the plugins too, without asking. |
 | `-VencordDir <folder>` | `--vencord-dir <folder>` | Where the Vencord source is, or where to download it to. |
 | `-NoInject` | `--no-inject` | Build Vencord with the plugins, but don't point Discord at the build. |
@@ -69,7 +69,7 @@ https://cdn.jsdelivr.net/gh/Plyxen/discord-rice@main/discord-rice.theme.css
 | Vencord with the plugins | `RiceUpdater` replaces the theme file | `RiceUpdater` fetches them, rebuilds Vencord and offers a restart |
 | Vencord, online link | Vencord fetches it on every start; jsDelivr can take up to a day to pick up a new version | |
 | Vencord, theme file only | Doesn't update. Use the link instead, or run the installer again | |
-| BetterDiscord | `DiscordRiceUpdater` replaces the theme file | |
+| BetterDiscord | `DiscordRiceUpdater` replaces the theme file | `DiscordRiceUpdater` replaces the plugin files, and BetterDiscord reloads them on the spot |
 
 Both updaters work the same way. Shortly after Discord starts, and every six hours after that, they ask GitHub whether this repo has a new commit, fetch what changed, check each file against GitHub's listing, and put it in place. They talk to nothing but this repo.
 
@@ -79,9 +79,9 @@ Both updaters work the same way. Shortly after Discord starts, and every six hou
 
 ### Options
 
-The easy way is inside Discord: the **rice bowl button** in the channel header, where the inbox button used to be, opens the discord-rice window, a small terminal-style settings tool with every option below. The same window is under **Settings → discord-rice** (in the Vencord section). It comes from the DiscordRice plugin, which also opens it once the first time you start Discord with it. Changes apply straight away.
+The easy way is inside Discord: the **rice bowl button** in the channel header, where the inbox button used to be, opens the discord-rice window, a small terminal-style settings tool with every option below. The same window is under **Settings → discord-rice** (in the Vencord section), or in BetterDiscord behind the cog of the DiscordRice plugin. It comes from the DiscordRice plugin, which also opens it once the first time you start Discord with it. Changes apply straight away.
 
-Without the plugin (and in BetterDiscord, which the plugins don't run in), every option is a CSS variable at the top of the theme file. You can edit the file, or leave it alone and put your changes in the mod's own CSS box, which is read after the theme: **Settings → Vencord → Themes → Edit QuickCSS**, or BetterDiscord's **Custom CSS**. For example `body { --hide-sticker-button: on; --corners: 0px; }`.
+Without the plugin, every option is a CSS variable at the top of the theme file. You can edit the file, or leave it alone and put your changes in the mod's own CSS box, which is read after the theme: **Settings → Vencord → Themes → Edit QuickCSS**, or BetterDiscord's **Custom CSS**. For example `body { --hide-sticker-button: on; --corners: 0px; }`.
 
 | Variable | Default | What it does |
 | --- | --- | --- |
@@ -113,7 +113,26 @@ The wallpaper is embedded in the theme (the long line at the bottom), so it need
 
 ## The plugins
 
-The four of them are Vencord user plugins in `vencord-plugins/`. They're optional: the theme works without them. User plugins can't be added to the normal Vencord install; they need Vencord built from its source.
+There are four, and they come for both mods. They're optional: the theme works without them.
+
+| Plugin | What it does |
+| --- | --- |
+| DiscordRice | The settings window, the theme's switches and the ASCII wallpaper. |
+| FolderPictures | A look of its own for a server folder: a picture, an icon or a bit of ASCII. |
+| CodeBlockButton | A ``` button in the popup you get when you select text in the chat box. |
+| RiceUpdater (in BetterDiscord: DiscordRiceUpdater) | Keeps the theme file and the plugins up to date, see [Updates](#updates). |
+
+### In BetterDiscord
+
+The plugins are the `.plugin.js` files in `betterdiscord/`. The installer copies them into BetterDiscord's plugins folder; by hand, open **Settings → Plugins → Open Plugins Folder** and drop them in. Then turn them on in that list. Nothing has to be built.
+
+- DiscordRice and FolderPictures are the very same code as the Vencord plugins, built into one file each, so the window, the switches and the folder looks are the same. The settings window opens from the rice bowl button and from the cog of the DiscordRice plugin; there is no page for it in Discord's settings.
+- CodeBlockButton is written separately for BetterDiscord, because the Vencord one works by rewriting Discord's own code, which BetterDiscord can't do. It does the same job: it puts the selected text inside ``` and takes them off again on a second click.
+- To build the two shared ones after changing their source: `node betterdiscord/src/build.mjs <a Vencord source folder>`. It uses the bundler from that Vencord folder and installs nothing.
+
+### In Vencord
+
+The plugins are the folders in `vencord-plugins/`. User plugins can't be added to the normal Vencord install; they need Vencord built from its source.
 
 **With the installer.** Say yes when it asks about the plugins, or run it with `-Plugins` / `--plugins`. It needs [git](https://git-scm.com) and [Node.js](https://nodejs.org) (22 or newer) and does the rest:
 
@@ -216,9 +235,9 @@ The presets come in pairs, the same name as ASCII and as an icon:
 
 - The **notification bell**, **video call**, **sticker button** and **gift button** switches, and the hiding of the greyed-out DM profile button, find those buttons by their English labels, so they do nothing when Discord is set to another language. Everything else works in any language.
 - The theme is made for Discord's dark mode on desktop.
-- The BetterDiscord side (the theme's rules for its interface and `DiscordRiceUpdater`) is written from BetterDiscord's source and tested outside it, not inside a running BetterDiscord.
+- The BetterDiscord side (the theme's rules for its interface, and the four plugins) is written from BetterDiscord's and Discord's source and tested on a stand-in page, not inside a running BetterDiscord. If something is off there, please open an issue.
 - The installers are tested on Windows. `install.sh` is tested with fake folders, not on a real Linux or macOS install.
-- The plugins are Vencord only. In BetterDiscord you get the whole look and the theme updater, but not the settings window, folder looks, ASCII wallpaper or code block button.
+- In BetterDiscord the inbox button is hidden from the outside instead of never being drawn, and the folder looks find a folder by an id Discord puts on it. Both can stop working after a Discord update until this repo catches up; the rest of the plugins keeps working.
 - The ASCII wallpaper needs a picture the page is allowed to read: the default one and imgur links work; some sites don't allow it.
 
 ## When Discord updates break it
