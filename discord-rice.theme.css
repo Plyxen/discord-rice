@@ -2,7 +2,7 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 4.0.2
+ * @version 4.0.3
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
@@ -704,6 +704,35 @@ body,
     --white-500: var(--fg-bright);
     --interactive-text-default: var(--fg-strong);
     --interactive-text-active: var(--fg-bright);
+}
+
+/* the call screen is all video and dark overlays, so plain "white" is light there too: the round buttons
+   (mute, camera, share...) draw their icons in it, and fill the pressed ones with it */
+.wrapper_hbKzX7,
+.callContainer_hbKzX7,
+.callContainer_DwQMm_,
+:is(.wrapper_hbKzX7, .callContainer_hbKzX7, .callContainer_DwQMm_) :is(.theme-dark, .theme-darker, .theme-midnight, .theme-light) {
+    --white: var(--fg-bright);
+    --white-500: var(--fg-bright);
+}
+/* ...except on the round buttons this theme fills with a light colour, where the icon stays dark */
+.colorable_K9Xq13:is(.green_K9Xq13, .join_K9Xq13, .yellow_K9Xq13) {
+    --white: var(--ink);
+}
+
+/* Vencord's own switches (plugin and theme lists), which don't use Discord's switch colours: the same look
+   as Discord's here. Off is a grey knob with a dark cross, on a dark knob with a light tick on the light track */
+.vc-switch-slider > rect {
+    fill: var(--fg-dim);
+}
+.vc-switch-slider path {
+    fill: var(--ink);
+}
+.vc-switch-checked .vc-switch-slider > rect {
+    fill: var(--ink);
+}
+.vc-switch-checked .vc-switch-slider path {
+    fill: var(--bar);
 }
 
 /* status dots and the "playing" icon: Discord paints these from script, with its own green, yellow and red,
