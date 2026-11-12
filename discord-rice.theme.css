@@ -2,7 +2,7 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 4.1.0
+ * @version 4.1.1
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
@@ -657,6 +657,12 @@ body,
 .bar_oJAkDB {
     color: var(--fg-dim);
 }
+/* the small badge on a server's icon that says people are in voice there: Discord draws a white speaker on
+   a black dot, and "white" is dark in this theme (see the colour names above), so the speaker was lost.
+   Light again. The green badge, for a call you are in yourself, keeps its dark icon */
+.iconBadge_rwEpIL:not(.isCurrentUserConnected_rwEpIL) {
+    color: var(--fg-bright);
+}
 
 /* home button: Discord writes "white" on it when it is hovered or open, which is dark in this theme (see
    the colour names above). Keep the icon light: it sits on a faint tint here, not on blurple */
@@ -802,8 +808,13 @@ rect[mask*='status-streaming'] {
     fill: var(--online);
 }
 
-/* member list: Discord fills each row from script too (it is what a nameplate picture sits on). No fill:
-   the rows sit on the wallpaper. The hover tint is on an inner element and still works */
+/* member list: see-through, like the other panes. Its colour is one Discord works out on <html>, from
+   its own grey, so the see-through base colours ("no panels" below) never reach it. Set here instead */
+body {
+    --custom-channel-members-bg: transparent;
+}
+/* Discord fills each row from script too (it is what a nameplate picture sits on). No fill: the rows sit
+   on the wallpaper. The hover tint is on an inner element and still works */
 .member_Iy0c7A {
     background: none !important;
 }
