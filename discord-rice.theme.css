@@ -2,7 +2,7 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 4.1.1
+ * @version 4.1.2
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
@@ -669,7 +669,8 @@ body,
 [data-list-item-id='guildsnav___home']:is(:hover, .selected_JJ-hgR) > .childWrapper_JJ-hgR {
     color: var(--fg-bright);
 }
-/* ...and with the Arch logo, drawn with a mask so it takes the button's text colour */
+/* ...and with the Arch logo, drawn with a mask so it takes the button's text colour. It makes one turn when
+   you point at the button or open the home page, and turns back when you leave */
 @container style(--home-icon: arch) {
     [data-list-item-id='guildsnav___home'] > .childWrapper_JJ-hgR > svg {
         display: none;
@@ -680,6 +681,14 @@ body,
         height: 26px;
         background-color: currentColor;
         mask: var(--arch-logo) center / contain no-repeat;
+    }
+    [data-list-item-id='guildsnav___home']:is(:hover, .selected_JJ-hgR) > .childWrapper_JJ-hgR::before {
+        rotate: 1turn;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+        [data-list-item-id='guildsnav___home'] > .childWrapper_JJ-hgR::before {
+            transition: rotate 0.4s ease;
+        }
     }
 }
 
