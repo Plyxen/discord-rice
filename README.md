@@ -40,7 +40,7 @@ If you'd rather read a script before running it, download the repo and run `inst
 
 - **Vencord and Vesktop:** the theme file goes into the themes folder.
 - **BetterDiscord:** the theme file and the plugins, which are single files that go into its plugins folder.
-- **The Vencord plugins,** after asking: see [The plugins](#the-plugins). This is the only part that needs anything installed (git and Node.js), and the script only tells you if they are missing.
+- **The Vencord plugins,** after asking: see [The plugins](#the-plugins). This is the only part that needs anything else installed (git and Node.js). If one is missing, the installer offers to install it and does so only if you say yes.
 
 Then turn the theme on in Discord: **Settings → Vencord → Themes** (or **Settings → Themes** under BetterDiscord) **→ discord-rice**. In BetterDiscord, also turn the plugins on under **Settings → Plugins**.
 
@@ -48,6 +48,7 @@ Then turn the theme on in Discord: **Settings → Vencord → Themes** (or **Set
 | --- | --- | --- |
 | `-ThemeOnly` | `--theme-only` | The theme only, without asking about the plugins. BetterDiscord still gets its updater plugin. |
 | `-Plugins` | `--plugins` | Set up the plugins too, without asking. |
+| `-InstallTools` | `--install-tools` | With the plugins, install git and Node.js without asking, if they are missing. |
 | `-Orion` | `--orion` | With the plugins, also add Orion without asking, or update it. See [Orion](#orion). |
 | `-VencordDir <folder>` | `--vencord-dir <folder>` | Where the Vencord source is, or where to download it to. |
 | `-NoInject` | `--no-inject` | Build Vencord with the plugins, but don't point Discord at the build. |
@@ -135,7 +136,7 @@ The plugins are the `.plugin.js` files in `betterdiscord/`. The installer copies
 
 The plugins are the folders in `vencord-plugins/`. User plugins can't be added to the normal Vencord install; they need Vencord built from its source.
 
-**With the installer.** Say yes when it asks about the plugins, or run it with `-Plugins` / `--plugins`. It needs [git](https://git-scm.com) and [Node.js](https://nodejs.org) (22 or newer) and does the rest:
+**With the installer.** Say yes when it asks about the plugins, or run it with `-Plugins` / `--plugins`. It needs [git](https://git-scm.com) and [Node.js](https://nodejs.org) (22 or newer). If one is missing, it offers to install it: with winget on Windows (the installer that comes with Windows, which asks for your permission), or with brew, apt, dnf or pacman elsewhere, showing the command before running it. A package manager's Node.js can be older than Vencord needs; the installer says so and stops there. Then it does the rest:
 
 1. If Discord or Vesktop already runs a Vencord source build, it uses that. Otherwise it downloads Vencord's source into a `Vencord` folder in your user folder.
 2. It copies the plugin folders into `src/userplugins/` and builds Vencord. The package manager Vencord uses (pnpm) is fetched for that one run if you don't have it.

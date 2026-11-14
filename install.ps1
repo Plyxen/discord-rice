@@ -14,7 +14,8 @@
       3. Vencord, if you say yes: sets up the plugins. Vencord only takes extra plugins when it is built
          from its source, so this finds your source build or downloads one (git clone), copies the plugin
          folders into it, builds it, and points Discord at the build with Vencord's own installer.
-         That needs Git and Node.js; the script tells you if they are missing and installs nothing itself.
+         That needs Git and Node.js. If one is missing, the script offers to install it with winget, the
+         installer that comes with Windows, and does so only if you say yes.
          With the plugins it also asks about Orion, which is somebody else's plugin (see -Orion).
 
     Run it again whenever you like: it replaces what it installed and leaves everything else alone.
@@ -25,6 +26,9 @@
 
 .PARAMETER Plugins
     Also do step 3, without asking.
+
+.PARAMETER InstallTools
+    With the plugins, install Git and Node.js with winget without asking, if they are missing.
 
 .PARAMETER Orion
     With the plugins, also add Orion (github.com/nyxxbit/discord-quest-completer) without asking, or update
@@ -53,6 +57,7 @@
 param(
     [switch]$ThemeOnly,
     [switch]$Plugins,
+    [switch]$InstallTools,
     [switch]$Orion,
     [string]$VencordDir,
     [switch]$NoInject,
@@ -87,13 +92,47 @@ function Find-Tool([string]$Command) {
 }
 function Have([string]$Command) { [bool](Find-Tool $Command) }
 
-# Asks a yes/no question. Without a keyboard to ask (a script, a scheduled run) the answer is the default.
-function Ask([string]$Question, [bool]$Default = $false) {
+# Asks a yes/no question. $Default is the answer to just pressing Enter. Without a keyboard to ask (a
+# script, a scheduled run) the answer is $Unattended, which is no unless said otherwise.
+function Ask([string]$Question, [bool]$Default = $false, [bool]$Unattended = $false) {
     $hint = '[y/N]'
     if ($Default) { $hint = '[Y/n]' }
-    try { $answer = Read-Host "$Question $hint" } catch { return $Default }
+    try { $answer = Read-Host "$Question $hint" } catch { return $Unattended }
     if ([string]::IsNullOrWhiteSpace($answer)) { return $Default }
     return $answer.Trim() -match '^(y|yes)$'
+}
+
+# What the plugins need besides Vencord: the command to look for, the name to show, its winget id.
+$Tools = @(
+    [pscustomobject]@{ Command = 'git'; Name = 'Git'; Id = 'Git.Git'; Link = 'https://git-scm.com' },
+    [pscustomobject]@{ Command = 'node'; Name = 'Node.js'; Id = 'OpenJS.NodeJS.LTS'; Link = 'https://nodejs.org' }
+)
+
+# A program installed a moment ago is on the PATH Windows keeps, but not yet on this window's copy of it.
+function Update-Path {
+    $fresh = @([Environment]::GetEnvironmentVariable('Path', 'Machine'), [Environment]::GetEnvironmentVariable('Path', 'User')) -join ';'
+    $known = $env:Path -split ';'
+    $added = $fresh -split ';' | Where-Object { $_ -and ($known -notcontains $_) }
+    if ($added) { $env:Path = ($env:Path.TrimEnd(';') + ';' + ($added -join ';')) }
+}
+
+# Installs the given tools with winget, after asking. True if it went and tried.
+function Install-Tools($Wanted) {
+    $names = ($Wanted | ForEach-Object { $_.Name }) -join ' and '
+    if (-not (Have winget)) { return $false }
+    if (-not $InstallTools) {
+        Info "The plugins need $names, which this PC doesn't have yet (or has too old)."
+        Info 'It can be installed now with winget, the installer that comes with Windows. Windows will ask'
+        Info 'for your permission while it does.'
+        if (-not (Ask "  Install $names now?" $true $false)) { return $false }
+    }
+    foreach ($tool in $Wanted) {
+        Info "Installing $($tool.Name) ..."
+        & (Find-Tool winget) install --id $tool.Id --exact --source winget --silent | Out-Host
+        if ($LASTEXITCODE -ne 0) { Warn "winget did not finish installing $($tool.Name) (exit code $LASTEXITCODE)." }
+    }
+    Update-Path
+    return $true
 }
 
 # Runs a program in a folder and stops the script if it fails.
@@ -281,13 +320,20 @@ function Undo-Orion {
 function Install-Plugins([string]$Source) {
     Step 'Vencord plugins'
 
-    $missing = @()
-    if (-not (Have git)) { $missing += 'Git (https://git-scm.com, or: winget install Git.Git)' }
-    if (-not (Have node)) { $missing += 'Node.js (https://nodejs.org, or: winget install OpenJS.NodeJS.LTS)' }
+    $missing = @($Tools | Where-Object { -not (Have $_.Command) })
     if ($missing) {
-        Warn 'The plugins need these, which are not installed (or not on PATH yet in this window):'
-        $missing | ForEach-Object { Info "  - $_" }
-        Info 'Install them, open a new PowerShell window and run this again. Nothing was changed for the plugins.'
+        $tried = Install-Tools $missing
+        $missing = @($Tools | Where-Object { -not (Have $_.Command) })
+    }
+    if ($missing) {
+        if ($tried) {
+            Warn 'Not everything is there yet. Windows may only show new programs to a new window.'
+            Info 'Open a new PowerShell window and run this again.'
+        } else {
+            Warn 'The plugins need these, which are not installed (or not on PATH yet in this window):'
+            $missing | ForEach-Object { Info "  - $($_.Name) ($($_.Link), or: winget install $($_.Id))" }
+            Info 'Install them, open a new PowerShell window and run this again. Nothing was changed for the plugins.'
+        }
         return
     }
 
@@ -318,6 +364,12 @@ function Install-Plugins([string]$Source) {
         $engines = (Get-Content (Join-Path $dir 'package.json') -Raw | ConvertFrom-Json).engines.node
         if ($engines -match '(\d+)') { $needed = [int]$Matches[1] }
     } catch { }
+    if ($nodeMajor -lt $needed) {
+        # the newer one replaces the old one where it was installed the usual way
+        if (Install-Tools @($Tools | Where-Object { $_.Command -eq 'node' })) {
+            $nodeMajor = [int](& node -p "process.versions.node.split('.')[0]")
+        }
+    }
     if ($nodeMajor -lt $needed) {
         Warn "Vencord needs Node.js $needed or newer; this PC has $nodeMajor. Update Node.js (https://nodejs.org) and run this again."
         return

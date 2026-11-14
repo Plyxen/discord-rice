@@ -12,7 +12,8 @@
 #   3. Vencord, if you say yes: sets up the plugins. Vencord only takes extra plugins when it is built from
 #      its source, so this finds your source build or downloads one (git clone), copies the plugin folders
 #      into it, builds it, and points Discord at the build with Vencord's own installer. That needs git
-#      and Node.js; the script tells you if they are missing and installs nothing itself.
+#      and Node.js. If one is missing, the script offers to install it with your package manager (brew,
+#      apt, dnf or pacman), shows the command first, and runs it only if you say yes.
 #      With the plugins it also asks about Orion, which is somebody else's plugin (see --help).
 #
 # Run it again whenever you like: it replaces what it installed and leaves everything else alone.
@@ -29,6 +30,7 @@ ORION_FOLDER="discord-quest-completer" # the folder name Orion's own guide uses
 theme_only=0
 want_plugins=0
 want_orion=0
+install_tools=0
 no_inject=0
 uninstall=0
 vencord_dir=""
@@ -46,6 +48,8 @@ Usage: install.sh [options]
   --theme-only        the theme only, without asking about the plugins (BetterDiscord still gets
                       the updater plugin, so the theme keeps itself up to date)
   --plugins           also set up the Vencord plugins, without asking
+  --install-tools     with the plugins, install git and Node.js with your package manager without
+                      asking, if they are missing
   --orion             with the plugins, also add Orion without asking (or update it). Orion
                       (github.com/nyxxbit/discord-quest-completer) completes Discord Quests without
                       playing them. It is not part of discord-rice: its newest code is downloaded
@@ -72,6 +76,7 @@ while [ $# -gt 0 ]; do
         --theme-only) theme_only=1 ;;
         --plugins) want_plugins=1 ;;
         --orion) want_orion=1 ;;
+        --install-tools) install_tools=1 ;;
         --no-inject) no_inject=1 ;;
         --uninstall) uninstall=1 ;;
         --vencord-dir)
@@ -88,6 +93,52 @@ done
 
 # Is there a terminal to ask on? (There is even when the script itself is piped in from curl.)
 has_tty() { { : >/dev/tty; } 2>/dev/null; }
+
+# Asks a yes/no question where just pressing Enter means yes. Without a terminal the answer is no.
+ask_yes() {
+    local answer=""
+    has_tty || return 1
+    printf '%s [Y/n] ' "$1" >/dev/tty
+    read -r answer </dev/tty || return 1
+    case "$answer" in
+        n | N | no | No | NO) return 1 ;;
+        *) return 0 ;;
+    esac
+}
+
+# The command that installs git and Node.js with this system's package manager. Prints nothing if it
+# knows none. npm is named too where it is a package of its own: it brings npx, which fetches pnpm.
+tools_command() {
+    local sudo=""
+    if [ "$(id -u)" != 0 ]; then sudo="sudo "; fi
+    if have brew; then
+        printf 'brew install git node\n'
+    elif have apt-get; then
+        printf '%sapt-get install -y git nodejs npm\n' "$sudo"
+    elif have dnf; then
+        printf '%sdnf install -y git nodejs npm\n' "$sudo"
+    elif have pacman; then
+        printf '%spacman -S --needed --noconfirm git nodejs npm\n' "$sudo"
+    fi
+}
+
+# Installs git and Node.js with the package manager, after showing the command and asking.
+# Fails (returns 1) if it didn't go and try.
+install_the_tools() {
+    local command
+    command="$(tools_command)"
+    [ -n "$command" ] || return 1
+    if [ "$install_tools" = 0 ]; then
+        info "The plugins need git and Node.js, and this computer doesn't have both yet (or has too old)."
+        info "They can be installed now with:  $command"
+        ask_yes "  Run that now?" || return 1
+    fi
+    info "Running: $command"
+    # the command is one of the fixed lines above, never anything typed in or downloaded
+    sh -c "$command" || warn "That did not finish cleanly."
+    hash -r 2>/dev/null || true
+    return 0
+}
 
 # Asks a yes/no question. Without a terminal the answer is no.
 ask() {
@@ -310,12 +361,19 @@ undo_orion() {
 
 # Sets $built_dir when the plugins are in and built.
 install_plugins() {
-    local in_use dir node_major needed plugin name now existing
+    local in_use dir node_major needed plugin name now existing tried=0
     step "Vencord plugins"
 
     if ! have git || ! have node; then
-        warn "The plugins need git and Node.js (https://nodejs.org), and at least one is missing."
-        info "Install them with your package manager and run this again. Nothing was changed for the plugins."
+        if install_the_tools; then tried=1; fi
+    fi
+    if ! have git || ! have node; then
+        if [ "$tried" = 1 ]; then
+            warn "git and Node.js are still not both there. Open a new terminal and run this again."
+        else
+            warn "The plugins need git and Node.js (https://nodejs.org), and at least one is missing."
+            info "Install them with your package manager and run this again. Nothing was changed for the plugins."
+        fi
         return 0
     fi
 
@@ -344,7 +402,8 @@ install_plugins() {
     needed="$(sed -n 's/.*"node"[[:space:]]*:[[:space:]]*"[^0-9]*\([0-9][0-9]*\).*/\1/p' "$dir/package.json" | head -n 1)"
     needed="${needed:-18}"
     if [ "$node_major" -lt "$needed" ]; then
-        warn "Vencord needs Node.js $needed or newer; this computer has $node_major. Update Node.js and run this again."
+        warn "Vencord needs Node.js $needed or newer; this computer has $node_major, and package managers often"
+        info "carry an older one. Get a current Node.js from https://nodejs.org (or with nvm) and run this again."
         return 0
     fi
 
