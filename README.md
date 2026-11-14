@@ -56,6 +56,8 @@ Then turn the theme on in Discord: **Settings → Vencord → Themes** (or **Set
 
 To pass an option to the one-line form: `curl ... | bash -s -- --plugins`, or on Windows `& ([scriptblock]::Create((irm https://raw.githubusercontent.com/Plyxen/discord-rice/main/install.ps1))) -Plugins`. Running the installer again replaces what it installed and leaves everything else alone.
 
+**A theme file you edited is kept.** Before replacing a theme file that is already there, the installer asks GitHub whether it is one of this repo's own versions (it sends the file's git id, nothing of the file itself). An untouched older version is simply replaced. One you changed by hand, or one GitHub couldn't say anything about, is kept next to the new file as `discord-rice.theme.css.bak`. Changes made in the discord-rice window, QuickCSS or Custom CSS aren't in the theme file and stay as they are.
+
 **By hand, Vencord: online link.** In Discord, open **Settings → Vencord → Themes → Online Themes** and paste:
 
 ```
@@ -73,9 +75,12 @@ https://cdn.jsdelivr.net/gh/Plyxen/discord-rice@main/discord-rice.theme.css
 | Vencord, theme file only | Doesn't update. Use the link instead, or run the installer again | |
 | BetterDiscord | `DiscordRiceUpdater` replaces the theme file | `DiscordRiceUpdater` replaces the plugin files, and BetterDiscord reloads them on the spot |
 
+An install from before the updaters existed (November 2026) has neither of them: run the installer once, and it keeps itself up to date from then on.
+
 Both updaters work the same way. Shortly after Discord starts, and every six hours after that, they ask GitHub whether this repo has a new commit, fetch what changed, check each file against GitHub's listing, and put it in place. They talk to nothing but this repo.
 
 - **Your own changes are safe.** A file is only replaced if nobody changed it on your PC since the updater last looked at it. If you edited the theme file or a plugin, the update is held back and you are told; **Replace my changes** in the updater's settings takes it anyway, and keeps your theme file as `.bak`.
+- **Check whenever you like.** The about tab of the [discord-rice window](#discord-rice-settings) says what the last check found and has a **check for updates** button, which looks on GitHub and installs what is new. When a file of yours was held back, **replace my changes** shows up next to it (click it twice).
 - **You choose how.** `RiceUpdater` (under **Settings → Vencord → Plugins**) can install updates by itself, tell you first, or not check at all. New plugins load when Discord restarts; the notification's click does that.
 - An updater that installs by itself means trusting this repo's future commits, like with any program that updates itself. "Tell me first" or "Don't check" are there if you'd rather not.
 
@@ -181,7 +186,7 @@ After changing a plugin yourself, copy it in again, run `pnpm build`, and restar
 
 | Tab | What's in it |
 | --- | --- |
-| about | A neofetch-style summary (your name `@discord`, theme, font, corners, wallpaper, folders, plugins and a colour row), the **theme** switch, which plugins are on, and tips. |
+| about | A neofetch-style summary (your name `@discord`, the theme and its version, font, corners, wallpaper, folders, plugins and a colour row), **check for updates** with what the last check found, the **theme** switch, which plugins are on, and tips. |
 | look | Font, corners, gaps, frosted-glass menus and grey window dots. |
 | wallpaper | The wallpaper link, how dark it is, film grain, and the ASCII wallpaper. |
 | hide | The inbox button, notification bell, video call button, chat bar buttons, nameplates, quests and store tabs. |
@@ -241,7 +246,7 @@ The presets come in pairs, the same name as ASCII and as an icon:
 
 ### Updater
 
-`riceUpdater.desktop` is the plugin behind [Updates](#updates). Its settings (**Settings → Vencord → Plugins → RiceUpdater**) have the three ways to handle an update, a line saying what the last check found, and **Check now** and **Replace my changes** buttons. It only looks after the theme file (if you use one) and the plugin folders that come from this repo; other user plugins you have are not touched.
+`riceUpdater.desktop` is the plugin behind [Updates](#updates). Its settings (**Settings → Vencord → Plugins → RiceUpdater**) have the three ways to handle an update, a line saying what the last check found, and **Check now** and **Replace my changes** buttons. The same line and buttons are on the about tab of the discord-rice window. It only looks after the theme file (if you use one) and the plugin folders that come from this repo; other user plugins you have are not touched.
 
 ## Known limits
 

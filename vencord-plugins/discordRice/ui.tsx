@@ -161,6 +161,50 @@ function useThemeOn() {
     return { on: enabledThemes.includes(THEME_FILE) || themeLinks.some(isOurLink), enabledThemes, themeLinks };
 }
 
+// the theme file in the themes folder, if there is one, with the version it says it is.
+// "again" is anything that changes when the file may have: it is then read once more
+function useThemeFile(again?: unknown) {
+    const [file, setFile] = useState<{ version?: string; } | null>(null);
+    useEffect(() => {
+        VencordNative.themes.getThemesList()
+            .then(list => setFile(list.find(t => t.fileName === THEME_FILE) ?? null))
+            .catch(() => void 0);
+    }, [again]);
+    return file;
+}
+
+// what the updater plugin (RiceUpdater, in BetterDiscord DiscordRiceUpdater) hands this window
+interface UpdateApi {
+    /** one line: what the last check found */
+    status(): string;
+    busy(): boolean;
+    /** the last check left files alone that aren't the same as GitHub's */
+    held(): boolean;
+    restartNeeded(): boolean;
+    /** look on GitHub and install what is new. force also replaces files that were changed on this PC */
+    check(force?: boolean): void;
+    restart(): void;
+    subscribe(listener: () => void): () => void;
+}
+
+function useUpdater() {
+    const api = isPluginEnabled("RiceUpdater") ? (plugins.RiceUpdater as any)?.api as UpdateApi | undefined : undefined;
+    const [, rerender] = useReducer((x: number) => x + 1, 0);
+    useEffect(() => api?.subscribe(rerender), [api]);
+    return api;
+}
+
+// for buttons that want a second click: armed for three seconds after the first
+function useArmed(): [boolean, (armed: boolean) => void] {
+    const [armed, setArmed] = useState(false);
+    useEffect(() => {
+        if (!armed) return;
+        const t = setTimeout(() => setArmed(false), 3000);
+        return () => clearTimeout(t);
+    }, [armed]);
+    return [armed, setArmed];
+}
+
 function uptime() {
     const m = Math.floor(performance.now() / 60000);
     return m < 60 ? `${m} min` : `${Math.floor(m / 60)}h ${m % 60}m`;
@@ -169,11 +213,13 @@ function uptime() {
 function Fetch() {
     const s = settings.use();
     const { on } = useThemeOn();
+    // an update may have just replaced the theme file
+    const version = useThemeFile(useUpdater()?.status())?.version;
     const user = UserStore.getCurrentUser();
     const folders = SortedGuildStore.getGuildFolders().filter(f => f.folderId != null).length;
     const title = `${user?.username ?? "you"}@discord`;
     const rows: [string, string][] = [
-        ["theme", on ? "discord-rice" : "off"],
+        ["theme", on ? `discord-rice${version ? ` ${version}` : ""}` : "off"],
         ["wm", "tiled, no gaps"],
         ["font", FONTS[s.font]?.[2] ?? "Iosevka"],
         ["colors", "greyscale"],
@@ -202,12 +248,7 @@ function Fetch() {
 // the theme itself: in the themes folder, or the online link if the file isn't there
 function ThemeCheck() {
     const { on, enabledThemes, themeLinks } = useThemeOn();
-    const [hasFile, setHasFile] = useState(false);
-    useEffect(() => {
-        VencordNative.themes.getThemesList()
-            .then(list => setHasFile(list.some(t => t.fileName === THEME_FILE)))
-            .catch(() => void 0);
-    }, []);
+    const hasFile = !!useThemeFile();
 
     const toggle = () => {
         if (!on) {
@@ -228,10 +269,46 @@ function ThemeCheck() {
     );
 }
 
+// what the updater last found, and a button that has it look now
+function Updates() {
+    const api = useUpdater();
+    const [armed, setArmed] = useArmed();
+    if (!api) return <p className="vc-rice-update">{MOD.updaterOff}</p>;
+
+    const busy = api.busy();
+    return (
+        <div className="vc-rice-update">
+            <p role="status">{api.status()}</p>
+            <div className="vc-rice-inline">
+                <button className="vc-rice-btn" disabled={busy} onClick={() => api.check()}>
+                    {busy ? "checking…" : "check for updates"}
+                </button>
+                {api.held() && (
+                    <button
+                        className="vc-rice-btn danger"
+                        disabled={busy}
+                        onClick={() => {
+                            if (!armed) return setArmed(true);
+                            setArmed(false);
+                            api.check(true);
+                        }}
+                    >
+                        {armed ? "sure? click again" : "replace my changes"}
+                    </button>
+                )}
+                {api.restartNeeded() && <button className="vc-rice-btn" onClick={() => api.restart()}>restart discord</button>}
+            </div>
+            <span className="vc-rice-desc">looks on github and installs what is new. files you changed yourself are left alone.</span>
+        </div>
+    );
+}
+
 function About() {
     return (
         <>
             <Fetch />
+            <Heading>updates</Heading>
+            <Updates />
             <Heading>status</Heading>
             <ThemeCheck />
             <div style={{ marginTop: 6 }}>
@@ -483,12 +560,7 @@ const TABS = [
 /* ---------------- the window ---------------- */
 
 function ResetButton() {
-    const [armed, setArmed] = useState(false);
-    useEffect(() => {
-        if (!armed) return;
-        const t = setTimeout(() => setArmed(false), 3000);
-        return () => clearTimeout(t);
-    }, [armed]);
+    const [armed, setArmed] = useArmed();
 
     return (
         <button

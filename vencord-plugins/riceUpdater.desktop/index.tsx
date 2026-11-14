@@ -35,6 +35,7 @@ let startTimer: ReturnType<typeof setTimeout> | undefined;
 let interval: ReturnType<typeof setInterval> | undefined;
 let busy = false;
 let restartNeeded = false;
+let held = false; // the last check left files alone that aren't the same as GitHub's
 let offered = ""; // the commit an update was already offered for, in "tell me" mode
 let status = "Not checked yet.";
 const watchers = new Set<() => void>();
@@ -75,6 +76,7 @@ async function run(apply: boolean, force = false, manual = false) {
     setStatus("Checking GitHub…");
     try {
         const r = await Native.check(apply, force);
+        held = r.changedHere.length > 0 || r.theme === "differs" || r.plugins === "differs";
 
         // new plugin files are in place (from this check, or an earlier one whose build failed)
         let built: boolean | null = null;
@@ -181,6 +183,20 @@ export default definePlugin({
     authors: [{ name: "Pota", id: 0n }],
     enabledByDefault: true,
     settings,
+
+    // for the discord-rice window, which has its own "check for updates" on the about tab
+    api: {
+        status: () => status,
+        busy: () => busy,
+        held: () => held,
+        restartNeeded: () => restartNeeded,
+        check: (force = false) => void run(true, force, true),
+        restart: relaunch,
+        subscribe(listener: () => void) {
+            watchers.add(listener);
+            return () => void watchers.delete(listener);
+        }
+    },
 
     start() {
         startTimer = setTimeout(automatic, FIRST_CHECK);

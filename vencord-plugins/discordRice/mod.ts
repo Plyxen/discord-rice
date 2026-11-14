@@ -10,5 +10,6 @@ export const MOD = {
     pluginOff: "off: turn it on in Vencord → Plugins, then restart Discord",
     foldersOff: "turn on the FolderPictures plugin (then restart discord) to give folders a look.",
     whereElse: "this window is behind the rice bowl button in the channel header, and in Settings → discord-rice.",
-    themeFrom: "from the themes folder or the online link. everything here needs it on."
+    themeFrom: "from the themes folder or the online link. everything here needs it on.",
+    updaterOff: "the RiceUpdater plugin does the checking, and it is off. turn it on in Vencord → Plugins, then restart Discord."
 };

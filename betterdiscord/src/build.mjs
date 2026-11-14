@@ -63,7 +63,7 @@ const PLUGINS = [
     {
         name: "DiscordRice",
         entry: "discordRice.tsx",
-        version: "1.0.0",
+        version: "1.1.0",
         description: "Settings for the discord-rice theme in one terminal-style window, behind a rice bowl button in the channel header: font, corners, wallpaper, ASCII wallpaper, what to hide, and folder looks."
     },
     {
@@ -109,6 +109,8 @@ for (const plugin of PLUGINS) {
         inject: [shim("globals.ts")],
         define: { __PLUGIN_NAME__: JSON.stringify(plugin.name) },
         loader: { ".css": "text" },
+        // Node's own modules, which BetterDiscord hands a plugin through require()
+        external: ["fs", "path"],
         plugins: [standIns],
         banner: { js: header },
         // BetterDiscord wants the plugin's class itself as what the file exports

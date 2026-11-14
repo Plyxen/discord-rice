@@ -2,7 +2,7 @@
  * @name DiscordRiceUpdater
  * @author Pota
  * @description Keeps the discord-rice theme file and plugins up to date from github.com/Plyxen/discord-rice. A file you edited yourself is left alone.
- * @version 1.1.0
+ * @version 1.2.0
  * @source https://github.com/Plyxen/discord-rice
  * @website https://github.com/Plyxen/discord-rice
  */
@@ -34,6 +34,42 @@ const FIRST_CHECK = 30000;
 const EVERY = 6 * 60 * 60000;
 
 module.exports = class DiscordRiceUpdater {
+    constructor() {
+        this.busy = false;
+        this.held = false; // the last check left files alone that aren't the same as GitHub's
+        this.status = ""; // what the last check found, once there has been one
+        this.watchers = new Set();
+
+        // for the discord-rice window (the DiscordRice plugin), which has its own "check for updates"
+        this.api = {
+            status: () => this.line(),
+            busy: () => this.busy,
+            held: () => this.held,
+            restartNeeded: () => false, // BetterDiscord reloads a plugin by itself when its file changes
+            check: force => void this.run(!!force),
+            restart: () => {},
+            subscribe: listener => {
+                this.watchers.add(listener);
+                return () => void this.watchers.delete(listener);
+            }
+        };
+    }
+
+    /**
+     * What the last check found. When an update replaces this plugin's own file, BetterDiscord starts a
+     * new copy of it that has not checked anything yet: that one reads the line the old copy left.
+     */
+    line() {
+        if (this.status) return this.status;
+        const { last } = BdApi.Data.load(NAME, "state") || {};
+        return last && Date.now() - last.at < 10 * 60000 ? last.text : "Not checked yet.";
+    }
+
+    say(text) {
+        this.status = text;
+        this.watchers.forEach(redraw => redraw());
+    }
+
     start() {
         this.startTimer = setTimeout(() => this.run(false), FIRST_CHECK);
         this.interval = setInterval(() => this.run(false), EVERY);
@@ -105,7 +141,10 @@ module.exports = class DiscordRiceUpdater {
     async run(force) {
         if (this.busy) return "Still checking.";
         this.busy = true;
+        this.say("Checking GitHub…");
         const fs = require("fs");
+        const clock = () => new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        let line;
         try {
             const state = BdApi.Data.load(NAME, "state") || {};
             state.seen = state.seen || {};
@@ -151,21 +190,28 @@ module.exports = class DiscordRiceUpdater {
 
             const firstReport = held.length && state.told !== commit;
             if (held.length) state.told = commit;
+            this.held = held.length > 0 || differs.length > 0;
+
+            if (updated.length) line = `Updated ${updated.join(", ")}.`;
+            else if (held.length) line = `There is an update, but ${held.join(", ")} was changed on this PC and is left alone.`;
+            else if (differs.length) line = `Your ${differs.join(", ")} isn't the same as the one on GitHub. It updates with GitHub's next change, or now with "Replace my changes".`;
+            else line = "Up to date.";
+
+            state.last = { text: `${line} Checked at ${clock()}, GitHub is at ${commit.slice(0, 7)}.`, at: Date.now() };
             BdApi.Data.save(NAME, "state", state);
 
             if (updated.length) BdApi.UI.showToast(`discord-rice updated: ${updated.join(", ")}`, { type: "success" });
             if (firstReport) BdApi.UI.showToast(`discord-rice has an update, but ${held.join(", ")} was changed on this PC. See the ${NAME} settings.`, { type: "warning", timeout: 10000 });
-
-            if (updated.length) return `Updated ${updated.join(", ")}.`;
-            if (held.length) return `There is an update, but ${held.join(", ")} was changed on this PC and is left alone.`;
-            if (differs.length) return `Your ${differs.join(", ")} isn't the same as the one on GitHub. It updates with GitHub's next change, or now with "Replace my changes".`;
-            return "Up to date.";
+            this.status = state.last.text;
         } catch (e) {
             console.error(`[${NAME}]`, e);
-            return `Couldn't check: ${e && e.message || e}.`;
+            line = `Couldn't check: ${e && e.message || e}.`;
+            this.status = `Couldn't check at ${clock()}: ${e && e.message || e}.`;
         } finally {
             this.busy = false;
+            this.say(this.status);
         }
+        return line;
     }
 
     getSettingsPanel() {

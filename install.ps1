@@ -18,7 +18,8 @@
          installer that comes with Windows, and does so only if you say yes.
          With the plugins it also asks about Orion, which is somebody else's plugin (see -Orion).
 
-    Run it again whenever you like: it replaces what it installed and leaves everything else alone.
+    Run it again whenever you like: it replaces what it installed and leaves everything else alone. A
+    theme file you edited yourself is kept next to the new one as .bak.
 
 .PARAMETER ThemeOnly
     The theme only, without asking about the plugins. BetterDiscord still gets the updater plugin, so the
@@ -234,11 +235,59 @@ function Build-Vencord([string]$Dir) {
     Invoke-Tool $Dir 'node' @('--require=./scripts/suppressExperimentalWarnings.js', 'scripts/build/build.mjs')
 }
 
+# The id git gives a file's contents. Windows line ends count as plain ones, as they do in the repo.
+function Get-GitId([string]$File) {
+    $bytes = [Text.Encoding]::GetEncoding(28591) # one character per byte, so nothing changes on the way
+    $data = $bytes.GetBytes(($bytes.GetString([IO.File]::ReadAllBytes($File)) -replace "`r`n", "`n"))
+    $sha = [Security.Cryptography.SHA1]::Create()
+    try {
+        $hash = $sha.ComputeHash([byte[]]([Text.Encoding]::ASCII.GetBytes("blob $($data.Length)`0") + $data))
+        return [BitConverter]::ToString($hash).Replace('-', '').ToLower()
+    } finally {
+        $sha.Dispose()
+    }
+}
+
+# Whether a file with this id is one of the versions the repo has had: 'yes', 'no', or 'unknown' when
+# GitHub can't be asked. Only the id goes to GitHub, nothing of the file itself.
+function Test-RepoVersion([string]$Id) {
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+        Invoke-WebRequest -UseBasicParsing -Method Head -TimeoutSec 15 -UserAgent 'discord-rice-installer' -Uri "https://api.github.com/repos/$Repo/git/blobs/$Id" | Out-Null
+        return 'yes'
+    } catch {
+        $code = 0
+        try { $code = [int]$_.Exception.Response.StatusCode } catch { }
+        if ($code -eq 404) { return 'no' }
+        return 'unknown'
+    }
+}
+
+# A theme file that is about to be replaced and is not one of the repo's own versions was changed by
+# hand, so it is kept next to the new one as .bak. When GitHub can't say, it is kept to be safe.
+$AskedIds = @{}
+function Backup-EditedTheme([string]$File, [string]$NewId, [string]$ModName) {
+    if (-not (Test-Path $File)) { return }
+    $id = Get-GitId $File
+    if ($id -eq $NewId) { return }
+    if (-not $AskedIds.ContainsKey($id)) { $AskedIds[$id] = Test-RepoVersion $id }
+    if ($AskedIds[$id] -eq 'yes') { return }
+    Copy-Item -Path $File -Destination "$File.bak" -Force
+    if ($AskedIds[$id] -eq 'no') {
+        Warn "$($ModName): the theme file here was edited. Your version is kept next to the new one as $ThemeFile.bak."
+        Info '  Changes made in the discord-rice window, QuickCSS or Custom CSS are not in that file and stay as they are.'
+    } else {
+        Info "$($ModName): GitHub couldn't say whether the theme file here was edited, so it is kept as $ThemeFile.bak."
+    }
+}
+
 function Install-Theme([string]$Source, $Mods) {
     Step 'Theme'
+    $newId = Get-GitId (Join-Path $Source $ThemeFile)
     foreach ($mod in $Mods) {
         $themes = Join-Path $mod.Dir 'themes'
         New-Item -ItemType Directory -Force -Path $themes | Out-Null
+        Backup-EditedTheme (Join-Path $themes $ThemeFile) $newId $mod.Name
         Copy-Item -Path (Join-Path $Source $ThemeFile) -Destination $themes -Force
         Info "$($mod.Name): $themes"
         if ($mod.Name -eq 'BetterDiscord') {

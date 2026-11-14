@@ -45,10 +45,14 @@ var THEME_FILE = "discord-rice.theme.css";
 var React = BdApi.React;
 var VencordNative = {
   themes: {
-    // "is the theme file in the themes folder?"
+    // "is the theme file in the themes folder, and which version does it say it is?" Read from the
+    // file itself: BetterDiscord's own list is a moment behind right after an update.
     async getThemesList() {
       try {
-        return BdApi.Themes.get(THEME_FILE) ? [{ fileName: THEME_FILE }] : [];
+        if (!BdApi.Themes.get(THEME_FILE)) return [];
+        const file = require("path").join(BdApi.Themes.folder, THEME_FILE);
+        const head = String(require("fs").readFileSync(file, "utf8")).slice(0, 2e3);
+        return [{ fileName: THEME_FILE, version: /^\s*\*\s*@version\s+(\S+)/m.exec(head)?.[1] }];
       } catch {
         return [];
       }

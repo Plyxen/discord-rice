@@ -16,7 +16,8 @@
 #      apt, dnf or pacman), shows the command first, and runs it only if you say yes.
 #      With the plugins it also asks about Orion, which is somebody else's plugin (see --help).
 #
-# Run it again whenever you like: it replaces what it installed and leaves everything else alone.
+# Run it again whenever you like: it replaces what it installed and leaves everything else alone. A theme
+# file you edited yourself is kept next to the new one as .bak.
 
 set -eo pipefail
 
@@ -276,12 +277,61 @@ run_pnpm() {
 
 build_vencord() { (cd "$1" && node --require=./scripts/suppressExperimentalWarnings.js scripts/build/build.mjs); }
 
+# Prints the id git gives a file's contents. Windows line ends count as plain ones, as they do in the
+# repo. Prints nothing if this computer has no program to work it out with.
+git_id() {
+    local size sum=""
+    if have sha1sum; then sum="sha1sum"; elif have shasum; then sum="shasum"; else return 0; fi
+    size="$(tr -d '\r' <"$1" | wc -c | tr -d '[:space:]')"
+    { printf 'blob %s\0' "$size"; tr -d '\r' <"$1"; } | "$sum" | cut -d ' ' -f 1
+}
+
+# Prints whether a file with this id is one of the versions the repo has had: yes, no, or unknown when
+# GitHub can't be asked. Only the id goes to GitHub, nothing of the file itself.
+repo_version() {
+    local code=""
+    if [ -n "$1" ] && have curl; then
+        code="$(curl -s -o /dev/null -I -m 15 -A discord-rice-installer -w '%{http_code}' "https://api.github.com/repos/$REPO/git/blobs/$1" 2>/dev/null || true)"
+    fi
+    case "$code" in
+        200) echo yes ;;
+        404) echo no ;;
+        *) echo unknown ;;
+    esac
+}
+
+# A theme file that is about to be replaced and is not one of the repo's own versions was changed by
+# hand, so it is kept next to the new one as .bak. When GitHub can't say, it is kept to be safe.
+asked_id=""
+asked_answer=""
+backup_edited_theme() { # the file that is there, the new file's id, the mod's name
+    local id
+    [ -f "$1" ] || return 0
+    if cmp -s "$1" "$src/$THEME_FILE"; then return 0; fi
+    id="$(git_id "$1")"
+    if [ -n "$id" ] && [ "$id" = "$2" ]; then return 0; fi
+    if [ -z "$id" ] || [ "$id" != "$asked_id" ]; then
+        asked_id="$id"
+        asked_answer="$(repo_version "$id")"
+    fi
+    if [ "$asked_answer" = yes ]; then return 0; fi
+    cp "$1" "$1.bak"
+    if [ "$asked_answer" = no ]; then
+        warn "$3: the theme file here was edited. Your version is kept next to the new one as $THEME_FILE.bak."
+        info "  Changes made in the discord-rice window, QuickCSS or Custom CSS are not in that file and stay as they are."
+    else
+        info "$3: GitHub couldn't say whether the theme file here was edited, so it is kept as $THEME_FILE.bak."
+    fi
+}
+
 install_theme() {
-    local i themes plugins plugin
+    local i themes plugins plugin new_id
     step "Theme"
+    new_id="$(git_id "$src/$THEME_FILE")"
     for i in "${!mod_names[@]}"; do
         themes="${mod_dirs[$i]}/themes"
         mkdir -p "$themes"
+        backup_edited_theme "$themes/$THEME_FILE" "$new_id" "${mod_names[$i]}"
         cp "$src/$THEME_FILE" "$themes/"
         info "${mod_names[$i]}: $themes"
         if [ "${mod_names[$i]}" = "BetterDiscord" ]; then

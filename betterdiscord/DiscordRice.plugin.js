@@ -2,7 +2,7 @@
  * @name DiscordRice
  * @author Pota
  * @description Settings for the discord-rice theme in one terminal-style window, behind a rice bowl button in the channel header: font, corners, wallpaper, ASCII wallpaper, what to hide, and folder looks.
- * @version 1.0.0
+ * @version 1.1.0
  * @source https://github.com/Plyxen/discord-rice
  * @website https://github.com/Plyxen/discord-rice
  */
@@ -45,10 +45,14 @@ var THEME_FILE = "discord-rice.theme.css";
 var React = BdApi.React;
 var VencordNative = {
   themes: {
-    // "is the theme file in the themes folder?"
+    // "is the theme file in the themes folder, and which version does it say it is?" Read from the
+    // file itself: BetterDiscord's own list is a moment behind right after an update.
     async getThemesList() {
       try {
-        return BdApi.Themes.get(THEME_FILE) ? [{ fileName: THEME_FILE }] : [];
+        if (!BdApi.Themes.get(THEME_FILE)) return [];
+        const file = require("path").join(BdApi.Themes.folder, THEME_FILE);
+        const head = String(require("fs").readFileSync(file, "utf8")).slice(0, 2e3);
+        return [{ fileName: THEME_FILE, version: /^\s*\*\s*@version\s+(\S+)/m.exec(head)?.[1] }];
       } catch {
         return [];
       }
@@ -922,6 +926,19 @@ var style_default = `/* The discord-rice settings window: a floating terminal wi
     font-weight: 400;\r
 }\r
 \r
+/* what the updater last found, over its buttons */\r
+.vc-rice-update,\r
+.vc-rice-update p {\r
+    margin: 0;\r
+    color: var(--r-t4);\r
+}\r
+.vc-rice-update p {\r
+    margin-bottom: 6px;\r
+}\r
+.vc-rice-update .vc-rice-desc {\r
+    margin-top: 6px;\r
+}\r
+\r
 .vc-rice-tips {\r
     margin: 0;\r
     padding: 0;\r
@@ -1131,7 +1148,8 @@ var MOD = {
   pluginOff: "off: turn it on in Settings → Plugins",
   foldersOff: "turn on the FolderPictures plugin (Settings → Plugins) to give folders a look.",
   whereElse: "this window is behind the rice bowl button in the channel header, and in the DiscordRice plugin's settings.",
-  themeFrom: "the theme file in BetterDiscord's themes folder. everything here needs it on."
+  themeFrom: "the theme file in BetterDiscord's themes folder. everything here needs it on.",
+  updaterOff: "the DiscordRiceUpdater plugin does the checking, and it is off. turn it on in Settings → Plugins."
 };
 
 // vencord-plugins/discordRice/ui.tsx
@@ -1232,6 +1250,28 @@ function useThemeOn() {
   const { enabledThemes, themeLinks } = useSettings(["enabledThemes", "themeLinks"]);
   return { on: enabledThemes.includes(THEME_FILE2) || themeLinks.some(isOurLink), enabledThemes, themeLinks };
 }
+function useThemeFile(again) {
+  const [file, setFile] = useState(null);
+  useEffect(() => {
+    VencordNative.themes.getThemesList().then((list) => setFile(list.find((t) => t.fileName === THEME_FILE2) ?? null)).catch(() => void 0);
+  }, [again]);
+  return file;
+}
+function useUpdater() {
+  const api = isPluginEnabled("RiceUpdater") ? plugins.RiceUpdater?.api : void 0;
+  const [, rerender] = useReducer((x) => x + 1, 0);
+  useEffect(() => api?.subscribe(rerender), [api]);
+  return api;
+}
+function useArmed() {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const t = setTimeout(() => setArmed(false), 3e3);
+    return () => clearTimeout(t);
+  }, [armed]);
+  return [armed, setArmed];
+}
 function uptime() {
   const m = Math.floor(performance.now() / 6e4);
   return m < 60 ? `${m} min` : `${Math.floor(m / 60)}h ${m % 60}m`;
@@ -1239,11 +1279,12 @@ function uptime() {
 function Fetch() {
   const s = settings.use();
   const { on } = useThemeOn();
+  const version = useThemeFile(useUpdater()?.status())?.version;
   const user = UserStore.getCurrentUser();
   const folders = SortedGuildStore.getGuildFolders().filter((f) => f.folderId != null).length;
   const title = `${user?.username ?? "you"}@discord`;
   const rows = [
-    ["theme", on ? "discord-rice" : "off"],
+    ["theme", on ? `discord-rice${version ? ` ${version}` : ""}` : "off"],
     ["wm", "tiled, no gaps"],
     ["font", FONTS[s.font]?.[2] ?? "Iosevka"],
     ["colors", "greyscale"],
@@ -1257,10 +1298,7 @@ function Fetch() {
 }
 function ThemeCheck() {
   const { on, enabledThemes, themeLinks } = useThemeOn();
-  const [hasFile, setHasFile] = useState(false);
-  useEffect(() => {
-    VencordNative.themes.getThemesList().then((list) => setHasFile(list.some((t) => t.fileName === THEME_FILE2))).catch(() => void 0);
-  }, []);
+  const hasFile = !!useThemeFile();
   const toggle = () => {
     if (!on) {
       if (hasFile) Settings.enabledThemes = [...enabledThemes, THEME_FILE2];
@@ -1272,8 +1310,27 @@ function ThemeCheck() {
   };
   return /* @__PURE__ */ React.createElement("button", { role: "switch", "aria-checked": on, className: "vc-rice-check", onClick: toggle }, /* @__PURE__ */ React.createElement("span", { className: "vc-rice-box", "aria-hidden": true }, on ? "[x]" : "[ ]"), /* @__PURE__ */ React.createElement("span", { className: "vc-rice-label" }, "theme"), /* @__PURE__ */ React.createElement("span", { className: "vc-rice-desc" }, MOD.themeFrom));
 }
+function Updates() {
+  const api = useUpdater();
+  const [armed, setArmed] = useArmed();
+  if (!api) return /* @__PURE__ */ React.createElement("p", { className: "vc-rice-update" }, MOD.updaterOff);
+  const busy = api.busy();
+  return /* @__PURE__ */ React.createElement("div", { className: "vc-rice-update" }, /* @__PURE__ */ React.createElement("p", { role: "status" }, api.status()), /* @__PURE__ */ React.createElement("div", { className: "vc-rice-inline" }, /* @__PURE__ */ React.createElement("button", { className: "vc-rice-btn", disabled: busy, onClick: () => api.check() }, busy ? "checking…" : "check for updates"), api.held() && /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      className: "vc-rice-btn danger",
+      disabled: busy,
+      onClick: () => {
+        if (!armed) return setArmed(true);
+        setArmed(false);
+        api.check(true);
+      }
+    },
+    armed ? "sure? click again" : "replace my changes"
+  ), api.restartNeeded() && /* @__PURE__ */ React.createElement("button", { className: "vc-rice-btn", onClick: () => api.restart() }, "restart discord")), /* @__PURE__ */ React.createElement("span", { className: "vc-rice-desc" }, "looks on github and installs what is new. files you changed yourself are left alone."));
+}
 function About() {
-  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Fetch, null), /* @__PURE__ */ React.createElement(Heading, null, "status"), /* @__PURE__ */ React.createElement(ThemeCheck, null), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 6 } }, PLUGINS.map(([name, what]) => {
+  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Fetch, null), /* @__PURE__ */ React.createElement(Heading, null, "updates"), /* @__PURE__ */ React.createElement(Updates, null), /* @__PURE__ */ React.createElement(Heading, null, "status"), /* @__PURE__ */ React.createElement(ThemeCheck, null), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 6 } }, PLUGINS.map(([name, what]) => {
     const on = isPluginEnabled(name);
     return /* @__PURE__ */ React.createElement("div", { key: name, className: "vc-rice-plugin" }, /* @__PURE__ */ React.createElement("span", { className: "dot" + (on ? " on" : ""), "aria-hidden": true }, on ? "●" : "○"), /* @__PURE__ */ React.createElement("b", null, name), /* @__PURE__ */ React.createElement("span", { className: "vc-rice-desc" }, on ? what : MOD.pluginOff));
   })), /* @__PURE__ */ React.createElement(Heading, null, "tips"), /* @__PURE__ */ React.createElement("ul", { className: "vc-rice-tips" }, /* @__PURE__ */ React.createElement("li", null, "right-click a server folder → ", /* @__PURE__ */ React.createElement("kbd", null, "Folder look"), ", or use the folders tab here."), /* @__PURE__ */ React.createElement("li", null, "select text in the chat bar, then the ", /* @__PURE__ */ React.createElement("kbd", null, "```"), " button wraps it in a code block."), /* @__PURE__ */ React.createElement("li", null, "drag the window by the empty space in the channel header, next to the channel name."), /* @__PURE__ */ React.createElement("li", null, MOD.whereElse)));
@@ -1396,12 +1453,7 @@ var TABS = [
   { id: "folders", lead: "give a server folder a look: ascii, an icon, your own text or a picture.", Pane: Folders }
 ];
 function ResetButton() {
-  const [armed, setArmed] = useState(false);
-  useEffect(() => {
-    if (!armed) return;
-    const t = setTimeout(() => setArmed(false), 3e3);
-    return () => clearTimeout(t);
-  }, [armed]);
+  const [armed, setArmed] = useArmed();
   return /* @__PURE__ */ React.createElement(
     "button",
     {

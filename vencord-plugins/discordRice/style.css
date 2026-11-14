@@ -414,6 +414,19 @@
     font-weight: 400;
 }
 
+/* what the updater last found, over its buttons */
+.vc-rice-update,
+.vc-rice-update p {
+    margin: 0;
+    color: var(--r-t4);
+}
+.vc-rice-update p {
+    margin-bottom: 6px;
+}
+.vc-rice-update .vc-rice-desc {
+    margin-top: 6px;
+}
+
 .vc-rice-tips {
     margin: 0;
     padding: 0;
