@@ -13,6 +13,7 @@
 #      its source, so this finds your source build or downloads one (git clone), copies the plugin folders
 #      into it, builds it, and points Discord at the build with Vencord's own installer. That needs git
 #      and Node.js; the script tells you if they are missing and installs nothing itself.
+#      With the plugins it also asks about Orion, which is somebody else's plugin (see --help).
 #
 # Run it again whenever you like: it replaces what it installed and leaves everything else alone.
 
@@ -22,15 +23,21 @@ REPO="Plyxen/discord-rice"
 THEME_FILE="discord-rice.theme.css"
 BD_UPDATER="DiscordRiceUpdater.plugin.js" # the one BetterDiscord plugin that also goes in with --theme-only
 VENCORD_REPO="https://github.com/Vendicated/Vencord"
+ORION_REPO="https://github.com/nyxxbit/discord-quest-completer"
+ORION_FOLDER="discord-quest-completer" # the folder name Orion's own guide uses
 
 theme_only=0
 want_plugins=0
+want_orion=0
 no_inject=0
 uninstall=0
 vencord_dir=""
 tmp=""
 src=""
 built_dir="" # the Vencord folder, once the plugins are in and built
+orion_state="" # "added" or "updated" when this run brought Orion in, "present" when it was there already
+orion_dir=""
+orion_before="" # the commit Orion was at before this run updated it
 
 usage() {
     cat <<'EOF'
@@ -39,6 +46,11 @@ Usage: install.sh [options]
   --theme-only        the theme only, without asking about the plugins (BetterDiscord still gets
                       the updater plugin, so the theme keeps itself up to date)
   --plugins           also set up the Vencord plugins, without asking
+  --orion             with the plugins, also add Orion without asking (or update it). Orion
+                      (github.com/nyxxbit/discord-quest-completer) completes Discord Quests without
+                      playing them. It is not part of discord-rice: its newest code is downloaded
+                      from its own repo into the same Vencord build, and its README warns that
+                      Discord has been restricting accounts for quest automation since April 2026
   --vencord-dir DIR   where the Vencord source is, or where to download it to
                       (default: the build that is already in use, otherwise ~/Vencord)
   --no-inject         build Vencord with the plugins, but don't point Discord at the build
@@ -59,6 +71,7 @@ while [ $# -gt 0 ]; do
     case "$1" in
         --theme-only) theme_only=1 ;;
         --plugins) want_plugins=1 ;;
+        --orion) want_orion=1 ;;
         --no-inject) no_inject=1 ;;
         --uninstall) uninstall=1 ;;
         --vencord-dir)
@@ -232,9 +245,72 @@ install_theme() {
     done
 }
 
+# Prints the folder of Orion in a Vencord build's userplugins, whatever it is called there.
+find_orion() {
+    local folder
+    for folder in "$1"/*/; do
+        if [ -f "${folder}orion.ts" ] && [ -f "${folder}index.tsx" ]; then
+            printf '%s\n' "${folder%/}"
+            return 0
+        fi
+    done
+    return 0
+}
+
+ask_orion() {
+    printf '\n'
+    info "Orion (github.com/nyxxbit/discord-quest-completer) is somebody else's Vencord plugin. It completes"
+    info "Discord Quests without playing them. It is not part of discord-rice and not checked by it: saying"
+    info "yes downloads its newest code from its own repo into this Vencord build."
+    warn "Its own README says Discord has been restricting accounts for quest automation since April 2026."
+    ask "  Add Orion too?"
+}
+
+# Fetches Orion into the build, or updates the copy that is there. Sets $orion_state.
+install_orion() {
+    local userplugins="$1" existing
+    existing="$(find_orion "$userplugins")"
+    if [ -n "$existing" ] && [ -e "$existing/.git" ]; then
+        info "Orion: updating $existing ..."
+        orion_before="$(git -C "$existing" rev-parse HEAD)"
+        if git -C "$existing" pull --ff-only; then
+            orion_state="updated"
+            orion_dir="$existing"
+        else
+            warn "Orion couldn't be updated (git pull failed). The copy that is there is kept."
+            orion_state="present"
+        fi
+    elif [ -n "$existing" ]; then
+        info "Orion is already in this build ($existing), not as a git download, so it is left as it is."
+        orion_state="present"
+    else
+        info "Orion: downloading $ORION_REPO ..."
+        if git clone --depth 1 "$ORION_REPO" "$userplugins/$ORION_FOLDER"; then
+            orion_state="added"
+            orion_dir="$userplugins/$ORION_FOLDER"
+        else
+            warn "Orion could not be downloaded. Carrying on without it."
+        fi
+    fi
+}
+
+# Vencord no longer builds, and this run brought Orion in or updated it: take that back.
+undo_orion() {
+    if [ "$orion_state" = "added" ]; then
+        warn "Vencord doesn't build with Orion in it, so Orion is taken out again."
+        rm -rf "$orion_dir"
+    elif [ "$orion_state" = "updated" ] && [ -n "$orion_before" ]; then
+        warn "Vencord doesn't build with the updated Orion, so Orion is put back to how it was."
+        git -C "$orion_dir" reset --hard "$orion_before"
+    else
+        return 1
+    fi
+    orion_state=""
+}
+
 # Sets $built_dir when the plugins are in and built.
 install_plugins() {
-    local in_use dir node_major needed plugin name now
+    local in_use dir node_major needed plugin name now existing
     step "Vencord plugins"
 
     if ! have git || ! have node; then
@@ -249,6 +325,11 @@ install_plugins() {
         /*) ;;
         *) dir="$PWD/$dir" ;;
     esac
+
+    # asked now, before the slow part, so the rest can run unattended
+    if [ "$want_orion" = 0 ] && [ -z "$(find_orion "$dir/src/userplugins")" ]; then
+        if ask_orion; then want_orion=1; fi
+    fi
 
     if is_vencord_source "$dir"; then
         info "Vencord source: $dir"
@@ -274,6 +355,13 @@ install_plugins() {
         cp -R "${plugin%/}" "$dir/src/userplugins/$name"
         info "plugin: $name"
     done
+    existing="$(find_orion "$dir/src/userplugins")"
+    if [ "$want_orion" = 1 ]; then
+        install_orion "$dir/src/userplugins"
+    elif [ -n "$existing" ]; then
+        info "Orion is already in this build ($existing) and stays as it is."
+        orion_state="present"
+    fi
 
     if [ ! -d "$dir/node_modules" ]; then
         info "Fetching what Vencord's build needs (pnpm install) ..."
@@ -283,8 +371,11 @@ install_plugins() {
     if ! build_vencord "$dir"; then
         # a Vencord checkout that was updated since its packages were last fetched
         warn "The build failed. Fetching packages again and retrying once ..."
-        run_pnpm "$dir" install --frozen-lockfile
-        build_vencord "$dir"
+        if ! { run_pnpm "$dir" install --frozen-lockfile && build_vencord "$dir"; }; then
+            # still no build: if this run brought Orion in, see whether Vencord builds without it
+            undo_orion || die "Vencord doesn't build; the messages above say why."
+            build_vencord "$dir"
+        fi
     fi
 
     if [ -n "$in_use" ] && [ "${in_use%/}" = "${dir%/}" ]; then
@@ -356,6 +447,10 @@ uninstall_all() {
         build_vencord "$dir"
         info "Restart Discord to finish."
     fi
+    plugin="$(find_orion "$dir/src/userplugins")"
+    if [ -n "$plugin" ]; then
+        info "Orion ($plugin) is somebody else's plugin and stays. Delete that folder to remove it."
+    fi
 }
 
 printf '\033[1mdiscord-rice installer\033[0m\n'
@@ -401,6 +496,10 @@ if [ -n "$built_dir" ]; then
     info "Fully restart Discord (quit it completely, then start it again)."
     info "The plugins are on by default; the rice bowl button in the channel header opens the settings."
     info "RiceUpdater keeps the theme file and the plugins up to date from GitHub from now on."
+    if [ "$orion_state" = "added" ] || [ "$orion_state" = "updated" ]; then
+        info "Orion: turn on OrionQuests under Settings > Vencord > Plugins. RiceUpdater leaves it alone;"
+        info "run this installer again with --orion to update it."
+    fi
 fi
 if [ "$for_vencord" = 1 ]; then
     info "Vencord: turn the theme on under Settings > Vencord > Themes > discord-rice."

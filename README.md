@@ -48,6 +48,7 @@ Then turn the theme on in Discord: **Settings → Vencord → Themes** (or **Set
 | --- | --- | --- |
 | `-ThemeOnly` | `--theme-only` | The theme only, without asking about the plugins. BetterDiscord still gets its updater plugin. |
 | `-Plugins` | `--plugins` | Set up the plugins too, without asking. |
+| `-Orion` | `--orion` | With the plugins, also add Orion without asking, or update it. See [Orion](#orion). |
 | `-VencordDir <folder>` | `--vencord-dir <folder>` | Where the Vencord source is, or where to download it to. |
 | `-NoInject` | `--no-inject` | Build Vencord with the plugins, but don't point Discord at the build. |
 | `-Uninstall` | `--uninstall` | Remove what the installer put in. Vencord and BetterDiscord themselves stay. |
@@ -141,6 +142,16 @@ The plugins are the folders in `vencord-plugins/`. User plugins can't be added t
 3. If Discord didn't run that build already, it points Discord at it with Vencord's own installer. Quit Discord first; the script waits.
 
 Fully restart Discord afterwards. The plugins are on by default, and your Vencord settings and themes carry over. **Settings → Vencord → Updater** keeps working: it pulls Vencord and rebuilds, and the plugins stay. For **Vesktop**, point it at the build yourself: **Settings → Vesktop Settings → Vencord Location** → the `dist` folder inside the Vencord folder.
+
+#### Orion
+
+After the plugins question the installer asks one more: whether to add [Orion](https://github.com/nyxxbit/discord-quest-completer) too. The answer defaults to no.
+
+- **What it is.** Somebody else's Vencord plugin (OrionQuests) that completes Discord Quests without playing them. It is not part of discord-rice, and nothing in it is checked or kept up by this repo.
+- **The risk.** Orion's own README says Discord has been restricting accounts for quest automation since April 2026. Read it before you say yes; that part is between you and your account.
+- **Why it is offered here.** Vencord runs one build at a time, and Orion's own installers bring a whole Vencord of their own, which drops these plugins. Putting Orion into the same build is how both stay.
+- **What saying yes does.** It downloads Orion's newest code from its own repo into `src/userplugins/discord-quest-completer` and builds Vencord with it. If Orion is already in the build under another name, it is left as it is. If Vencord doesn't build with Orion in it, Orion is taken out again and the rest is installed.
+- **Afterwards.** Turn on **OrionQuests** under **Settings → Vencord → Plugins**. RiceUpdater never touches it; run the installer again with `-Orion` / `--orion` to update it. Uninstalling discord-rice leaves Orion in place: delete its folder to remove it.
 
 **By hand.** This is what the installer does, with [pnpm](https://pnpm.io) installed. Vencord's own guide is [here](https://docs.vencord.dev/installing/custom-plugins/).
 

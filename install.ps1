@@ -15,6 +15,7 @@
          from its source, so this finds your source build or downloads one (git clone), copies the plugin
          folders into it, builds it, and points Discord at the build with Vencord's own installer.
          That needs Git and Node.js; the script tells you if they are missing and installs nothing itself.
+         With the plugins it also asks about Orion, which is somebody else's plugin (see -Orion).
 
     Run it again whenever you like: it replaces what it installed and leaves everything else alone.
 
@@ -24,6 +25,12 @@
 
 .PARAMETER Plugins
     Also do step 3, without asking.
+
+.PARAMETER Orion
+    With the plugins, also add Orion (github.com/nyxxbit/discord-quest-completer) without asking, or update
+    it if this script added it before. Orion completes Discord Quests without playing them. It is not part
+    of discord-rice: its newest code is downloaded from its own repo into the same Vencord build, and its
+    README warns that Discord has been restricting accounts for quest automation since April 2026.
 
 .PARAMETER VencordDir
     Where the Vencord source is, or where to download it to. Default: the build Discord already uses if
@@ -46,6 +53,7 @@
 param(
     [switch]$ThemeOnly,
     [switch]$Plugins,
+    [switch]$Orion,
     [string]$VencordDir,
     [switch]$NoInject,
     [switch]$Uninstall
@@ -60,6 +68,11 @@ $BdUpdater = 'DiscordRiceUpdater.plugin.js' # the one BetterDiscord plugin that 
 $VencordRepo = 'https://github.com/Vendicated/Vencord'
 $TempDir = $null
 $BuiltDir = $null # the Vencord folder, once the plugins are in and built
+$OrionRepo = 'https://github.com/nyxxbit/discord-quest-completer'
+$OrionFolder = 'discord-quest-completer' # the folder name Orion's own guide uses
+$OrionState = $null # 'added' or 'updated' when this run brought Orion in, 'present' when it was there already
+$OrionDir = $null
+$OrionBefore = $null # the commit Orion was at before this run updated it
 
 function Step([string]$Text) { Write-Host "`n> $Text" -ForegroundColor Cyan }
 function Info([string]$Text) { Write-Host "  $Text" }
@@ -201,6 +214,69 @@ function Install-Theme([string]$Source, $Mods) {
     }
 }
 
+# The folder of Orion in a Vencord build's userplugins, whatever it is called there, or nothing.
+function Find-Orion([string]$Userplugins) {
+    if (-not (Test-Path $Userplugins)) { return $null }
+    foreach ($folder in Get-ChildItem $Userplugins -Directory) {
+        if ((Test-Path (Join-Path $folder.FullName 'orion.ts')) -and (Test-Path (Join-Path $folder.FullName 'index.tsx'))) { return $folder.FullName }
+    }
+    return $null
+}
+
+function Ask-Orion {
+    Write-Host ''
+    Info "Orion (github.com/nyxxbit/discord-quest-completer) is somebody else's Vencord plugin. It completes"
+    Info 'Discord Quests without playing them. It is not part of discord-rice and not checked by it: saying'
+    Info 'yes downloads its newest code from its own repo into this Vencord build.'
+    Warn 'Its own README says Discord has been restricting accounts for quest automation since April 2026.'
+    return (Ask '  Add Orion too?')
+}
+
+# Fetches Orion into the build, or updates the copy that is there. Sets $OrionState. Prints, returns nothing.
+function Install-Orion([string]$Userplugins) {
+    $existing = Find-Orion $Userplugins
+    if ($existing -and (Test-Path (Join-Path $existing '.git'))) {
+        Info "Orion: updating $existing ..."
+        $script:OrionBefore = (& git -C $existing rev-parse HEAD)
+        & git -C $existing pull --ff-only
+        if ($LASTEXITCODE -eq 0) {
+            $script:OrionState = 'updated'
+            $script:OrionDir = $existing
+        } else {
+            Warn "Orion couldn't be updated (git pull failed). The copy that is there is kept."
+            $script:OrionState = 'present'
+        }
+    } elseif ($existing) {
+        Info "Orion is already in this build ($existing), not as a git download, so it is left as it is."
+        $script:OrionState = 'present'
+    } else {
+        $target = Join-Path $Userplugins $OrionFolder
+        Info "Orion: downloading $OrionRepo ..."
+        & git clone --depth 1 $OrionRepo $target
+        if ($LASTEXITCODE -ne 0) {
+            Warn 'Orion could not be downloaded. Carrying on without it.'
+            return
+        }
+        $script:OrionState = 'added'
+        $script:OrionDir = $target
+    }
+}
+
+# Vencord no longer builds, and this run brought Orion in or updated it: take that back. True if it did.
+function Undo-Orion {
+    if ($script:OrionState -eq 'added') {
+        Warn "Vencord doesn't build with Orion in it, so Orion is taken out again."
+        Remove-Item $script:OrionDir -Recurse -Force
+    } elseif ($script:OrionState -eq 'updated' -and $script:OrionBefore) {
+        Warn "Vencord doesn't build with the updated Orion, so Orion is put back to how it was."
+        & git -C $script:OrionDir reset --hard $script:OrionBefore | Out-Host
+    } else {
+        return $false
+    }
+    $script:OrionState = $null
+    return $true
+}
+
 # Sets $BuiltDir when the plugins are in and built. Returns nothing, so what git and the build print is shown.
 function Install-Plugins([string]$Source) {
     Step 'Vencord plugins'
@@ -220,6 +296,11 @@ function Install-Plugins([string]$Source) {
     if (-not $dir) { $dir = $inUse }
     if (-not $dir) { $dir = Join-Path $HOME 'Vencord' }
     $dir = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($dir)
+    $userplugins = Join-Path $dir 'src\userplugins'
+
+    # asked now, before the slow part, so the rest can run unattended
+    $wantOrion = [bool]$Orion
+    if (-not $wantOrion -and -not (Find-Orion $userplugins)) { $wantOrion = Ask-Orion }
 
     if (Test-VencordSource $dir) {
         Info "Vencord source: $dir"
@@ -242,13 +323,18 @@ function Install-Plugins([string]$Source) {
         return
     }
 
-    $userplugins = Join-Path $dir 'src\userplugins'
     New-Item -ItemType Directory -Force -Path $userplugins | Out-Null
     foreach ($plugin in Get-ChildItem (Join-Path $Source 'vencord-plugins') -Directory) {
         $target = Join-Path $userplugins $plugin.Name
         if (Test-Path $target) { Remove-Item $target -Recurse -Force }
         Copy-Item -Path $plugin.FullName -Destination $target -Recurse
         Info "plugin: $($plugin.Name)"
+    }
+    if ($wantOrion) {
+        Install-Orion $userplugins
+    } elseif (Find-Orion $userplugins) {
+        Info "Orion is already in this build ($(Find-Orion $userplugins)) and stays as it is."
+        $script:OrionState = 'present'
     }
 
     if (-not (Test-Path (Join-Path $dir 'node_modules'))) {
@@ -261,12 +347,22 @@ function Install-Plugins([string]$Source) {
     } catch {
         # a Vencord checkout that was updated since its packages were last fetched
         Warn 'The build failed. Fetching packages again and retrying once ...'
-        Invoke-Pnpm $dir @('install', '--frozen-lockfile')
-        Build-Vencord $dir
+        $problem = $null
+        try {
+            Invoke-Pnpm $dir @('install', '--frozen-lockfile')
+            Build-Vencord $dir
+        } catch {
+            $problem = $_
+        }
+        if ($problem) {
+            # still no build: if this run brought Orion in, see whether Vencord builds without it
+            if (-not (Undo-Orion)) { throw $problem }
+            Build-Vencord $dir
+        }
     }
 
     $hasDiscord = [bool](Get-DiscordFolders)
-    if ($inUse -and ($inUse.TrimEnd('') -eq $dir.TrimEnd(''))) {
+    if ($inUse -and ($inUse.TrimEnd('\') -eq $dir.TrimEnd('\'))) {
         Info 'Discord (or Vesktop) already loads this build.'
     } elseif ($NoInject) {
         Info 'Not pointing Discord at the build (-NoInject).'
@@ -280,7 +376,7 @@ function Install-Plugins([string]$Source) {
         Invoke-Tool $dir 'node' @('scripts/runInstaller.mjs', '--', '--install', '--branch', 'auto')
         # Vencord's installer doesn't say whether it worked, so look
         $now = Find-VencordInUse
-        if (-not $now -or ($now.TrimEnd('') -ne $dir.TrimEnd(''))) {
+        if (-not $now -or ($now.TrimEnd('\') -ne $dir.TrimEnd('\'))) {
             Warn "Discord doesn't load this build yet. In $dir, run: node scripts/runInstaller.mjs -- --install"
         }
     }
@@ -321,6 +417,8 @@ function Uninstall-All([string]$Source) {
         Build-Vencord $dir
         Info 'Restart Discord to finish.'
     }
+    $orionDir = Find-Orion (Join-Path $dir 'src\userplugins')
+    if ($orionDir) { Info "Orion ($orionDir) is somebody else's plugin and stays. Delete that folder to remove it." }
 }
 
 try {
@@ -363,6 +461,10 @@ try {
         Info 'Fully restart Discord (quit it from the icon next to the clock, then start it again).'
         Info 'The plugins are on by default; the rice bowl button in the channel header opens the settings.'
         Info 'RiceUpdater keeps the theme file and the plugins up to date from GitHub from now on.'
+        if ($script:OrionState -eq 'added' -or $script:OrionState -eq 'updated') {
+            Info 'Orion: turn on OrionQuests under Settings > Vencord > Plugins. RiceUpdater leaves it alone;'
+            Info 'run this installer again with -Orion to update it.'
+        }
     }
     if ($forVencord) {
         Info 'Vencord: turn the theme on under Settings > Vencord > Themes > discord-rice.'
