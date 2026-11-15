@@ -135,12 +135,13 @@ function Prompt({ value, onChange, placeholder, maxLength, onEnter, label }: {
 
 /* ---------------- about ---------------- */
 
+// every row is the same on both sides of the middle column, the steam as near as two characters can be
 const BOWL = [
-    "       (   )  (",
-    "        ) (    )",
-    "       (   ) (",
-    "    _.-'''''''''''-._",
-    "  .' . ' . ' . ' . ' '.",
+    "        (   (   (",
+    "       )   )   )",
+    "        (   (   (",
+    "      .-'''''''''-.",
+    "   .-'  . ' . ' .  '-.",
     " (_____________________)",
     "  \\                   /",
     "   '.               .'",
