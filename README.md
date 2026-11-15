@@ -113,6 +113,7 @@ Without the plugin, every option is a CSS variable at the top of the theme file.
 | `--corner-room` | `168px` | Room kept free at the right end of the channel header, where the inbox, plugin buttons and window dots sit now that there is no top bar (in the `:root` block). Raise it if a plugin adds more buttons there. |
 | `--line`, `--line-focus`, `--float-border` | faint / light grey | The lines between panes, the chat bar's line while typing, and the border around menus (in the `:root` block). |
 | `--mention` | faint grey band | The background of messages that ping you (in the `:root` block). |
+| `--ping-floor` | `0.65` | A ping in a role's colour is never darker than this, so a black or very dark role can still be read. `0` is black, `1` is white, and `0` leaves every colour as the server set it (in the `:root` block). |
 
 The rest of the `:root` block is the colours: text, the see-through layers and solid surfaces, the light greys that stand in for Discord's blurple, and the muted status colours, each with a comment saying where it shows up.
 
