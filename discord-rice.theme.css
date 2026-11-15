@@ -2,7 +2,7 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 4.2.0
+ * @version 4.2.1
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
@@ -1041,6 +1041,14 @@ body .videoControls_qOjco6 > * {
     -webkit-app-region: drag;
 }
 .children_ybUK7Z :is(a, button, input, [role='button'], [role='link'], [role='textbox'], [tabindex]:not([tabindex='-1'])) {
+    -webkit-app-region: no-drag;
+}
+/* ...and by the empty part of the server header, the strip with the server's name above the channels.
+   The name with its arrow (the server menu) and the invite button keep taking clicks */
+.header_XH4OpX {
+    -webkit-app-region: drag;
+}
+.header_XH4OpX :is(.guildDropdown_XH4OpX, .headerChildren_XH4OpX) {
     -webkit-app-region: no-drag;
 }
 

@@ -16,7 +16,7 @@ Discord made to look like a tiling-WM Linux rice: a theme and a few small plugin
 - **Plain folders.** A closed folder shows a folder icon instead of a 2×2 grid of tiny server icons. With the folder plugin it can show a picture, an icon or a bit of ASCII instead.
 - **ASCII wallpaper.** With the discord-rice plugin, the wallpaper can be redrawn out of characters, digits or 0s and 1s, like the fetch screenshots on r/unixporn.
 - **Less clutter.** Nitro, Shop and Quests are gone from the DM list, and so are the quest card above your user panel, nameplates behind names, the notification bell in the channel header, the video call button in DMs (voice call stays), and the gift and apps buttons in the chat bar. The DM profile button hides while Discord has it greyed out.
-- **Small fixes.** The game page (click the game you're playing) opens as a smaller centred window, so its close button isn't stuck under the window controls. Drag the window by the empty space in the channel header. On small windows the header search box shrinks so the channel name stays readable.
+- **Small fixes.** The game page (click the game you're playing) opens as a smaller centred window, so its close button isn't stuck under the window controls. Drag the window by the empty space in the channel header, or in the server header above the channel list. On small windows the header search box shrinks so the channel name stays readable.
 - **Light on Discord.** No other theme is loaded underneath, and the rules are written and measured so that clicking around and switching channels costs about the same as with no theme at all.
 
 ### Install
