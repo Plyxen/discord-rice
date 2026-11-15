@@ -2,7 +2,7 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 4.1.3
+ * @version 4.2.0
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
@@ -877,6 +877,124 @@ body {
     margin-top: -3px;
 }
 
+
+/* ================================================================
+   dialogs
+   Invite people, create a channel, "are you sure?" and the like look like the discord-rice settings
+   window, a floating terminal window: a title bar with a line under it (the title bold, the line
+   Discord writes under it dim beside it), a small close button, a line above the buttons, and the same
+   see-through glass as the menus. The frame itself (thin light border, small corners, flat inputs) is
+   set with the other floating windows further down.
+   Discord has two kinds of dialog. First the newer one.
+   ================================================================ */
+
+/* the title bar starts at the dialog's top edge. A big centred header with a picture is left alone */
+.container_dvN-MP .header_dvN-MP:not(.headerCentered_dvN-MP) {
+    margin-top: calc(var(--custom-modal-padding-top) * -1);
+    padding: 7px 44px 7px 14px; /* 44px: room for the close button */
+    border-bottom: 1px solid var(--line);
+}
+/* title and subtitle side by side, like "discord-rice ~/.config/..."; a subtitle that is too long for
+   that drops to a row of its own. Discord sets the gap on the element, hence !important */
+.header_dvN-MP:not(.headerCentered_dvN-MP) > .stack_TWWX0S {
+    flex-flow: row wrap;
+    align-items: baseline;
+    gap: 0 10px !important;
+}
+.header_dvN-MP:not(.headerCentered_dvN-MP) .headerLayout_dvN-MP {
+    display: contents;
+}
+.header_dvN-MP:not(.headerCentered_dvN-MP) .headerMain_dvN-MP {
+    flex: 0 1 auto;
+}
+.header_dvN-MP:not(.headerCentered_dvN-MP) .headerLeading_dvN-MP /* a back button, when there is one */ {
+    align-self: center;
+    margin: 0;
+}
+.header_dvN-MP:not(.headerCentered_dvN-MP) .headerTitle_dvN-MP {
+    color: var(--fg-bright);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.45;
+}
+.header_dvN-MP:not(.headerCentered_dvN-MP) .headerSubtitle_dvN-MP {
+    color: var(--fg-dim);
+    font-size: 13px;
+    line-height: 1.45;
+}
+/* close: small, in the bar's right corner */
+.header_dvN-MP:not(.headerCentered_dvN-MP) .headerTrailing_dvN-MP {
+    position: absolute;
+    top: 3px;
+    right: 4px;
+    margin: 0;
+    padding: 0;
+}
+/* ...and its button, like a back button on the left, is as small as the bar */
+.header_dvN-MP:not(.headerCentered_dvN-MP) :is(.headerLeading_dvN-MP, .headerTrailing_dvN-MP) .buttonChildrenWrapper_F7qvhY {
+    min-width: 26px;
+    min-height: 26px;
+}
+.header_dvN-MP:not(.headerCentered_dvN-MP) :is(.headerLeading_dvN-MP, .headerTrailing_dvN-MP) svg {
+    width: 16px;
+    height: 16px;
+}
+/* Discord draws a line under the header and over the footer while the content is scrolled. The bar and
+   the footer have their own lines now, so those would be second ones */
+.container_dvN-MP .bodySpacerTopBorder_dvN-MP {
+    border-bottom-color: transparent;
+}
+.container_dvN-MP .bodyScrollingSpacerBottom_dvN-MP {
+    border-top-color: transparent;
+}
+/* a line above what sits under the content: the row of buttons, or an extra like the invite link */
+.container_dvN-MP footer.section_dvN-MP {
+    padding-block: 12px;
+    border-top: 1px solid var(--line);
+}
+.container_dvN-MP footer.section_dvN-MP:last-child {
+    margin-bottom: calc(var(--custom-modal-padding-bottom) * -1);
+}
+
+/* the older kind, which Vencord's and BetterDiscord's own dialogs use too. Its header is whatever each
+   dialog puts there, so it only gets the bar's size, its line and a small title */
+.root__KoJTP .header__KoJTP {
+    padding: 7px 8px 7px 14px;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+}
+.root__KoJTP .header__KoJTP :is(h1, h2, h3, .heading-md\/semibold_RAOoio, .heading-lg\/semibold_RAOoio, .heading-xl\/semibold_RAOoio) {
+    color: var(--fg-bright);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.45;
+}
+.root__KoJTP .close__KoJTP {
+    height: 16px;
+    padding: 2px;
+}
+.root__KoJTP .close__KoJTP svg {
+    width: 16px;
+    height: 16px;
+}
+.root__KoJTP .footer__KoJTP {
+    padding-block: 12px;
+    border-top: 1px solid var(--line);
+    border-radius: 0;
+}
+
+/* glass, as on the menus: a see-through dark tint with what is behind blurred. Only the plain dialog
+   sizes: the profile window and the picture viewer are built on the older kind too and keep their own
+   backgrounds. --glass-menus: off gives solid dark dialogs */
+@container style(--glass-menus: on) {
+    :is(.container_dvN-MP, .small__KoJTP, .medium__KoJTP, .large__KoJTP) {
+        background: var(--float-tint) !important;
+        backdrop-filter: blur(var(--float-blur)) saturate(1.2);
+        --modal-background: transparent;
+        --modal-footer-background: transparent;
+        --background-surface-high: transparent;
+    }
+}
 /* ================================================================
    no panels: inside the main app layer every base surface is see-through, so the wallpaper is the
    background. Menus, popouts, modals and settings live outside this layer and keep solid colours.
@@ -1176,10 +1294,10 @@ body .videoControls_qOjco6 > * {
 }
 
 /* floating windows: right-click menus, the GIF / sticker / emoji picker, inbox, autocomplete, search
-   suggestions, small modals. Styled like rofi or a floating window in Hyprland: small corners, a thin
+   suggestions, dialogs. Styled like rofi or a floating window in Hyprland: small corners, a thin
    light border instead of a drop shadow, flat inputs */
 :is(.menu_M3qk4j, .contentWrapper_58b0l2, .autocomplete_rg6La1, .container_cbVzxY,
-    .messagesPopoutWrap_6bgemo, .popout_j5xNzb, .root__KoJTP) {
+    .messagesPopoutWrap_6bgemo, .popout_j5xNzb, .root__KoJTP, .container_dvN-MP) {
     border: 1px solid var(--float-border) !important;
     border-radius: var(--radius-sm) !important;
     box-shadow: none !important;

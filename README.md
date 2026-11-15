@@ -12,6 +12,7 @@ Discord made to look like a tiling-WM Linux rice: a theme and a few small plugin
 - **Greyscale.** Made to sit on a black-and-white desktop. Server icons and folders are black-and-white too. Only status dots, unread badges and red "danger" buttons keep a muted colour.
 - **Terminal touches.** Iosevka everywhere, and the chat bar is a `❯` prompt whose line lights up while you type. The selected channel is a solid bar like ranger's cursor (a faint tint for the voice channel you're in), categories are bold like directories in `ls`, and message times sit in `[brackets]`.
 - **Menus like rofi.** Right-click menus, the emoji/GIF picker and other popouts are dark frosted glass with a thin border.
+- **Dialogs like a terminal window.** Invite, create-channel and "are you sure?" dialogs look like the discord-rice settings window: a title bar with a line under it, a small close button, a line above the buttons, and the same glass as the menus.
 - **Plain folders.** A closed folder shows a folder icon instead of a 2×2 grid of tiny server icons. With the folder plugin it can show a picture, an icon or a bit of ASCII instead.
 - **ASCII wallpaper.** With the discord-rice plugin, the wallpaper can be redrawn out of characters, digits or 0s and 1s, like the fetch screenshots on r/unixporn.
 - **Less clutter.** Nitro, Shop and Quests are gone from the DM list, and so are the quest card above your user panel, nameplates behind names, the notification bell in the channel header, the video call button in DMs (voice call stays), and the gift and apps buttons in the chat bar. The DM profile button hides while Discord has it greyed out.
@@ -99,7 +100,7 @@ Without the plugin, every option is a CSS variable at the top of the theme file.
 | `--corners` | `3px` | Corner size. `0px` for dead sharp. Avatars and pills stay round. |
 | `--plain-folders` | `on` | Closed folders show a folder icon. `off` brings back the 2×2 grid. |
 | `--mono-server-icons` | `on` | Black-and-white server icons and folders. `hover` shows colour under the mouse; `off` keeps colour. |
-| `--glass-menus` | `on` | Frosted-glass menus and pickers. `off` makes them solid. The tint and blur are `--float-tint` and `--float-blur` (in the `:root` block). |
+| `--glass-menus` | `on` | Frosted-glass menus, pickers and dialogs. `off` makes them solid. The tint and blur are `--float-tint` and `--float-blur` (in the `:root` block). |
 | `--hide-quests` | `on` | The quest card above your user panel, and quest embeds in chat. |
 | `--hide-nameplates` | `on` | The picture strips behind names in the member list, DM list and user panel. Shop and settings previews stay. |
 | `--hide-store-tabs` | `on` | Nitro Home, Shop and Quests in the DM list. |
