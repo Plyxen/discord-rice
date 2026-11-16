@@ -2,7 +2,7 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 4.2.3
+ * @version 4.2.4
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
@@ -744,6 +744,15 @@ body,
 .source_4HfQya .sourceOverlayCTA_4HfQya {
     background-color: var(--button);
     color: var(--ink);
+}
+
+/* a video or sound file in chat: the player writes on the picture and on its own dark strips, and it does
+   so in plain "white": the time, the file's name, the icons under the mouse, the round play button in the
+   middle (the second name, which the previews of links to videos use too). So "white" is light there */
+.wrapper_FJ99sr,
+.wrapper_lj7V-K {
+    --white: var(--fg-bright);
+    --white-500: var(--fg-bright);
 }
 
 /* ---- the mod's own interface ----
