@@ -2,7 +2,7 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 4.2.1
+ * @version 4.2.2
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
@@ -735,6 +735,14 @@ body,
 /* ...except on the round buttons this theme fills with a light colour, where the icon stays dark */
 .colorable_K9Xq13:is(.green_K9Xq13, .join_K9Xq13, .yellow_K9Xq13) {
     --white: var(--ink);
+}
+
+/* screen share picker (the grid of windows and screens to stream): the "Share Screen" button that appears
+   over the tile you hover is Discord's "white" with black text. White is dark in this theme (see the
+   colour names above), so the button was black on near-black. It takes the theme's light button colours */
+.source_4HfQya .sourceOverlayCTA_4HfQya {
+    background-color: var(--button);
+    color: var(--ink);
 }
 
 /* ---- the mod's own interface ----
