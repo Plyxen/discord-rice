@@ -16,6 +16,10 @@
 #      apt, dnf or pacman), shows the command first, and runs it only if you say yes.
 #      With the plugins it also asks about Orion, which is somebody else's plugin (see --help).
 #
+# With plain Discord and no mod at all, it offers step 3 straight away: that brings Vencord too. Where
+# Discord came from a package (pacman, apt, dnf) it sits in /opt or /usr, so the last part of step 3 needs
+# sudo; the script shows that command and asks before running it.
+#
 # Run it again whenever you like: it replaces what it installed and leaves everything else alone. A theme
 # file you edited yourself is kept next to the new one as .bak.
 
@@ -38,6 +42,8 @@ vencord_dir=""
 tmp=""
 src=""
 built_dir="" # the Vencord folder, once the plugins are in and built
+not_loaded=0 # 1 when that build is ready but Discord could not be pointed at it
+no_mod_at_start=0 # 1 when there was no Vencord, Vesktop or BetterDiscord before this run
 orion_state="" # "added" or "updated" when this run brought Orion in, "present" when it was there already
 orion_dir=""
 orion_before="" # the commit Orion was at before this run updated it
@@ -136,7 +142,12 @@ install_the_tools() {
     fi
     info "Running: $command"
     # the command is one of the fixed lines above, never anything typed in or downloaded
-    sh -c "$command" || warn "That did not finish cleanly."
+    if ! sh -c "$command"; then
+        warn "That did not finish cleanly."
+        case "$command" in
+            *pacman*) info "If pacman couldn't download a package, update the system first (sudo pacman -Syu) and run this again." ;;
+        esac
+    fi
     hash -r 2>/dev/null || true
     return 0
 }
@@ -201,14 +212,51 @@ find_mods() {
     done < <(config_dirs)
 }
 
-# Has Discord's own app (not Vesktop) been used here?
-has_discord() {
+# Has Discord's own app (not Vesktop) been used here? Prints the folder its settings folder is in.
+discord_config_base() {
     local base name
     while IFS= read -r base; do
         for name in discord discordptb discordcanary discorddevelopment Discord; do
-            [ -d "$base/$name" ] && return 0
+            if [ -d "$base/$name" ]; then
+                printf '%s\n' "$base"
+                return 0
+            fi
         done
     done < <(config_dirs)
+    return 1
+}
+has_discord() { discord_config_base >/dev/null; }
+
+# The resources folders Discord's own app can be in (stable, PTB, Canary), wherever it was installed.
+discord_resources() {
+    local root name
+    case "$(uname -s)" in
+        Darwin)
+            for name in "Discord" "Discord PTB" "Discord Canary"; do
+                printf '%s\n' "/Applications/$name.app/Contents/Resources"
+            done
+            ;;
+        *)
+            for root in /usr/share /usr/lib /usr/lib64 /opt "$HOME/.local/share"; do
+                for name in discord Discord discord-ptb DiscordPTB discord-canary DiscordCanary; do
+                    printf '%s\n' "$root/$name/resources"
+                done
+            done
+            for root in /var/lib/flatpak "$HOME/.local/share/flatpak"; do
+                printf '%s\n' "$root/app/com.discordapp.Discord/current/active/files/discord/resources"
+            done
+            ;;
+    esac
+}
+
+# Is Discord in a folder that only root may change? That is where a package (pacman, apt, dnf) puts it:
+# /opt or /usr.
+discord_needs_root() {
+    local res
+    [ "$(id -u)" != 0 ] || return 1
+    while IFS= read -r res; do
+        if [ -d "$res" ] && [ ! -w "$res" ]; then return 0; fi
+    done < <(discord_resources)
     return 1
 }
 
@@ -224,18 +272,9 @@ patcher_target() {
 
 # A Vencord source build that is already in use: the one Discord loads, or the one Vesktop is set to.
 find_vencord_in_use() {
-    local asar target dir i base dist
-    for asar in \
-        "/Applications/Discord.app/Contents/Resources/app.asar" \
-        "/usr/share/discord/resources/app.asar" \
-        "/usr/lib/discord/resources/app.asar" \
-        "/usr/lib64/discord/resources/app.asar" \
-        "/opt/discord/resources/app.asar" \
-        "/opt/Discord/resources/app.asar" \
-        "$HOME/.local/share/Discord/resources/app.asar" \
-        "/var/lib/flatpak/app/com.discordapp.Discord/current/active/files/discord/resources/app.asar" \
-        "$HOME/.local/share/flatpak/app/com.discordapp.Discord/current/active/files/discord/resources/app.asar"; do
-        target="$(patcher_target "$asar")"
+    local res target dir i base dist
+    while IFS= read -r res; do
+        target="$(patcher_target "$res/app.asar")"
         # the file it names may itself only pass on to another build, so follow it once
         for i in 1 2; do
             [ -n "$target" ] || break
@@ -246,7 +285,7 @@ find_vencord_in_use() {
             fi
             target="$(patcher_target "$target")"
         done
-    done
+    done < <(discord_resources)
     while IFS= read -r base; do
         [ -f "$base/vesktop/settings.json" ] || continue
         dist="$(sed -n 's/.*"vencordDir"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$base/vesktop/settings.json" | head -n 1)"
@@ -411,7 +450,7 @@ undo_orion() {
 
 # Sets $built_dir when the plugins are in and built.
 install_plugins() {
-    local in_use dir node_major needed plugin name now existing tried=0
+    local in_use dir node_major needed plugin name now existing i cli tried=0 as_root="" uses_vesktop=0
     step "Vencord plugins"
 
     if ! have git || ! have node; then
@@ -503,10 +542,36 @@ install_plugins() {
         (cd "$dir" && node scripts/runInstaller.mjs -- --install --branch auto) || true
         # Vencord's installer doesn't say whether it worked, so look
         now="$(find_vencord_in_use)"
+        cli="$dir/dist/Installer/VencordInstallerCli-linux" # what the line above downloaded and ran
+        if [ "${now%/}" != "${dir%/}" ] && [ -x "$cli" ] && discord_needs_root; then
+            # the same step as root. Vencord's installer is told where the build is, as runInstaller.mjs tells it
+            as_root="sudo env VENCORD_USER_DATA_DIR=$(printf '%q' "$dir") VENCORD_DEV_INSTALL=1 $(printf '%q' "$cli") --install --branch auto"
+            info "Discord is installed for the whole system (in /opt or /usr), so only an administrator may change it."
+            info "The same step as administrator:  $as_root"
+            if have sudo && ask_yes "  Run that now? (sudo asks for your password)"; then
+                sudo env VENCORD_USER_DATA_DIR="$dir" VENCORD_DEV_INSTALL=1 "$cli" --install --branch auto || true
+                now="$(find_vencord_in_use)"
+            fi
+        fi
         if [ "${now%/}" != "${dir%/}" ]; then
-            warn "Couldn't confirm that Discord loads this build. If Vencord's installer said it has no"
-            info "permission, run it yourself with sudo, in $dir:"
-            info "  sudo node scripts/runInstaller.mjs -- --install"
+            not_loaded=1
+            warn "Couldn't confirm that Discord loads this build."
+            if [ -n "$as_root" ]; then
+                info "Run this in a terminal yourself, then fully restart Discord:"
+                info "  $as_root"
+            else
+                info "If Vencord's installer said it has no permission, run it yourself with sudo, in $dir:"
+                info "  sudo node scripts/runInstaller.mjs -- --install"
+            fi
+        fi
+    else
+        for i in "${!mod_names[@]}"; do
+            if [ "${mod_names[$i]}" = "Vesktop" ]; then uses_vesktop=1; fi
+        done
+        if [ "$uses_vesktop" = 0 ]; then
+            not_loaded=1
+            warn "Found no Discord app that has been started on this computer, so nothing points at the build yet."
+            info "Start Discord once, close it, and run this again."
         fi
     fi
     for i in "${!mod_names[@]}"; do
@@ -571,16 +636,26 @@ if [ "$uninstall" = 1 ]; then
     exit 0
 fi
 
+if [ "${#mod_names[@]}" -eq 0 ] && [ "$want_plugins" = 0 ] && [ "$theme_only" = 0 ]; then
+    # plain Discord with no mod yet: this script can bring Vencord itself, as the build the plugins need
+    info "Found no Vencord, Vesktop or BetterDiscord on this computer."
+    info "This script can set Vencord up for you: built from its source, with the discord-rice plugins in it."
+    info "That needs git and Node.js, which it offers to install if they are missing."
+    if ask_yes "  Set up Vencord with the theme and the plugins now?"; then want_plugins=1; fi
+fi
 if [ "${#mod_names[@]}" -eq 0 ] && [ "$want_plugins" = 0 ]; then
-    warn "Found no Vencord, Vesktop or BetterDiscord on this computer."
-    info "Install one first (https://vencord.dev or https://betterdiscord.app) and run this again,"
-    info "or run it with --plugins to set up Vencord from its source together with the plugins."
+    warn "Nothing was installed: there is no Vencord, Vesktop or BetterDiscord here to put the theme in."
+    info "To set up Vencord with the theme and the plugins without being asked anything, run:"
+    info "  curl -fsSL https://raw.githubusercontent.com/$REPO/main/install.sh | bash -s -- --plugins --install-tools"
+    info "Or install a mod yourself first (https://vencord.dev or https://betterdiscord.app) and run this again."
     exit 0
 fi
 if [ "${#mod_names[@]}" -eq 0 ]; then
-    # Vencord is about to be set up from source; its data folder is where the theme goes
+    # Vencord is about to be set up from source; its data folder is where the theme goes. That folder is
+    # next to Discord's own settings folder (which is somewhere else for a Flatpak Discord)
+    no_mod_at_start=1
     mod_names=("Vencord")
-    mod_dirs=("$(config_dirs | head -n 1)/Vencord")
+    mod_dirs=("$(discord_config_base || config_dirs | head -n 1)/Vencord")
 fi
 info "Found: $(printf '%s, ' "${mod_names[@]}" | sed 's/, $//')"
 
@@ -601,8 +676,13 @@ fi
 if [ "$want_plugins" = 1 ] && [ "$theme_only" = 0 ]; then install_plugins; fi
 
 step "Done"
-if [ -n "$built_dir" ]; then
+if [ -n "$built_dir" ] && [ "$not_loaded" = 1 ]; then
+    warn "Vencord with the plugins is built in $built_dir, but Discord does not load it yet: see above."
+    info "Once it does:"
+elif [ -n "$built_dir" ]; then
     info "Fully restart Discord (quit it completely, then start it again)."
+fi
+if [ -n "$built_dir" ]; then
     info "The plugins are on by default; the rice bowl button in the channel header opens the settings."
     info "RiceUpdater keeps the theme file and the plugins up to date from GitHub from now on."
     if [ "$orion_state" = "added" ] || [ "$orion_state" = "updated" ]; then
@@ -610,7 +690,9 @@ if [ -n "$built_dir" ]; then
         info "run this installer again with --orion to update it."
     fi
 fi
-if [ "$for_vencord" = 1 ]; then
+if [ "$no_mod_at_start" = 1 ] && [ -z "$built_dir" ]; then
+    warn "Vencord was not set up, so Discord looks the same as before. See the messages above, then run this again."
+elif [ "$for_vencord" = 1 ]; then
     info "Vencord: turn the theme on under Settings > Vencord > Themes > discord-rice."
     if [ -z "$built_dir" ]; then
         info "Without the plugins the theme file does not update itself. For that, use the online link"

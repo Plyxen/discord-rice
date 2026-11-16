@@ -533,12 +533,21 @@ try {
 
     $mods = @(Get-Mods)
     $wantPlugins = [bool]$Plugins
+    if (-not $mods -and -not $wantPlugins -and -not $ThemeOnly) {
+        # plain Discord with no mod yet: this script can bring Vencord itself, as the build the plugins need
+        Info 'Found no Vencord, Vesktop or BetterDiscord on this PC.'
+        Info 'This script can set Vencord up for you: built from its source, with the discord-rice plugins in it.'
+        Info 'That needs Git and Node.js, which it offers to install if they are missing.'
+        $wantPlugins = Ask '  Set up Vencord with the theme and the plugins now?' $true
+    }
     if (-not $mods -and -not $wantPlugins) {
-        Warn 'Found no Vencord, Vesktop or BetterDiscord on this PC.'
-        Info 'Install one first (https://vencord.dev or https://betterdiscord.app) and run this again,'
-        Info 'or run it with -Plugins to set up Vencord from its source together with the plugins.'
+        Warn 'Nothing was installed: there is no Vencord, Vesktop or BetterDiscord here to put the theme in.'
+        Info 'To set up Vencord with the theme and the plugins without being asked anything, run:'
+        Info "  & ([scriptblock]::Create((irm https://raw.githubusercontent.com/$Repo/main/install.ps1))) -Plugins -InstallTools"
+        Info 'Or install a mod yourself first (https://vencord.dev or https://betterdiscord.app) and run this again.'
         return
     }
+    $noModAtStart = -not $mods
     if (-not $mods) {
         # Vencord is about to be set up from source; its data folder is where the theme goes
         $mods = @([pscustomobject]@{ Name = 'Vencord'; Dir = (Join-Path $env:APPDATA 'Vencord') })
@@ -567,7 +576,9 @@ try {
             Info 'run this installer again with -Orion to update it.'
         }
     }
-    if ($forVencord) {
+    if ($noModAtStart -and -not $vencord) {
+        Warn 'Vencord was not set up, so Discord looks the same as before. See the messages above, then run this again.'
+    } elseif ($forVencord) {
         Info 'Vencord: turn the theme on under Settings > Vencord > Themes > discord-rice.'
         if (-not $vencord) {
             Info 'Without the plugins the theme file does not update itself. For that, use the online link'

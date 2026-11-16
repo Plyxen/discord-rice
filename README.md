@@ -23,7 +23,7 @@ Discord made to look like a tiling-WM Linux rice: a theme and a few small plugin
 
 You need [Vencord](https://vencord.dev) (or [Vesktop](https://github.com/Vencord/Vesktop), which has Vencord built in) or [BetterDiscord](https://betterdiscord.app). The theme works on its own; the plugins below are optional extras.
 
-**The installer.** It finds the mods you have, copies the theme into each one, and offers to set up the Vencord plugins too.
+**The installer.** It finds the mods you have, copies the theme into each one, and offers to set up the Vencord plugins too. With plain Discord and no mod at all, it offers to set up Vencord for you, with the plugins in it.
 
 Windows, in PowerShell:
 
@@ -147,7 +147,7 @@ The plugins are the folders in `vencord-plugins/`. User plugins can't be added t
 
 1. If Discord or Vesktop already runs a Vencord source build, it uses that. Otherwise it downloads Vencord's source into a `Vencord` folder in your user folder.
 2. It copies the plugin folders into `src/userplugins/` and builds Vencord. The package manager Vencord uses (pnpm) is fetched for that one run if you don't have it.
-3. If Discord didn't run that build already, it points Discord at it with Vencord's own installer. Quit Discord first; the script waits.
+3. If Discord didn't run that build already, it points Discord at it with Vencord's own installer. Quit Discord first; the script waits. On Linux, a Discord that came from a package (pacman, apt, dnf) sits in `/opt` or `/usr`, which only an administrator may change: there the installer shows the same step with `sudo` and runs it if you say yes. When the package manager later updates Discord, that update can undo this step; if the theme and plugins are gone after one, run the installer again.
 
 Fully restart Discord afterwards. The plugins are on by default, and your Vencord settings and themes carry over. **Settings → Vencord → Updater** keeps working: it pulls Vencord and rebuilds, and the plugins stay. For **Vesktop**, point it at the build yourself: **Settings → Vesktop Settings → Vencord Location** → the `dist` folder inside the Vencord folder.
 
