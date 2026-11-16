@@ -2,7 +2,7 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 4.2.2
+ * @version 4.2.3
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
@@ -119,7 +119,8 @@ body {
 
     /* light greys where Discord uses its blurple. Links keep a faint cool tint so they still read as links */
     --link: oklch(84% 0.035 250);
-    --bar: hsl(0, 0%, 84%); /* selected channel bar, open picker tab, hovered menu item, ticked switches */
+    --bar: hsl(0, 0%, 84%); /* open picker tab, hovered menu item, ticked switches */
+    --channel-bar: hsl(0, 0%, 64%); /* selected channel: dimmer than --bar, since it stays on screen the whole time */
     --button: hsl(0, 0%, 88%);
     --button-hover: hsl(0, 0%, 80%);
     --button-press: hsl(0, 0%, 72%);
@@ -1271,7 +1272,7 @@ body .videoControls_qOjco6 > * {
 
 /* selected channel: a solid bar with dark text, like the cursor line in ranger */
 #app-mount .modeSelected_TNyK-N .link_TNyK-N {
-    background: var(--bar);
+    background: var(--channel-bar);
 }
 #app-mount .modeSelected_TNyK-N .link_TNyK-N :is(.name_TNyK-N, .icon_TNyK-N, .actionIcon_Wx6SnQ, .iconItem_Wx6SnQ) {
     color: var(--ink);
