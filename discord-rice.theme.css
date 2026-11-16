@@ -2,7 +2,7 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 4.2.4
+ * @version 4.2.5
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
@@ -49,7 +49,7 @@ body {
     --hide-video-call-button: on; /* the camera in the DM header. The voice call button stays, and you can turn the camera on in the call */
 
     /* ---- look ---- */
-    --mono-server-icons: on; /* off | on | hover: black-and-white server pictures. hover = colour under the mouse */
+    --mono-server-icons: off; /* off | on | hover: black-and-white server pictures. hover = colour under the mouse */
     --glass-menus: on; /* off | on: frosted-glass menus and pickers. off = solid dark */
     --plain-folders: on; /* off | on: a closed folder shows a folder icon instead of a 2x2 grid of its servers.
                             A picture set with the FolderPictures plugin takes the icon's place */

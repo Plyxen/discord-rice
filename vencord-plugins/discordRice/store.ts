@@ -29,9 +29,9 @@ export const settings = definePluginSettings({
     monoServerIcons: {
         type: OptionType.SELECT, description: "Black-and-white server icons", hidden: true,
         options: [
-            { label: "On", value: "on", default: true },
+            { label: "On", value: "on" },
             { label: "Colour under the mouse", value: "hover" },
-            { label: "Off", value: "off" }
+            { label: "Off", value: "off", default: true }
         ]
     },
     glassMenus: { type: OptionType.BOOLEAN, description: "Frosted-glass menus", default: true, hidden: true },
@@ -65,7 +65,7 @@ export type Store = typeof settings.store;
 
 export const DEFAULTS: Partial<Store> = {
     hideInbox: true, hideNameplates: true, hideQuests: true, hideStoreTabs: true, hideGiftButton: true,
-    hideAppsButton: true, hideStickerButton: false, hideNotificationButton: true, hideVideoCallButton: true, plainFolders: true, monoServerIcons: "on", glassMenus: true,
+    hideAppsButton: true, hideStickerButton: false, hideNotificationButton: true, hideVideoCallButton: true, plainFolders: true, monoServerIcons: "off", glassMenus: true,
     archLogo: true, monoWindowControls: true, grain: true, font: "iosevka", corners: 3, wallpaper: "",
     wallpaperDim: 0.5, asciiWallpaper: "off", asciiSize: 10
 };

@@ -2,7 +2,7 @@
  * @name DiscordRice
  * @author Pota
  * @description Settings for the discord-rice theme in one terminal-style window, behind a rice bowl button in the channel header: font, corners, wallpaper, ASCII wallpaper, what to hide, and folder looks.
- * @version 1.1.0
+ * @version 1.1.1
  * @source https://github.com/Plyxen/discord-rice
  * @website https://github.com/Plyxen/discord-rice
  */
@@ -261,9 +261,9 @@ var settings = definePluginSettings({
     description: "Black-and-white server icons",
     hidden: true,
     options: [
-      { label: "On", value: "on", default: true },
+      { label: "On", value: "on" },
       { label: "Colour under the mouse", value: "hover" },
-      { label: "Off", value: "off" }
+      { label: "Off", value: "off", default: true }
     ]
   },
   glassMenus: { type: OptionType.BOOLEAN, description: "Frosted-glass menus", default: true, hidden: true },
@@ -307,7 +307,7 @@ var DEFAULTS = {
   hideNotificationButton: true,
   hideVideoCallButton: true,
   plainFolders: true,
-  monoServerIcons: "on",
+  monoServerIcons: "off",
   glassMenus: true,
   archLogo: true,
   monoWindowControls: true,

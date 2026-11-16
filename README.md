@@ -9,7 +9,7 @@ Discord made to look like a tiling-WM Linux rice: a theme and a few small plugin
 `discord-rice.theme.css`. One file, written against Discord's own styles. It loads nothing else but the font.
 
 - **Tiled, no gaps.** One misty wallpaper behind the whole window, with the columns split by 1px lines. No floating panels, boxes or shadows, and no top bar. Calls show the wallpaper behind the tiles too, instead of black.
-- **Greyscale.** Made to sit on a black-and-white desktop. Server icons and folders are black-and-white too. Only status dots, unread badges and red "danger" buttons keep a muted colour.
+- **Greyscale.** Made to sit on a black-and-white desktop. Only status dots, unread badges and red "danger" buttons keep a muted colour. Server icons and folders keep their own colours, unless you switch **b/w icons** on.
 - **Terminal touches.** Iosevka everywhere, and the chat bar is a `❯` prompt whose line lights up while you type. The selected channel is a solid bar like ranger's cursor (a faint tint for the voice channel you're in), categories are bold like directories in `ls`, and message times sit in `[brackets]`.
 - **Menus like rofi.** Right-click menus, the emoji/GIF picker and other popouts are dark frosted glass with a thin border.
 - **Dialogs like a terminal window.** Invite, create-channel and "are you sure?" dialogs look like the discord-rice settings window: a title bar with a line under it, a small close button, a line above the buttons, and the same glass as the menus.
@@ -99,7 +99,7 @@ Without the plugin, every option is a CSS variable at the top of the theme file.
 | `--font` | `'Iosevka'` | `''` for Discord's own. `--code-font` is the same for code blocks. |
 | `--corners` | `3px` | Corner size. `0px` for dead sharp. Avatars and pills stay round. |
 | `--plain-folders` | `on` | Closed folders show a folder icon. `off` brings back the 2×2 grid. |
-| `--mono-server-icons` | `on` | Black-and-white server icons and folders. `hover` shows colour under the mouse; `off` keeps colour. |
+| `--mono-server-icons` | `off` | `on` makes server icons and folders black-and-white. `hover` does too, but shows colour under the mouse. |
 | `--glass-menus` | `on` | Frosted-glass menus, pickers and dialogs. `off` makes them solid. The tint and blur are `--float-tint` and `--float-blur` (in the `:root` block). |
 | `--hide-quests` | `on` | The quest card above your user panel, and quest embeds in chat. |
 | `--hide-nameplates` | `on` | The picture strips behind names in the member list, DM list and user panel. Shop and settings previews stay. |

@@ -63,7 +63,7 @@ const PLUGINS = [
     {
         name: "DiscordRice",
         entry: "discordRice.tsx",
-        version: "1.1.0",
+        version: "1.1.1",
         description: "Settings for the discord-rice theme in one terminal-style window, behind a rice bowl button in the channel header: font, corners, wallpaper, ASCII wallpaper, what to hide, and folder looks."
     },
     {
