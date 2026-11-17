@@ -56,7 +56,7 @@ export function built(_: IpcMainInvokeEvent) {
     return markBuilt(STATE_FILE);
 }
 
-/** Says whether the failed build is news for this commit, so it is only announced once. */
-export function buildFailed(_: IpcMainInvokeEvent, commit: string) {
-    return markBuildFailed(STATE_FILE, String(commit));
+/** Says whether the failed build is news for the plugins that wait for it, so it is only announced once. */
+export function buildFailed(_: IpcMainInvokeEvent) {
+    return markBuildFailed(STATE_FILE);
 }

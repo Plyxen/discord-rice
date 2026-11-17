@@ -20,8 +20,9 @@
  * The rule for writing: a thing is updated when the repo changed it and nobody changed it on this PC
  * since the updater last looked. Files changed here (you edit the theme by hand, or work on a plugin) are
  * left alone and reported instead, unless asked to replace them. A file that already is the repo's
- * version doesn't count as changed, and neither does one the updater itself was stopped halfway through
- * replacing.
+ * version doesn't count as changed. Each file is replaced in one step, so an update that is cut short
+ * leaves every file either as it was or as the repo has it, never half written: the next check simply
+ * carries on, and anything else it finds was changed by you.
  *
  * Where Vencord's source can't be reached (a Flatpak Discord only sees the build folder), nothing can be
  * installed. The installer leaves a note next to the build saying which plugin files it was made from,
@@ -30,7 +31,7 @@
 
 import { createHash } from "crypto";
 import { existsSync } from "fs";
-import { copyFile, mkdir, readdir, readFile, rm, rmdir, stat, writeFile } from "fs/promises";
+import { copyFile, mkdir, readdir, readFile, realpath, rename, rm, rmdir, stat, writeFile } from "fs/promises";
 import { dirname, join } from "path";
 
 const REPO = "Plyxen/discord-rice";
@@ -68,9 +69,7 @@ interface State {
     pendingBuild?: boolean;
     /** the commit for which "files were changed on this PC" was already reported */
     told?: string;
-    /** files the updater is in the middle of replacing; gone again once it got through */
-    writing?: string[];
-    /** the commit for which a failed build was already reported */
+    /** the plugins (their id on GitHub) for which a failed build was already reported */
     buildTold?: string;
     /** the plugins on GitHub for which "run the installer again" was already said */
     byHandTold?: string;
@@ -213,9 +212,8 @@ interface Plan {
  * Decides what to do with one thing.
  * @param remote what the repo has
  * @param local what is on this PC, for every path in remote or in unit.local that exists
- * @param ours files the updater was stopped halfway through replacing last time
  */
-function plan(remoteId: string, remote: Shas, local: Shas, unit: Unit | undefined, apply: boolean, force: boolean, ours: string[]): Plan {
+function plan(remoteId: string, remote: Shas, local: Shas, unit: Unit | undefined, apply: boolean, force: boolean): Plan {
     const write = Object.keys(remote).filter(p => local[p] !== remote[p]);
     // files the updater put here once, which the repo no longer has
     const remove = Object.keys(unit?.local ?? {}).filter(p => !(p in remote) && p in local);
@@ -228,9 +226,9 @@ function plan(remoteId: string, remote: Shas, local: Shas, unit: Unit | undefine
         if (!unit) return result("differs", { unit: { remote: remoteId, local } });
         // the repo hasn't changed it since, so whatever differs was done here on purpose
         if (unit.remote === remoteId) return result("differs");
-        // changed here: not how the updater left it, not the repo's version already (an update that stopped
-        // halfway, or files copied in by hand), and not one the updater was in the middle of writing
-        const changedHere = Object.keys(local).filter(p => local[p] !== unit.local[p] && local[p] !== remote[p] && !ours.includes(p));
+        // changed here: not how the updater left it, and not the repo's version already (an update that
+        // stopped halfway, or files copied in by hand)
+        const changedHere = Object.keys(local).filter(p => local[p] !== unit.local[p] && local[p] !== remote[p]);
         if (changedHere.length) return result("changed-here", { changedHere });
     }
     if (!apply) return result("available", { write, remove });
@@ -244,6 +242,35 @@ async function existingShas(dir: string, paths: Iterable<string>) {
         if (existsSync(file)) out[p] = await localSha(file);
     }
     return out;
+}
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Puts new contents in a file's place in one step: they are written next to it and then take its name.
+ * So the file is the old one or the new one, and never half of the new one, whatever cuts this short
+ * (a full disk, Discord being closed).
+ */
+async function replaceFile(file: string, data: Buffer) {
+    // if the file is a link, what it points at is replaced, and the link stays
+    const target = await realpath(file).catch(() => file);
+    const fresh = target + ".rice-new";
+    try {
+        await writeFile(fresh, data);
+        for (let tries = 0; ; tries++) {
+            try {
+                await rename(fresh, target);
+                break;
+            } catch (e: any) {
+                // on Windows a virus scanner or an editor can hold the file for a moment
+                if (tries >= 5 || !["EPERM", "EBUSY", "EACCES"].includes(e?.code)) throw e;
+                await sleep(100 * (tries + 1));
+            }
+        }
+    } catch (e) {
+        await rm(fresh, { force: true }).catch(() => void 0);
+        throw e;
+    }
 }
 
 const modified = (path: string) => stat(path).then(s => s.mtimeMs, () => 0);
@@ -278,8 +305,7 @@ export async function sync(options: SyncOptions): Promise<SyncResult> {
     const state = await readState(stateFile);
     const listing = await fetchListing(state, !force);
     const { commit } = listing;
-    // what an earlier run was stopped in the middle of writing (a full disk, Discord closed)
-    const ours = Array.isArray(state.writing) ? state.writing : [];
+    delete (state as { writing?: unknown; }).writing; // a note one earlier version kept
 
     const result: SyncResult = {
         commit: commit.slice(0, 7),
@@ -297,15 +323,12 @@ export async function sync(options: SyncOptions): Promise<SyncResult> {
     const themePath = join(themesDir, THEME_FILE);
     if (listing.theme && existsSync(themePath)) {
         const remote = { [THEME_FILE]: listing.theme };
-        const step = plan(listing.theme, remote, await existingShas(themesDir, [THEME_FILE]), state.theme, apply, force, ours);
+        const step = plan(listing.theme, remote, await existingShas(themesDir, [THEME_FILE]), state.theme, apply, force);
         if (step.outcome === "updated") {
             const data = await download(commit, THEME_FILE, listing.theme);
             // replacing a theme that was edited here: keep the edited one next to it
-            if (!ours.includes(THEME_FILE) && state.theme?.local[THEME_FILE] !== await localSha(themePath)) await copyFile(themePath, themePath + ".bak");
-            // noted before the file is touched: if this stops halfway, the next check knows who did it
-            state.writing = [THEME_FILE];
-            await writeState(stateFile, state);
-            await writeFile(themePath, data);
+            if (state.theme?.local[THEME_FILE] !== await localSha(themePath)) await copyFile(themePath, themePath + ".bak");
+            await replaceFile(themePath, data);
         }
         if (step.unit) state.theme = step.unit;
         result.theme = step.outcome;
@@ -317,16 +340,14 @@ export async function sync(options: SyncOptions): Promise<SyncResult> {
     if (pluginsDir && listing.pluginsId && Object.keys(listing.plugins).length) {
         const remote = listing.plugins;
         const local = await existingShas(pluginsDir, [...Object.keys(remote), ...Object.keys(state.plugins?.local ?? {})]);
-        const step = plan(listing.pluginsId, remote, local, state.plugins, apply, force, ours);
+        const step = plan(listing.pluginsId, remote, local, state.plugins, apply, force);
         if (step.outcome === "updated") {
             // everything is fetched and checked before the first file is touched
             const files = await Promise.all(step.write.map(async p => [p, await download(commit, `${PLUGIN_ROOT}/${p}`, remote[p])] as const));
-            state.writing = [...step.write, ...step.remove];
-            await writeState(stateFile, state);
             for (const [p, data] of files) {
                 const file = join(pluginsDir, ...p.split("/"));
                 await mkdir(dirname(file), { recursive: true });
-                await writeFile(file, data);
+                await replaceFile(file, data);
             }
             for (const p of step.remove) {
                 const file = join(pluginsDir, ...p.split("/"));
@@ -357,9 +378,6 @@ export async function sync(options: SyncOptions): Promise<SyncResult> {
         }
     }
 
-    // everything written got through
-    delete state.writing;
-
     if (result.changedHere.length) {
         result.firstReport = state.told !== commit;
         state.told = commit;
@@ -385,11 +403,16 @@ export async function markBuilt(stateFile: string) {
     await writeState(stateFile, state);
 }
 
-/** Building Vencord with the new plugin files failed. Says whether that is news for this commit. */
-export async function markBuildFailed(stateFile: string, commit: string) {
+/**
+ * Building Vencord with the new plugin files failed. Says whether that is news: it is the first time for
+ * these plugins. (Not for this commit: a later commit that only touches the theme or the README leaves
+ * the same build waiting, and that was already said.)
+ */
+export async function markBuildFailed(stateFile: string) {
     const state = await readState(stateFile);
-    const first = state.buildTold !== commit;
-    state.buildTold = commit;
+    const waiting = state.listing?.pluginsId ?? state.listing?.commit ?? "";
+    const first = state.buildTold !== waiting;
+    state.buildTold = waiting;
     await writeState(stateFile, state);
     return first;
 }

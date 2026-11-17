@@ -2,7 +2,7 @@
  * @name FolderPictures
  * @author Pota
  * @description Give server folders their own look instead of the 2x2 grid of their servers: a picture (file or link), an ASCII preset or an icon. Right-click a folder > Folder look.
- * @version 1.0.1
+ * @version 1.0.2
  * @source https://github.com/Plyxen/discord-rice
  * @website https://github.com/Plyxen/discord-rice
  */
@@ -377,6 +377,8 @@ async function linkToPicture(link) {
     const discordCdn = /(^|\.)(discordapp\.(com|net)|discord\.com)$/.test(url.hostname);
     if (!allowed && !discordCdn)
       throw new Error(`Discord won't load pictures from ${url.hostname}. Pinterest (i.pinimg.com), imgur and Discord image links work, or save the picture and use "Picture from file".`);
+    if (discordCdn && url.searchParams.has("ex"))
+      throw new Error(`That Discord link only works for about a day, and the picture couldn't be copied from it. Save the picture and use "Picture from file".`);
     await loadImage(url.href);
     showToast({ text: `${url.hostname} doesn't allow a copy of the picture, so the folder keeps the link and loads it from there each time Discord starts. To keep it on this PC, save the picture and use "Picture from file".` });
     return url.href;

@@ -579,8 +579,8 @@ root_command() { # the Vencord folder, Vencord's installer, the install's folder
     printf 'sudo env VENCORD_USER_DATA_DIR=%q VENCORD_DEV_INSTALL=1 %q --install --location %q\n' "$1" "$2" "$3"
 }
 
-# Points every install in $targets at the build in $1, with Vencord's own installer, and puts the theme
-# where each of them looks for it. Sets not_loaded when none of them loads the build afterwards.
+# Points every install in $targets at the build in $1, with Vencord's own installer. Sets not_loaded when
+# none of them loads the build afterwards.
 point_discord() {
     local dir="$1" line loc res base kind cli="" loaded=0 names=""
     local todo=() as_root=() missed=()
@@ -650,10 +650,6 @@ point_discord() {
     # Vencord's installer doesn't say whether it worked, so look
     for line in "${targets[@]}"; do
         IFS='|' read -r _ loc res base kind <<<"$line"
-        if [ "$kind" = flatpak ]; then flatpak_target=1; else plain_target=1; fi
-        # Vencord keeps its themes next to this Discord's settings folder, which for a Flatpak is not where
-        # the others are
-        if add_mod "Vencord" "$base/Vencord"; then put_theme "$base/Vencord" "Vencord"; fi
         if [ "$(vencord_loaded_by "$res")" = "$dir" ]; then
             loaded=$((loaded + 1))
         else
@@ -683,7 +679,7 @@ point_discord() {
 
 # Sets $built_dir when the plugins are in and built.
 install_plugins() {
-    local in_use dir node_major needed plugin name existing i tried=0 uses_vesktop=0
+    local in_use dir node_major needed plugin name existing i line base kind tried=0 uses_vesktop=0
     step "Vencord plugins"
 
     if ! have git || ! have node; then
@@ -762,6 +758,14 @@ install_plugins() {
     write_stamp "$dir"
 
     find_targets
+    # Vencord keeps its themes next to the settings folder of the Discord it runs in, which for a Flatpak is
+    # not where the others are. So each Discord the build is for gets the theme there, also when pointing
+    # it at the build is left to you (--no-inject) or to the sudo step
+    for line in "${targets[@]}"; do
+        IFS='|' read -r _ _ _ base kind <<<"$line"
+        if [ "$kind" = flatpak ]; then flatpak_target=1; else plain_target=1; fi
+        if add_mod "Vencord" "$base/Vencord"; then put_theme "$base/Vencord" "Vencord"; fi
+    done
     if [ "$no_inject" = 1 ]; then
         info "Not pointing Discord at the build (--no-inject)."
     elif [ "${#targets[@]}" -gt 0 ]; then

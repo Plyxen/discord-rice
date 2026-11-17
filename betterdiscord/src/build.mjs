@@ -69,7 +69,7 @@ const PLUGINS = [
     {
         name: "FolderPictures",
         entry: "folderPictures.tsx",
-        version: "1.0.1",
+        version: "1.0.2",
         description: "Give server folders their own look instead of the 2x2 grid of their servers: a picture (file or link), an ASCII preset or an icon. Right-click a folder > Folder look."
     }
 ];

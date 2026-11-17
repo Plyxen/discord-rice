@@ -104,8 +104,9 @@ async function run(apply: boolean, force = false, manual = false) {
                 await Native.built();
                 restartNeeded = true;
             } else {
-                // (the main-process half is the old one until Discord restarts after an update of this plugin)
-                failedBefore = Native.buildFailed ? !await Native.buildFailed(r.commit) : false;
+                // (the main-process half is the old one until Discord restarts after an update of this plugin:
+                // one that has no buildFailed yet, or one that still wants the commit)
+                failedBefore = Native.buildFailed ? !await (Native.buildFailed as (commit: string) => Promise<boolean>)(r.commit) : false;
             }
         } else if (r.builtElsewhere && r.builtAfterStart) {
             // the installer, or a build in a terminal, did it while Discord was running

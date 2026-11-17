@@ -197,6 +197,10 @@ async function linkToPicture(link: string): Promise<string> {
         const discordCdn = /(^|\.)(discordapp\.(com|net)|discord\.com)$/.test(url.hostname);
         if (!allowed && !discordCdn)
             throw new Error(`Discord won't load pictures from ${url.hostname}. Pinterest (i.pinimg.com), imgur and Discord image links work, or save the picture and use "Picture from file".`);
+        // Discord's links to pictures in chats only work for about a day ("ex" in them is when that ends), so
+        // one that couldn't be copied is not worth keeping: the folder would lose its picture tomorrow
+        if (discordCdn && url.searchParams.has("ex"))
+            throw new Error("That Discord link only works for about a day, and the picture couldn't be copied from it. Save the picture and use \"Picture from file\".");
         await loadImage(url.href);
         showToast({ text: `${url.hostname} doesn't allow a copy of the picture, so the folder keeps the link and loads it from there each time Discord starts. To keep it on this PC, save the picture and use "Picture from file".` });
         return url.href;
