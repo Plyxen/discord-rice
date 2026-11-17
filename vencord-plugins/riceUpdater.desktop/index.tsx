@@ -14,6 +14,8 @@
  * - New plugin files are written into src/userplugins, Vencord is rebuilt with its own updater, and a
  *   notification offers to restart Discord, which is what loads them.
  * - Files that were changed on this PC are never replaced without asking.
+ * - A Flatpak Discord can't build Vencord and usually can't see its source. There the theme is still
+ *   updated, and for new plugins a notification says to run the installer again.
  */
 
 import { showNotification } from "@api/Notifications";
@@ -24,7 +26,7 @@ import { relaunch } from "@utils/native";
 import definePlugin, { OptionType, PluginNative } from "@utils/types";
 import { useEffect, useReducer } from "@webpack/common";
 
-import type { SyncResult } from "./sync";
+import type { CheckResult } from "./native";
 
 const Native = VencordNative.pluginHelpers.RiceUpdater as PluginNative<typeof import("./native")>;
 
@@ -50,16 +52,29 @@ const clock = () => new Date().toLocaleTimeString([], { hour: "2-digit", minute:
 // an error from the main process arrives as "Error invoking remote method '...': Error: what went wrong"
 const reason = (e: unknown) => String((e as Error)?.message ?? e).replace(/^Error invoking remote method '[^']*': (Error: )?/, "");
 
-function describe(r: SyncResult, built: boolean | null) {
+// what gets new plugins in where this plugin can't: the installer, which copies them in and builds Vencord
+const INSTALLER = "run the discord-rice installer again (its one line is in the README on GitHub)";
+const NO_SOURCE = "Discord can't reach Vencord's source folder here, as in a Flatpak";
+
+function describe(r: CheckResult, built: boolean | null) {
     const parts: string[] = [];
+    const names = r.pluginNames.length ? ` (${r.pluginNames.join(", ")})` : "";
     if (r.theme === "updated") parts.push("The theme was updated.");
-    if (r.plugins === "updated" || built) parts.push(`The plugins were updated${r.pluginNames.length ? ` (${r.pluginNames.join(", ")})` : ""}.`);
-    if (built === false) parts.push("Building Vencord with them failed; it is tried again the next time Discord starts.");
-    else if (restartNeeded) parts.push("Restart Discord to load them.");
+    if (r.plugins === "updated" || built) parts.push(`The plugins were updated${names}.`);
+    if (built === false) {
+        parts.push(r.flatpak
+            ? `The new plugin files are in place, but a Flatpak Discord can't build Vencord with them. To finish, ${INSTALLER}.`
+            : `The new plugin files are in place, but building Vencord with them failed. It is tried again the next time Discord starts; to finish now, ${INSTALLER}.`);
+    } else if (restartNeeded) {
+        parts.push("Restart Discord to load the new plugins.");
+    }
+    if (r.plugins === "by-hand") parts.push(`GitHub has new plugins${names}. They can't be installed from in here (${NO_SOURCE}): ${INSTALLER}.`);
+    if (r.plugins === "absent") parts.push(`The plugins are not looked after here (${NO_SOURCE}). For new ones, ${INSTALLER}.`);
     if (r.theme === "available" || r.plugins === "available") parts.push("There is an update.");
     if (r.changedHere.length) parts.push(`There is an update, but these files were changed on this PC and are left alone: ${r.changedHere.join(", ")}.`);
     if (r.theme === "differs" || r.plugins === "differs") parts.push("Your copy isn't the same as the one on GitHub. It updates with GitHub's next change, or now with \"Replace my changes\".");
     if (!parts.length) parts.push("Up to date.");
+    else if (r.theme === "current" && (r.plugins === "by-hand" || r.plugins === "absent")) parts.unshift("The theme is up to date.");
     return `${parts.join(" ")} Checked at ${clock()}, GitHub is at ${r.commit}.`;
 }
 
@@ -80,6 +95,7 @@ async function run(apply: boolean, force = false, manual = false) {
 
         // new plugin files are in place (from this check, or an earlier one whose build failed)
         let built: boolean | null = null;
+        let failedBefore = false;
         if (r.needsBuild && !IS_STANDALONE) {
             setStatus("Building Vencord with the new plugins…");
             const res = await VencordNative.updater.rebuild();
@@ -87,7 +103,13 @@ async function run(apply: boolean, force = false, manual = false) {
             if (built) {
                 await Native.built();
                 restartNeeded = true;
+            } else {
+                // (the main-process half is the old one until Discord restarts after an update of this plugin)
+                failedBefore = Native.buildFailed ? !await Native.buildFailed(r.commit) : false;
             }
+        } else if (r.builtElsewhere && r.builtAfterStart) {
+            // the installer, or a build in a terminal, did it while Discord was running
+            restartNeeded = true;
         }
 
         setStatus(describe(r, built));
@@ -101,9 +123,12 @@ async function run(apply: boolean, force = false, manual = false) {
                 onClick: relaunch
             });
         } else if (built === false) {
-            showNotification({
+            // said once for an update, not at every check: where Vencord can't be built, it stays that way
+            if (!failedBefore || manual) showNotification({
                 title: "discord-rice: update not finished",
-                body: "The new plugin files are in place, but building Vencord failed. It is tried again the next time Discord starts.",
+                body: r.flatpak
+                    ? "The new plugin files are in place, but a Flatpak Discord can't build Vencord with them. Run the discord-rice installer again to finish."
+                    : "The new plugin files are in place, but building Vencord failed. It is tried again the next time Discord starts; running the discord-rice installer again also finishes it.",
                 permanent: true
             });
         } else if (r.theme === "updated" && (notify || manual)) {
@@ -119,6 +144,12 @@ async function run(apply: boolean, force = false, manual = false) {
                 onClick: () => run(true)
             });
         }
+
+        if (r.plugins === "by-hand" && (r.firstByHand || manual)) showNotification({
+            title: "discord-rice: new plugins on GitHub",
+            body: "They can't be installed from inside this Discord (a Flatpak can't reach Vencord's source). Run the discord-rice installer again to get them.",
+            permanent: true
+        });
 
         if (r.changedHere.length && (r.firstReport || manual)) showNotification({
             title: "discord-rice: update left alone",

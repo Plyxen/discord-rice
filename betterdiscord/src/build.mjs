@@ -63,13 +63,13 @@ const PLUGINS = [
     {
         name: "DiscordRice",
         entry: "discordRice.tsx",
-        version: "1.1.1",
+        version: "1.1.2",
         description: "Settings for the discord-rice theme in one terminal-style window, behind a rice bowl button in the channel header: font, corners, wallpaper, ASCII wallpaper, what to hide, and folder looks."
     },
     {
         name: "FolderPictures",
         entry: "folderPictures.tsx",
-        version: "1.0.0",
+        version: "1.0.1",
         description: "Give server folders their own look instead of the 2x2 grid of their servers: a picture (file or link), an ASCII preset or an icon. Right-click a folder > Folder look."
     }
 ];

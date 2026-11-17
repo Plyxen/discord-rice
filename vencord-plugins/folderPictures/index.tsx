@@ -57,7 +57,8 @@ let looks: Record<string, Look> = {};
 let styleEl: HTMLStyleElement | null = null;
 const listeners = new Set<() => void>();
 
-const cssString = (s: string) => `"${s.replace(/["\\]/g, "\\$&").replace(/\n/g, "\\a ")}"`;
+// a line break inside a CSS string ends it, so those are written as escapes too
+const cssString = (s: string) => `"${s.replace(/["\\]/g, "\\$&").replace(/[\n\r\f]/g, c => `\\${c.charCodeAt(0).toString(16)} `)}"`;
 
 export const iconUrl = (icon: string) =>
     `url("data:image/svg+xml,${encodeURIComponent(
@@ -176,7 +177,9 @@ export function pickFile(folderId: string) {
     input.click();
 }
 
-// a link becomes a small local copy when the site allows that (CORS), otherwise the link itself is kept
+// A link becomes a small local copy when the site allows that (CORS). Otherwise the link itself is kept:
+// the picture is then fetched from that site every time Discord starts, and is gone when the site drops
+// it, so that is said when it happens.
 async function linkToPicture(link: string): Promise<string> {
     const url = new URL(link.trim());
     if (url.protocol !== "https:") throw new Error("Use an https:// link.");
@@ -195,6 +198,7 @@ async function linkToPicture(link: string): Promise<string> {
         if (!allowed && !discordCdn)
             throw new Error(`Discord won't load pictures from ${url.hostname}. Pinterest (i.pinimg.com), imgur and Discord image links work, or save the picture and use "Picture from file".`);
         await loadImage(url.href);
+        showToast({ text: `${url.hostname} doesn't allow a copy of the picture, so the folder keeps the link and loads it from there each time Discord starts. To keep it on this PC, save the picture and use "Picture from file".` });
         return url.href;
     }
 }

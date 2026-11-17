@@ -2,7 +2,7 @@
  * @name FolderPictures
  * @author Pota
  * @description Give server folders their own look instead of the 2x2 grid of their servers: a picture (file or link), an ASCII preset or an icon. Right-click a folder > Folder look.
- * @version 1.0.0
+ * @version 1.0.1
  * @source https://github.com/Plyxen/discord-rice
  * @website https://github.com/Plyxen/discord-rice
  */
@@ -278,7 +278,7 @@ var PRESETS = [
 var looks = {};
 var styleEl = null;
 var listeners = /* @__PURE__ */ new Set();
-var cssString = (s) => `"${s.replace(/["\\]/g, "\\$&").replace(/\n/g, "\\a ")}"`;
+var cssString = (s) => `"${s.replace(/["\\]/g, "\\$&").replace(/[\n\r\f]/g, (c) => `\\${c.charCodeAt(0).toString(16)} `)}"`;
 var iconUrl = (icon) => `url("data:image/svg+xml,${encodeURIComponent(
   `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>${ICONS[icon] ?? ""}</svg>`
 )}")`;
@@ -378,6 +378,7 @@ async function linkToPicture(link) {
     if (!allowed && !discordCdn)
       throw new Error(`Discord won't load pictures from ${url.hostname}. Pinterest (i.pinimg.com), imgur and Discord image links work, or save the picture and use "Picture from file".`);
     await loadImage(url.href);
+    showToast({ text: `${url.hostname} doesn't allow a copy of the picture, so the folder keeps the link and loads it from there each time Discord starts. To keep it on this PC, save the picture and use "Picture from file".` });
     return url.href;
   }
 }

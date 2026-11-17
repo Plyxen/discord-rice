@@ -17,8 +17,10 @@
 #      With the plugins it also asks about Orion, which is somebody else's plugin (see --help).
 #
 # With plain Discord and no mod at all, it offers step 3 straight away: that brings Vencord too. Where
-# Discord came from a package (pacman, apt, dnf) it sits in /opt or /usr, so the last part of step 3 needs
-# sudo; the script shows that command and asks before running it.
+# Discord came from a package (pacman, apt, dnf) or is a Flatpak for the whole system, only an
+# administrator may change it, so the last part of step 3 needs sudo; the script shows that command and
+# asks before running it. If Discord is installed in more than one place (a Flatpak and an old /opt
+# folder, say), each of them is pointed at the build: the script can't know which one you start.
 #
 # Run it again whenever you like: it replaces what it installed and leaves everything else alone. A theme
 # file you edited yourself is kept next to the new one as .bak.
@@ -43,6 +45,9 @@ tmp=""
 src=""
 built_dir="" # the Vencord folder, once the plugins are in and built
 not_loaded=0 # 1 when that build is ready but Discord could not be pointed at it
+flatpak_target=0 # 1 when the build is for a Flatpak Discord: that one can't update the plugins by itself
+plain_target=0 # 1 when the build is for a Discord that is not a Flatpak
+theme_id="" # the id git gives the new theme file
 no_mod_at_start=0 # 1 when there was no Vencord, Vesktop or BetterDiscord before this run
 orion_state="" # "added" or "updated" when this run brought Orion in, "present" when it was there already
 orion_dir=""
@@ -212,52 +217,138 @@ find_mods() {
     done < <(config_dirs)
 }
 
-# Has Discord's own app (not Vesktop) been used here? Prints the folder its settings folder is in.
-discord_config_base() {
-    local base name
-    while IFS= read -r base; do
-        for name in discord discordptb discordcanary discorddevelopment Discord; do
-            if [ -d "$base/$name" ]; then
-                printf '%s\n' "$base"
-                return 0
-            fi
-        done
-    done < <(config_dirs)
-    return 1
+# Adds a mod to the list, unless its folder is in it already (then it fails).
+add_mod() { # name, folder
+    local i
+    for i in "${!mod_dirs[@]}"; do
+        if [ "${mod_dirs[$i]}" = "$2" ]; then return 1; fi
+    done
+    mod_names+=("$1")
+    mod_dirs+=("$2")
 }
-has_discord() { discord_config_base >/dev/null; }
 
-# The resources folders Discord's own app can be in (stable, PTB, Canary), wherever it was installed.
-discord_resources() {
-    local root name
+# Which Discord a folder name stands for, told the way Vencord's installer tells it.
+branch_of() {
+    case "$1" in
+        *[Cc]anary) echo canary ;;
+        *[Pp][Tt][Bb]) echo ptb ;;
+        *[Dd]evelopment) echo development ;;
+        *) echo stable ;;
+    esac
+}
+
+# Discord's newer updater keeps the app next to its settings, one app-<version> folder per version. Prints
+# the resources folder of the last one in plain byte order, which is the one Vencord's installer takes.
+newest_app() {
+    local d
+    for d in "$1"/app-*/resources; do
+        if [ -d "$d" ]; then printf '%s\n' "$d"; fi
+    done | LC_ALL=C sort | tail -n 1
+}
+
+# Every place Discord's own app is installed, found the way Vencord's installer finds them (the snap is
+# not among them: Vencord can't change that one). One line each, with | between:
+#   stable, ptb or canary | the folder Vencord's installer is told | its resources folder |
+#   the folder its settings folder is in | "flatpak" for a Flatpak
+discord_places() {
+    local root name p res app
     case "$(uname -s)" in
         Darwin)
-            for name in "Discord" "Discord PTB" "Discord Canary"; do
-                printf '%s\n' "/Applications/$name.app/Contents/Resources"
+            for root in /Applications "$HOME/Applications"; do
+                for name in "Discord" "Discord PTB" "Discord Canary"; do
+                    p="$root/$name.app"
+                    res="$p/Contents/Resources"
+                    if [ -f "$res/app.asar" ]; then
+                        printf '%s|%s|%s|%s|\n' "$(branch_of "$name")" "$p" "$res" "$HOME/Library/Application Support"
+                    fi
+                done
             done
             ;;
         *)
-            for root in /usr/share /usr/lib /usr/lib64 /opt "$HOME/.local/share"; do
-                for name in discord Discord discord-ptb DiscordPTB discord-canary DiscordCanary; do
-                    printf '%s\n' "$root/$name/resources"
+            # put there by a package (/opt, /usr), or unpacked by hand
+            for root in /usr/share /usr/lib /usr/lib64 /opt "$HOME/.local/share" "$HOME/.dvm"; do
+                for name in Discord DiscordPTB DiscordCanary discord discordptb discordcanary discord-ptb discord-canary; do
+                    p="$root/$name"
+                    if [ -f "$p/resources/app.asar" ]; then
+                        printf '%s|%s|%s|%s|\n' "$(branch_of "$name")" "$p" "$p/resources" "${XDG_CONFIG_HOME:-$HOME/.config}"
+                    fi
                 done
             done
-            for root in /var/lib/flatpak "$HOME/.local/share/flatpak"; do
-                printf '%s\n' "$root/app/com.discordapp.Discord/current/active/files/discord/resources"
+            # a Flatpak, for the whole system or for this user
+            for root in /var/lib/flatpak/app "$HOME/.local/share/flatpak/app"; do
+                for name in Discord DiscordPTB DiscordCanary; do
+                    p="$root/com.discordapp.$name"
+                    case "$name" in
+                        Discord) app="discord" ;;
+                        DiscordPTB) app="discord-ptb" ;;
+                        *) app="discord-canary" ;;
+                    esac
+                    res="$p/current/active/files/$app/resources"
+                    if [ -f "$res/app.asar" ]; then
+                        printf '%s|%s|%s|%s|flatpak\n' "$(branch_of "$name")" "$p" "$res" "$HOME/.var/app/com.discordapp.$name/config"
+                    fi
+                done
+            done
+            # the app kept next to its settings by Discord's newer updater, outside and inside a Flatpak
+            for name in discord discordcanary discordptb; do
+                p="$HOME/.config/$name"
+                res="$(newest_app "$p")"
+                if [ -n "$res" ]; then
+                    printf '%s|%s|%s|%s|\n' "$(branch_of "$name")" "$p" "$res" "$HOME/.config"
+                fi
+            done
+            for name in Discord DiscordCanary DiscordPTB; do
+                p="$HOME/.var/app/com.discordapp.$name/config/discord"
+                res="$(newest_app "$p")"
+                if [ -n "$res" ]; then
+                    printf '%s|%s|%s|%s|flatpak\n' "$(branch_of "$name")" "$p" "$res" "$HOME/.var/app/com.discordapp.$name/config"
+                fi
             done
             ;;
     esac
 }
 
-# Is Discord in a folder that only root may change? That is where a package (pacman, apt, dnf) puts it:
-# /opt or /usr.
-discord_needs_root() {
-    local res
-    [ "$(id -u)" != 0 ] || return 1
-    while IFS= read -r res; do
-        if [ -d "$res" ] && [ ! -w "$res" ]; then return 0; fi
-    done < <(discord_resources)
-    return 1
+# The same list with each install in it once: /usr/lib64 is often just another name for /usr/lib.
+discord_installs() {
+    local line res k dup
+    local kept=()
+    while IFS= read -r line; do
+        res="$(printf '%s
+' "$line" | cut -d '|' -f 3)"
+        dup=0
+        for k in "${kept[@]}"; do
+            if [ "$res" -ef "$k" ]; then dup=1; fi
+        done
+        if [ "$dup" = 0 ]; then
+            kept+=("$res")
+            printf '%s
+' "$line"
+        fi
+    done < <(discord_places)
+}
+
+# The installs the build is for. Fills targets with lines from discord_installs: every place the regular
+# Discord is in, or Canary's when there is no regular one, or PTB's (the order Vencord's installer has).
+targets=()
+find_targets() {
+    local all branch line
+    all="$(discord_installs)"
+    targets=()
+    for branch in stable canary ptb; do
+        while IFS= read -r line; do
+            if [ -n "$line" ] && [ "${line%%|*}" = "$branch" ]; then targets+=("$line"); fi
+        done <<<"$all"
+        if [ "${#targets[@]}" -gt 0 ]; then return 0; fi
+    done
+    return 0
+}
+
+# May this user change what is in a folder? Not where a package or a system-wide Flatpak put Discord.
+can_change() { [ -w "$1" ]; }
+
+# How an install is called in the messages.
+install_name() { # the folder, "flatpak" or nothing
+    if [ "$2" = flatpak ]; then printf '%s (Flatpak)\n' "$1"; else printf '%s\n' "$1"; fi
 }
 
 is_vencord_source() { [ -n "$1" ] && [ -f "$1/scripts/build/build.mjs" ] && [ -f "$1/package.json" ]; }
@@ -270,22 +361,34 @@ patcher_target() {
     { LC_ALL=C grep -a -o 'require("[^"]*patcher\.js")' "$file" || true; } | head -n 1 | sed -e 's/^require("//' -e 's/")$//'
 }
 
-# A Vencord source build that is already in use: the one Discord loads, or the one Vesktop is set to.
+# Prints the Vencord source build that the Discord with this resources folder loads, if it loads one.
+vencord_loaded_by() {
+    local target dir i
+    target="$(patcher_target "$1/app.asar")"
+    # the file it names may itself only pass on to another build, so follow it once
+    for i in 1 2; do
+        if [ -z "$target" ]; then break; fi
+        dir="$(dirname "$(dirname "$target")")"
+        if is_vencord_source "$dir"; then
+            printf '%s\n' "$dir"
+            return 0
+        fi
+        target="$(patcher_target "$target")"
+    done
+    return 0
+}
+
+# A Vencord source build that is already in use: the one a Discord loads, or the one Vesktop is set to.
 find_vencord_in_use() {
-    local res target dir i base dist
-    while IFS= read -r res; do
-        target="$(patcher_target "$res/app.asar")"
-        # the file it names may itself only pass on to another build, so follow it once
-        for i in 1 2; do
-            [ -n "$target" ] || break
-            dir="$(dirname "$(dirname "$target")")"
-            if is_vencord_source "$dir"; then
-                printf '%s\n' "$dir"
-                return 0
-            fi
-            target="$(patcher_target "$target")"
-        done
-    done < <(discord_resources)
+    local res dir base dist
+    while IFS='|' read -r _ _ res _ _; do
+        if [ -z "$res" ]; then continue; fi
+        dir="$(vencord_loaded_by "$res")"
+        if [ -n "$dir" ]; then
+            printf '%s\n' "$dir"
+            return 0
+        fi
+    done < <(discord_installs)
     while IFS= read -r base; do
         [ -f "$base/vesktop/settings.json" ] || continue
         dist="$(sed -n 's/.*"vencordDir"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$base/vesktop/settings.json" | head -n 1)"
@@ -363,25 +466,30 @@ backup_edited_theme() { # the file that is there, the new file's id, the mod's n
     fi
 }
 
+# Puts the theme into one mod's themes folder, and BetterDiscord's plugins into its plugins folder.
+put_theme() { # the mod's folder, the mod's name
+    local themes="$1/themes" plugins plugin
+    if [ -z "$theme_id" ]; then theme_id="$(git_id "$src/$THEME_FILE")"; fi
+    mkdir -p "$themes"
+    backup_edited_theme "$themes/$THEME_FILE" "$theme_id" "$2"
+    cp "$src/$THEME_FILE" "$themes/"
+    info "$2: $themes"
+    if [ "$2" = "BetterDiscord" ]; then
+        plugins="$1/plugins"
+        mkdir -p "$plugins"
+        for plugin in "$src"/betterdiscord/*.plugin.js; do
+            if [ "$theme_only" = 1 ] && [ "$(basename "$plugin")" != "$BD_UPDATER" ]; then continue; fi
+            cp "$plugin" "$plugins/"
+            info "$2: plugin $(basename "$plugin" .plugin.js)"
+        done
+    fi
+}
+
 install_theme() {
-    local i themes plugins plugin new_id
+    local i
     step "Theme"
-    new_id="$(git_id "$src/$THEME_FILE")"
     for i in "${!mod_names[@]}"; do
-        themes="${mod_dirs[$i]}/themes"
-        mkdir -p "$themes"
-        backup_edited_theme "$themes/$THEME_FILE" "$new_id" "${mod_names[$i]}"
-        cp "$src/$THEME_FILE" "$themes/"
-        info "${mod_names[$i]}: $themes"
-        if [ "${mod_names[$i]}" = "BetterDiscord" ]; then
-            plugins="${mod_dirs[$i]}/plugins"
-            mkdir -p "$plugins"
-            for plugin in "$src"/betterdiscord/*.plugin.js; do
-                if [ "$theme_only" = 1 ] && [ "$(basename "$plugin")" != "$BD_UPDATER" ]; then continue; fi
-                cp "$plugin" "$plugins/"
-                info "${mod_names[$i]}: plugin $(basename "$plugin" .plugin.js)"
-            done
-        fi
+        put_theme "${mod_dirs[$i]}" "${mod_names[$i]}"
     done
 }
 
@@ -448,9 +556,134 @@ undo_orion() {
     orion_state=""
 }
 
+# Notes next to the build which plugin files it was made from. A Flatpak Discord can't see Vencord's source,
+# only the build folder; with this note RiceUpdater can still tell there that the plugins on GitHub are newer.
+write_stamp() {
+    local out="$1/dist/discord-rice-plugins.txt" file id
+    if [ ! -d "$1/dist" ]; then return 0; fi
+    : >"$out"
+    while IFS= read -r file; do
+        id="$(git_id "$src/vencord-plugins/$file")"
+        if [ -z "$id" ]; then
+            # no program here to work the ids out with: better no note than half of one
+            rm -f "$out"
+            return 0
+        fi
+        printf '%s %s\n' "$id" "$file" >>"$out"
+    done < <(cd "$src/vencord-plugins" && find . -type f | sed 's|^\./||' | LC_ALL=C sort)
+}
+
+# The command that points one install at the build as administrator. Vencord's installer is told where the
+# build is the same way its own script (scripts/runInstaller.mjs) tells it.
+root_command() { # the Vencord folder, Vencord's installer, the install's folder
+    printf 'sudo env VENCORD_USER_DATA_DIR=%q VENCORD_DEV_INSTALL=1 %q --install --location %q\n' "$1" "$2" "$3"
+}
+
+# Points every install in $targets at the build in $1, with Vencord's own installer, and puts the theme
+# where each of them looks for it. Sets not_loaded when none of them loads the build afterwards.
+point_discord() {
+    local dir="$1" line loc res base kind cli="" loaded=0 names=""
+    local todo=() as_root=() missed=()
+
+    for line in "${targets[@]}"; do
+        IFS='|' read -r _ loc res base kind <<<"$line"
+        if [ "$(vencord_loaded_by "$res")" = "$dir" ]; then
+            info "Already loads this build: $(install_name "$loc" "$kind")"
+        else
+            todo+=("$line")
+        fi
+    done
+
+    if [ "${#todo[@]}" -gt 0 ]; then
+        if pgrep -x Discord >/dev/null 2>&1 || pgrep -x discord >/dev/null 2>&1; then
+            warn "Discord is running. Quit it completely first."
+            if has_tty; then
+                printf '  Press Enter when it is closed ' >/dev/tty
+                read -r _ </dev/tty || true
+            fi
+        fi
+        case "$(uname -s)" in
+            Darwin) cli="$dir/dist/Installer/VencordInstallerCli-darwin" ;;
+            *) cli="$dir/dist/Installer/VencordInstallerCli-linux" ;;
+        esac
+        # Vencord's own script downloads its installer into the build folder. Asked for its version, it does
+        # only that; the installer is then told which Discord to change, one at a time
+        info "Fetching Vencord's installer ..."
+        (cd "$dir" && node scripts/runInstaller.mjs -- --version) || true
+        if [ ! -x "$cli" ]; then
+            not_loaded=1
+            warn "Vencord's installer could not be downloaded, so Discord does not load the build yet."
+            info "Run this again later. Or, in $dir:  node scripts/runInstaller.mjs -- --install"
+            return 0
+        fi
+
+        for line in "${todo[@]}"; do
+            IFS='|' read -r _ loc res base kind <<<"$line"
+            if can_change "$res"; then
+                info "Pointing Discord at the build: $(install_name "$loc" "$kind")"
+                VENCORD_USER_DATA_DIR="$dir" VENCORD_DEV_INSTALL=1 "$cli" --install --location "$loc" || true
+            else
+                as_root+=("$line")
+            fi
+        done
+
+        if [ "${#as_root[@]}" -gt 0 ]; then
+            info "Installed for the whole system, so only an administrator may change it:"
+            for line in "${as_root[@]}"; do
+                IFS='|' read -r _ loc res base kind <<<"$line"
+                info "  $(install_name "$loc" "$kind")"
+            done
+            info "The same step as administrator:"
+            for line in "${as_root[@]}"; do
+                IFS='|' read -r _ loc res base kind <<<"$line"
+                info "  $(root_command "$dir" "$cli" "$loc")"
+            done
+            if have sudo && ask_yes "  Run that now? (sudo asks for your password)"; then
+                for line in "${as_root[@]}"; do
+                    IFS='|' read -r _ loc res base kind <<<"$line"
+                    sudo env VENCORD_USER_DATA_DIR="$dir" VENCORD_DEV_INSTALL=1 "$cli" --install --location "$loc" || true
+                done
+            fi
+        fi
+    fi
+
+    # Vencord's installer doesn't say whether it worked, so look
+    for line in "${targets[@]}"; do
+        IFS='|' read -r _ loc res base kind <<<"$line"
+        if [ "$kind" = flatpak ]; then flatpak_target=1; else plain_target=1; fi
+        # Vencord keeps its themes next to this Discord's settings folder, which for a Flatpak is not where
+        # the others are
+        if add_mod "Vencord" "$base/Vencord"; then put_theme "$base/Vencord" "Vencord"; fi
+        if [ "$(vencord_loaded_by "$res")" = "$dir" ]; then
+            loaded=$((loaded + 1))
+        else
+            missed+=("$line")
+            names="$names${names:+, }$(install_name "$loc" "$kind")"
+        fi
+    done
+
+    if [ "${#missed[@]}" -eq 0 ]; then return 0; fi
+    if [ "$loaded" = 0 ]; then
+        not_loaded=1
+        warn "Couldn't confirm that Discord loads this build."
+        info "Run this in a terminal yourself, then fully restart Discord:"
+    else
+        warn "Left as it was: $names"
+        info "If that is the Discord you start, run this in a terminal, then fully restart Discord:"
+    fi
+    for line in "${missed[@]}"; do
+        IFS='|' read -r _ loc res base kind <<<"$line"
+        if can_change "$res" || [ ! -x "$cli" ]; then
+            info "  (cd $(printf '%q' "$dir") && node scripts/runInstaller.mjs -- --install --location $(printf '%q' "$loc"))"
+        else
+            info "  $(root_command "$dir" "$cli" "$loc")"
+        fi
+    done
+}
+
 # Sets $built_dir when the plugins are in and built.
 install_plugins() {
-    local in_use dir node_major needed plugin name now existing i cli tried=0 as_root="" uses_vesktop=0
+    local in_use dir node_major needed plugin name existing i tried=0 uses_vesktop=0
     step "Vencord plugins"
 
     if ! have git || ! have node; then
@@ -526,52 +759,21 @@ install_plugins() {
         fi
     fi
 
-    if [ -n "$in_use" ] && [ "${in_use%/}" = "${dir%/}" ]; then
-        info "Discord (or Vesktop) already loads this build."
-    elif [ "$no_inject" = 1 ]; then
+    write_stamp "$dir"
+
+    find_targets
+    if [ "$no_inject" = 1 ]; then
         info "Not pointing Discord at the build (--no-inject)."
-    elif has_discord; then
-        if pgrep -x Discord >/dev/null 2>&1 || pgrep -x discord >/dev/null 2>&1; then
-            warn "Discord is running. Quit it completely first."
-            if has_tty; then
-                printf '  Press Enter when it is closed ' >/dev/tty
-                read -r _ </dev/tty || true
-            fi
-        fi
-        info "Pointing Discord at the build with Vencord's installer ..."
-        (cd "$dir" && node scripts/runInstaller.mjs -- --install --branch auto) || true
-        # Vencord's installer doesn't say whether it worked, so look
-        now="$(find_vencord_in_use)"
-        cli="$dir/dist/Installer/VencordInstallerCli-linux" # what the line above downloaded and ran
-        if [ "${now%/}" != "${dir%/}" ] && [ -x "$cli" ] && discord_needs_root; then
-            # the same step as root. Vencord's installer is told where the build is, as runInstaller.mjs tells it
-            as_root="sudo env VENCORD_USER_DATA_DIR=$(printf '%q' "$dir") VENCORD_DEV_INSTALL=1 $(printf '%q' "$cli") --install --branch auto"
-            info "Discord is installed for the whole system (in /opt or /usr), so only an administrator may change it."
-            info "The same step as administrator:  $as_root"
-            if have sudo && ask_yes "  Run that now? (sudo asks for your password)"; then
-                sudo env VENCORD_USER_DATA_DIR="$dir" VENCORD_DEV_INSTALL=1 "$cli" --install --branch auto || true
-                now="$(find_vencord_in_use)"
-            fi
-        fi
-        if [ "${now%/}" != "${dir%/}" ]; then
-            not_loaded=1
-            warn "Couldn't confirm that Discord loads this build."
-            if [ -n "$as_root" ]; then
-                info "Run this in a terminal yourself, then fully restart Discord:"
-                info "  $as_root"
-            else
-                info "If Vencord's installer said it has no permission, run it yourself with sudo, in $dir:"
-                info "  sudo node scripts/runInstaller.mjs -- --install"
-            fi
-        fi
+    elif [ "${#targets[@]}" -gt 0 ]; then
+        point_discord "${dir%/}"
     else
         for i in "${!mod_names[@]}"; do
             if [ "${mod_names[$i]}" = "Vesktop" ]; then uses_vesktop=1; fi
         done
         if [ "$uses_vesktop" = 0 ]; then
             not_loaded=1
-            warn "Found no Discord app that has been started on this computer, so nothing points at the build yet."
-            info "Start Discord once, close it, and run this again."
+            warn "Found no Discord app on this computer, so nothing points at the build yet."
+            info "Install Discord (not the snap: Vencord can't change that one) and run this again."
         fi
     fi
     for i in "${!mod_names[@]}"; do
@@ -616,6 +818,7 @@ uninstall_all() {
             removed=1
         fi
     done
+    rm -f "$dir/dist/discord-rice-plugins.txt"
     if [ "$removed" = 1 ] && have node && [ -d "$dir/node_modules" ]; then
         info "Building Vencord without the plugins ..."
         build_vencord "$dir"
@@ -652,12 +855,17 @@ if [ "${#mod_names[@]}" -eq 0 ] && [ "$want_plugins" = 0 ]; then
 fi
 if [ "${#mod_names[@]}" -eq 0 ]; then
     # Vencord is about to be set up from source; its data folder is where the theme goes. That folder is
-    # next to Discord's own settings folder (which is somewhere else for a Flatpak Discord)
+    # next to the settings folder of each Discord it is set up for (somewhere else for a Flatpak Discord)
     no_mod_at_start=1
-    mod_names=("Vencord")
-    mod_dirs=("$(discord_config_base || config_dirs | head -n 1)/Vencord")
+    find_targets
+    for line in "${targets[@]}"; do
+        IFS='|' read -r _ _ _ base _ <<<"$line"
+        add_mod "Vencord" "$base/Vencord" || true
+    done
+    if [ "${#mod_names[@]}" -eq 0 ]; then add_mod "Vencord" "$(config_dirs | head -n 1)/Vencord"; fi
+else
+    info "Found: $(printf '%s, ' "${mod_names[@]}" | sed 's/, $//')"
 fi
-info "Found: $(printf '%s, ' "${mod_names[@]}" | sed 's/, $//')"
 
 install_theme
 
@@ -684,7 +892,16 @@ elif [ -n "$built_dir" ]; then
 fi
 if [ -n "$built_dir" ]; then
     info "The plugins are on by default; the rice bowl button in the channel header opens the settings."
-    info "RiceUpdater keeps the theme file and the plugins up to date from GitHub from now on."
+    if [ "$flatpak_target" = 1 ] && [ "$plain_target" = 0 ]; then
+        info "RiceUpdater keeps the theme file up to date from GitHub from now on. A Flatpak Discord can't build"
+        info "Vencord, so for the plugins it tells you when GitHub has new ones: run this installer again then."
+    else
+        info "RiceUpdater keeps the theme file and the plugins up to date from GitHub from now on."
+        if [ "$flatpak_target" = 1 ]; then
+            info "The Flatpak Discord can't build Vencord, so in that one it only updates the theme, and tells you"
+            info "when GitHub has new plugins: run this installer again then."
+        fi
+    fi
     if [ "$orion_state" = "added" ] || [ "$orion_state" = "updated" ]; then
         info "Orion: turn on OrionQuests under Settings > Vencord > Plugins. RiceUpdater leaves it alone;"
         info "run this installer again with --orion to update it."

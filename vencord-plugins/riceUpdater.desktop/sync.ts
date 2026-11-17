@@ -19,12 +19,18 @@
  *
  * The rule for writing: a thing is updated when the repo changed it and nobody changed it on this PC
  * since the updater last looked. Files changed here (you edit the theme by hand, or work on a plugin) are
- * left alone and reported instead, unless asked to replace them.
+ * left alone and reported instead, unless asked to replace them. A file that already is the repo's
+ * version doesn't count as changed, and neither does one the updater itself was stopped halfway through
+ * replacing.
+ *
+ * Where Vencord's source can't be reached (a Flatpak Discord only sees the build folder), nothing can be
+ * installed. The installer leaves a note next to the build saying which plugin files it was made from,
+ * and that note is enough to tell that the repo has newer ones.
  */
 
 import { createHash } from "crypto";
 import { existsSync } from "fs";
-import { copyFile, mkdir, readdir, readFile, rm, rmdir, writeFile } from "fs/promises";
+import { copyFile, mkdir, readdir, readFile, rm, rmdir, stat, writeFile } from "fs/promises";
 import { dirname, join } from "path";
 
 const REPO = "Plyxen/discord-rice";
@@ -62,10 +68,16 @@ interface State {
     pendingBuild?: boolean;
     /** the commit for which "files were changed on this PC" was already reported */
     told?: string;
+    /** files the updater is in the middle of replacing; gone again once it got through */
+    writing?: string[];
+    /** the commit for which a failed build was already reported */
+    buildTold?: string;
+    /** the plugins on GitHub for which "run the installer again" was already said */
+    byHandTold?: string;
 }
 
 export type Outcome =
-    /** not installed here (no theme file, or Vencord isn't a source build) */
+    /** not looked after here (no theme file; or Vencord's source can't be reached and nothing says what it was built from) */
     | "absent"
     | "current"
     | "updated"
@@ -74,7 +86,9 @@ export type Outcome =
     /** there is an update, but files were changed on this PC */
     | "changed-here"
     /** differs from the repo, but the repo hasn't changed it since the updater first saw it */
-    | "differs";
+    | "differs"
+    /** there is an update, and it can't be installed from here: Vencord's source can't be reached */
+    | "by-hand";
 
 export interface SyncResult {
     commit: string;
@@ -86,13 +100,21 @@ export interface SyncResult {
     changedHere: string[];
     /** true the first time changedHere is reported for this commit */
     firstReport: boolean;
+    /** true the first time "by-hand" is reported for these plugins */
+    firstByHand: boolean;
     needsBuild: boolean;
+    /** Vencord was built with the new plugin files by something else since: the installer, or you in a terminal */
+    builtElsewhere: boolean;
 }
 
 export interface SyncOptions {
     themesDir: string;
-    /** src/userplugins of a Vencord source build, or null */
+    /** src/userplugins of a Vencord source build, or null when it can't be reached */
     pluginsDir: string | null;
+    /** a file every build of Vencord writes: tells whether Vencord was built since the plugin files changed */
+    builtFile?: string;
+    /** the installer's note of the plugin files the build was made from; read when pluginsDir is null */
+    noteFile?: string;
     stateFile: string;
     /** false: only look */
     apply: boolean;
@@ -191,8 +213,9 @@ interface Plan {
  * Decides what to do with one thing.
  * @param remote what the repo has
  * @param local what is on this PC, for every path in remote or in unit.local that exists
+ * @param ours files the updater was stopped halfway through replacing last time
  */
-function plan(remoteId: string, remote: Shas, local: Shas, unit: Unit | undefined, apply: boolean, force: boolean): Plan {
+function plan(remoteId: string, remote: Shas, local: Shas, unit: Unit | undefined, apply: boolean, force: boolean, ours: string[]): Plan {
     const write = Object.keys(remote).filter(p => local[p] !== remote[p]);
     // files the updater put here once, which the repo no longer has
     const remove = Object.keys(unit?.local ?? {}).filter(p => !(p in remote) && p in local);
@@ -205,7 +228,9 @@ function plan(remoteId: string, remote: Shas, local: Shas, unit: Unit | undefine
         if (!unit) return result("differs", { unit: { remote: remoteId, local } });
         // the repo hasn't changed it since, so whatever differs was done here on purpose
         if (unit.remote === remoteId) return result("differs");
-        const changedHere = Object.keys(local).filter(p => local[p] !== unit.local[p]);
+        // changed here: not how the updater left it, not the repo's version already (an update that stopped
+        // halfway, or files copied in by hand), and not one the updater was in the middle of writing
+        const changedHere = Object.keys(local).filter(p => local[p] !== unit.local[p] && local[p] !== remote[p] && !ours.includes(p));
         if (changedHere.length) return result("changed-here", { changedHere });
     }
     if (!apply) return result("available", { write, remove });
@@ -221,11 +246,40 @@ async function existingShas(dir: string, paths: Iterable<string>) {
     return out;
 }
 
+const modified = (path: string) => stat(path).then(s => s.mtimeMs, () => 0);
+
+/** Was Vencord built after the last of these plugin files was written? */
+async function builtSince(builtFile: string, dir: string, paths: string[]) {
+    const built = await modified(builtFile);
+    if (!built) return false;
+    const written = await Promise.all(paths.map(p => modified(join(dir, ...p.split("/")))));
+    return written.every(at => at < built);
+}
+
+/** The plugin files a build was made from, as the installer noted them: one "id path" per line. */
+async function readNote(file: string): Promise<Shas | null> {
+    let text: string;
+    try {
+        text = await readFile(file, "utf8");
+    } catch {
+        return null;
+    }
+    const out: Shas = {};
+    for (const line of text.split(/\r?\n/)) {
+        const [, sha, path] = /^([0-9a-f]{40}) (.+)$/.exec(line) ?? [];
+        // the same paths the listing keeps
+        if (sha && path.split("/").length >= 2 && path.split("/").every(p => SAFE_PART.test(p))) out[path] = sha;
+    }
+    return Object.keys(out).length ? out : null;
+}
+
 export async function sync(options: SyncOptions): Promise<SyncResult> {
     const { themesDir, pluginsDir, stateFile, apply, force } = options;
     const state = await readState(stateFile);
     const listing = await fetchListing(state, !force);
     const { commit } = listing;
+    // what an earlier run was stopped in the middle of writing (a full disk, Discord closed)
+    const ours = Array.isArray(state.writing) ? state.writing : [];
 
     const result: SyncResult = {
         commit: commit.slice(0, 7),
@@ -234,18 +288,23 @@ export async function sync(options: SyncOptions): Promise<SyncResult> {
         pluginNames: [],
         changedHere: [],
         firstReport: false,
-        needsBuild: false
+        firstByHand: false,
+        needsBuild: false,
+        builtElsewhere: false
     };
 
     // ---- the theme file
     const themePath = join(themesDir, THEME_FILE);
     if (listing.theme && existsSync(themePath)) {
         const remote = { [THEME_FILE]: listing.theme };
-        const step = plan(listing.theme, remote, await existingShas(themesDir, [THEME_FILE]), state.theme, apply, force);
+        const step = plan(listing.theme, remote, await existingShas(themesDir, [THEME_FILE]), state.theme, apply, force, ours);
         if (step.outcome === "updated") {
             const data = await download(commit, THEME_FILE, listing.theme);
             // replacing a theme that was edited here: keep the edited one next to it
-            if (state.theme?.local[THEME_FILE] !== await localSha(themePath)) await copyFile(themePath, themePath + ".bak");
+            if (!ours.includes(THEME_FILE) && state.theme?.local[THEME_FILE] !== await localSha(themePath)) await copyFile(themePath, themePath + ".bak");
+            // noted before the file is touched: if this stops halfway, the next check knows who did it
+            state.writing = [THEME_FILE];
+            await writeState(stateFile, state);
             await writeFile(themePath, data);
         }
         if (step.unit) state.theme = step.unit;
@@ -254,13 +313,16 @@ export async function sync(options: SyncOptions): Promise<SyncResult> {
     }
 
     // ---- the plugins
+    let wrote = false;
     if (pluginsDir && listing.pluginsId && Object.keys(listing.plugins).length) {
         const remote = listing.plugins;
         const local = await existingShas(pluginsDir, [...Object.keys(remote), ...Object.keys(state.plugins?.local ?? {})]);
-        const step = plan(listing.pluginsId, remote, local, state.plugins, apply, force);
+        const step = plan(listing.pluginsId, remote, local, state.plugins, apply, force, ours);
         if (step.outcome === "updated") {
             // everything is fetched and checked before the first file is touched
             const files = await Promise.all(step.write.map(async p => [p, await download(commit, `${PLUGIN_ROOT}/${p}`, remote[p])] as const));
+            state.writing = [...step.write, ...step.remove];
+            await writeState(stateFile, state);
             for (const [p, data] of files) {
                 const file = join(pluginsDir, ...p.split("/"));
                 await mkdir(dirname(file), { recursive: true });
@@ -274,16 +336,40 @@ export async function sync(options: SyncOptions): Promise<SyncResult> {
                 if (dir !== pluginsDir && !(await readdir(dir)).length) await rmdir(dir);
             }
             state.pendingBuild = true;
+            wrote = true;
         }
         if (step.unit) state.plugins = step.unit;
         result.plugins = step.outcome;
         result.pluginNames = [...new Set([...step.write, ...step.remove].map(p => p.split("/")[0]))];
         result.changedHere.push(...step.changedHere.map(p => `${PLUGIN_ROOT}/${p}`));
+    } else if (!pluginsDir && listing.pluginsId && options.noteFile) {
+        // the source can't be reached, so nothing is installed here; the installer's note says whether
+        // the build is behind
+        const built = await readNote(options.noteFile);
+        if (built) {
+            const changed = [...new Set([...Object.keys(listing.plugins), ...Object.keys(built)])].filter(p => listing.plugins[p] !== built[p]);
+            result.plugins = changed.length ? "by-hand" : "current";
+            result.pluginNames = [...new Set(changed.map(p => p.split("/")[0]))];
+            if (changed.length) {
+                result.firstByHand = state.byHandTold !== listing.pluginsId;
+                state.byHandTold = listing.pluginsId;
+            }
+        }
     }
+
+    // everything written got through
+    delete state.writing;
 
     if (result.changedHere.length) {
         result.firstReport = state.told !== commit;
         state.told = commit;
+    }
+    // new plugin files wait for a build: something else may have built Vencord with them since
+    if (state.pendingBuild && pluginsDir && !wrote && options.builtFile
+        && await builtSince(options.builtFile, pluginsDir, Object.keys(listing.plugins))) {
+        delete state.pendingBuild;
+        delete state.buildTold;
+        result.builtElsewhere = true;
     }
     result.needsBuild = !!state.pendingBuild && !!pluginsDir;
     await writeState(stateFile, state);
@@ -293,7 +379,17 @@ export async function sync(options: SyncOptions): Promise<SyncResult> {
 /** Vencord was rebuilt with the new plugin files. */
 export async function markBuilt(stateFile: string) {
     const state = await readState(stateFile);
-    if (!state.pendingBuild) return;
+    if (!state.pendingBuild && !state.buildTold) return;
     delete state.pendingBuild;
+    delete state.buildTold;
     await writeState(stateFile, state);
+}
+
+/** Building Vencord with the new plugin files failed. Says whether that is news for this commit. */
+export async function markBuildFailed(stateFile: string, commit: string) {
+    const state = await readState(stateFile);
+    const first = state.buildTold !== commit;
+    state.buildTold = commit;
+    await writeState(stateFile, state);
+    return first;
 }

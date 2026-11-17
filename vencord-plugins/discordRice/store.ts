@@ -14,7 +14,28 @@ import { showToast } from "@webpack/common";
 export const THEME_FILE = "discord-rice.theme.css";
 // the online-theme link (Settings → Vencord → Themes → Online Themes), served by jsDelivr from the repo
 export const THEME_LINK = "https://cdn.jsdelivr.net/gh/Plyxen/discord-rice@main/discord-rice.theme.css";
-export const isOurLink = (link: string) => link.includes(THEME_FILE);
+// this repo's theme file, from wherever it is served (jsDelivr, GitHub's raw files or pages): not another
+// theme that merely has the same file name, such as somebody's own copy of it
+export function isOurLink(link: string) {
+    try {
+        const url = new URL(link);
+        return url.pathname.endsWith("/" + THEME_FILE) && /plyxen/i.test(url.hostname + url.pathname);
+    } catch {
+        return false;
+    }
+}
+
+// Is this a whole link to a picture, as opposed to one that is still being typed? Anything used as the
+// wallpaper is asked for from that site straight away, so half a link must not be.
+export function isPictureLink(text: string) {
+    if (text.startsWith("data:image/")) return true;
+    try {
+        const url = new URL(text);
+        return (url.protocol === "https:" || url.protocol === "http:") && url.hostname.includes(".") && url.pathname.length > 1;
+    } catch {
+        return false;
+    }
+}
 export const settings = definePluginSettings({
     hideInbox: { type: OptionType.BOOLEAN, description: "Hide the inbox button", default: true, hidden: true },
     hideNameplates: { type: OptionType.BOOLEAN, description: "Hide nameplates", default: true, hidden: true },
@@ -70,7 +91,8 @@ export const DEFAULTS: Partial<Store> = {
     wallpaperDim: 0.5, asciiWallpaper: "off", asciiSize: 10
 };
 
-const cssString = (s: string) => `"${s.replace(/["\\]/g, "\\$&")}"`;
+// a line break inside a CSS string ends it, so those are written as escapes too
+const cssString = (s: string) => `"${s.replace(/["\\]/g, "\\$&").replace(/[\n\r\f]/g, c => `\\${c.charCodeAt(0).toString(16)} `)}"`;
 const onOff = (b: boolean) => b ? "on" : "off";
 
 export const FONTS: Record<string, [string, string, string]> = {
@@ -81,9 +103,10 @@ export const FONTS: Record<string, [string, string, string]> = {
 /* ---------------- ASCII wallpaper ---------------- */
 
 let asciiUrl: string | null = null; // a blob: link, so the style sheet stays small
-let asciiKey = "";
-let asciiTimer: ReturnType<typeof setTimeout> | undefined;
-let asciiRetries = 0;
+let asciiKey = ""; // what the wallpaper is wanted from now; a drawing made for anything else is thrown away
+let asciiTimer: ReturnType<typeof setTimeout> | undefined; // the one thing waiting: a drawing, or another try
+let asciiWaits = 0; // looks for the theme's own picture that found none yet
+const ASCII_TRIES = [5_000, 20_000, 60_000]; // waits before trying a picture again that didn't load
 
 function loadImage(src: string, crossOrigin: boolean) {
     return new Promise<HTMLImageElement>((resolve, reject) => {
@@ -200,33 +223,65 @@ function syncAscii() {
     const { asciiWallpaper: mode, asciiSize: cell } = settings.store;
     if (mode === "off") {
         asciiKey = "";
+        clearTimeout(asciiTimer);
         setAsciiUrl(null);
         return;
     }
     const src = wallpaperSource();
     if (!src) {
         // the theme loads after plugins start, so its built-in wallpaper may not be there yet
-        if (asciiRetries++ < 20) setTimeout(syncAscii, 1500);
+        clearTimeout(asciiTimer);
+        if (asciiWaits++ < 20) asciiTimer = setTimeout(syncAscii, 1500);
         return;
     }
+    asciiWaits = 0;
     const key = `${mode}|${cell}|${src.length}|${src.slice(0, 200)}`;
     if (key === asciiKey) return;
     asciiKey = key;
+    drawSoon(key, src, mode, cell, 0);
+}
+
+// Draws after a short wait, so a slider being dragged draws once. `tries` counts the times this picture
+// didn't load.
+function drawSoon(key: string, src: string, mode: string, cell: number, tries: number) {
     clearTimeout(asciiTimer);
     asciiTimer = setTimeout(async () => {
+        let url: string | null = null;
         try {
-            const url = await drawAscii(src, mode, cell);
-            if (asciiKey !== key) {
-                // the settings changed while drawing; a newer drawing is on its way
-                URL.revokeObjectURL(url);
-                return;
-            }
-            setAsciiUrl(url);
+            url = await drawAscii(src, mode, cell);
         } catch {
-            setAsciiUrl(null);
-            showToast({ text: "Couldn't turn that wallpaper into ASCII. The site doesn't let Discord read the picture; try an imgur link.", variant: "critical" });
+            // url stays empty, which is dealt with below
         }
-        applyStyle(false);
+        // The settings changed while drawing, or the plugin was switched off: whatever came of this drawing,
+        // good or bad, is no longer wanted, and must not undo what a newer one did
+        if (asciiKey !== key) {
+            if (url) URL.revokeObjectURL(url);
+            return;
+        }
+        if (url) {
+            setAsciiUrl(url);
+            return applyStyle(false);
+        }
+        // It failed, so the drawing that is up is of something else: the plain picture shows meanwhile
+        if (asciiUrl) {
+            setAsciiUrl(null);
+            applyStyle(false);
+        }
+        // If the picture loads when nothing is read from it, the site is what forbids the reading, and
+        // trying again won't help. If it doesn't load at all, the link is wrong or there is no network
+        // (Discord just started, say): that is tried a few more times before saying so
+        const blocked = await loadImage(src, false).then(() => true, () => false);
+        if (asciiKey !== key) return;
+        if (!blocked && tries < ASCII_TRIES.length) {
+            asciiTimer = setTimeout(() => drawSoon(key, src, mode, cell, tries + 1), ASCII_TRIES[tries]);
+            return;
+        }
+        showToast({
+            text: blocked
+                ? "Couldn't turn that wallpaper into ASCII. The site doesn't let Discord read the picture; try an imgur link."
+                : "Couldn't load the wallpaper picture to turn it into ASCII. Check the link, or try an imgur link.",
+            variant: "critical"
+        });
     }, 300);
 }
 
@@ -283,8 +338,11 @@ export function resetAll() {
 }
 
 export function teardown() {
+    // nothing may come back after this: no waiting drawing or retry, and a drawing under way finds that
+    // its key is no longer the wanted one
     clearTimeout(asciiTimer);
     asciiKey = "";
+    asciiWaits = 0;
     setAsciiUrl(null);
     styleEl?.remove();
 }

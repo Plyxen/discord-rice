@@ -18,7 +18,7 @@ import { GuildStore, IconUtils, openModal, SortedGuildStore, useEffect, useReduc
 import type { KeyboardEvent, ReactNode } from "react";
 
 import { MOD } from "./mod";
-import { FONTS, isOurLink, resetAll, set, settings, Store, THEME_FILE, THEME_LINK } from "./store";
+import { FONTS, isOurLink, isPictureLink, resetAll, set, settings, Store, THEME_FILE, THEME_LINK } from "./store";
 
 type Key = keyof Store;
 
@@ -502,10 +502,29 @@ const DIM = Array.from({ length: 21 }, (_, i) => i / 20);
 
 function Wallpaper() {
     const { wallpaper } = settings.use(["wallpaper"]);
+    // What is typed is kept here and only becomes the wallpaper once it is a whole link and has stopped
+    // changing: the wallpaper is asked for from its site at once, and every half-typed link would be too
+    const [typed, setTyped] = useState(wallpaper);
+    const latest = useRef(typed);
+    latest.current = typed;
+    const takeLink = () => {
+        const link = latest.current.trim();
+        if (link !== settings.store.wallpaper && (!link || isPictureLink(link))) set("wallpaper", link);
+    };
+    useEffect(() => setTyped(wallpaper), [wallpaper]); // "reset defaults" empties it
+    useEffect(() => {
+        const timer = setTimeout(takeLink, 700);
+        return () => clearTimeout(timer);
+    }, [typed]);
+    useEffect(() => takeLink, []); // closing the window right after pasting still takes the link
+
+    const link = typed.trim();
     return (
         <>
-            <Field label="image" desc="a link to any picture: imgur, i.pinimg.com, github.io, raw.githubusercontent.com. empty = the misty forest.">
-                <Prompt label="Wallpaper link" value={wallpaper} onChange={v => set("wallpaper", v)} placeholder="https://i.imgur.com/....jpg" />
+            <Field label="image" desc={link && !isPictureLink(link)
+                ? "not a whole link yet: it starts with https:// and ends in the picture's name."
+                : "a link to any picture: imgur, i.pinimg.com, github.io, raw.githubusercontent.com. empty = the misty forest."}>
+                <Prompt label="Wallpaper link" value={typed} onChange={setTyped} onEnter={takeLink} placeholder="https://i.imgur.com/....jpg" />
             </Field>
             <Range k="wallpaperDim" label="darken" values={DIM} show={v => `${Math.round(v * 100)}%`} desc="raise it if text gets hard to read." />
             <Check k="grain" label="film grain" desc="a little noise over the wallpaper." />

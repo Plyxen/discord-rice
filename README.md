@@ -72,6 +72,7 @@ https://cdn.jsdelivr.net/gh/Plyxen/discord-rice@main/discord-rice.theme.css
 | How you have it | The theme | The plugins |
 | --- | --- | --- |
 | Vencord with the plugins | `RiceUpdater` replaces the theme file | `RiceUpdater` fetches them, rebuilds Vencord and offers a restart |
+| The same in a Flatpak Discord | `RiceUpdater` replaces the theme file | `RiceUpdater` tells you when GitHub has new ones; run the installer again to get them (see below) |
 | Vencord, online link | Vencord fetches it on every start; jsDelivr can take up to a day to pick up a new version | |
 | Vencord, theme file only | Doesn't update. Use the link instead, or run the installer again | |
 | BetterDiscord | `DiscordRiceUpdater` replaces the theme file | `DiscordRiceUpdater` replaces the plugin files, and BetterDiscord reloads them on the spot |
@@ -82,7 +83,9 @@ Both updaters work the same way. Shortly after Discord starts, and every six hou
 
 - **Your own changes are safe.** A file is only replaced if nobody changed it on your PC since the updater last looked at it. If you edited the theme file or a plugin, the update is held back and you are told; **Replace my changes** in the updater's settings takes it anyway, and keeps your theme file as `.bak`.
 - **Check whenever you like.** The about tab of the [discord-rice window](#discord-rice-settings) says what the last check found and has a **check for updates** button, which looks on GitHub and installs what is new. When a file of yours was held back, **replace my changes** shows up next to it (click it twice).
-- **You choose how.** `RiceUpdater` (under **Settings → Vencord → Plugins**) can install updates by itself, tell you first, or not check at all. New plugins load when Discord restarts; the notification's click does that.
+- **You choose how.** `RiceUpdater` (under **Settings → Vencord → Plugins**) and `DiscordRiceUpdater` (behind its cog under **Settings → Plugins** in BetterDiscord) can install updates by themselves, tell you first, or not check at all. In Vencord, new plugins load when Discord restarts; the notification's click does that.
+- **A Flatpak Discord can't update the plugins by itself.** It is only let into Vencord's build folder, not its source, and it can't run the build. So there `RiceUpdater` keeps the theme file up to date and, when GitHub has newer plugins than the ones Vencord was built with, says so once: run the installer again, which copies them in and builds. If you gave the Flatpak access to your home folder, the updater can fetch the new files but still not build; it says so once per update, and running the installer again (or building Vencord yourself) finishes it.
+- **If building fails** anywhere else (Node.js not found from inside Discord, say), you are told once per update and it is tried again on every start; building Vencord yourself or running the installer again also finishes it.
 - An updater that installs by itself means trusting this repo's future commits, like with any program that updates itself. "Tell me first" or "Don't check" are there if you'd rather not.
 
 ### Options
@@ -147,7 +150,7 @@ The plugins are the folders in `vencord-plugins/`. User plugins can't be added t
 
 1. If Discord or Vesktop already runs a Vencord source build, it uses that. Otherwise it downloads Vencord's source into a `Vencord` folder in your user folder.
 2. It copies the plugin folders into `src/userplugins/` and builds Vencord. The package manager Vencord uses (pnpm) is fetched for that one run if you don't have it.
-3. If Discord didn't run that build already, it points Discord at it with Vencord's own installer. Quit Discord first; the script waits. On Linux, a Discord that came from a package (pacman, apt, dnf) sits in `/opt` or `/usr`, which only an administrator may change: there the installer shows the same step with `sudo` and runs it if you say yes. When the package manager later updates Discord, that update can undo this step; if the theme and plugins are gone after one, run the installer again.
+3. If Discord didn't run that build already, it points Discord at it with Vencord's own installer. Quit Discord first; the script waits. On Linux this is done for every place Discord is installed in (a Flatpak, a package in `/opt` or `/usr`, a folder in your home), because the script can't know which one you start; each also gets the theme where its Vencord looks for it, which for a Flatpak is under `~/.var/app`. A Discord that came from a package (pacman, apt, dnf) or is a Flatpak for the whole system may only be changed by an administrator: there the installer shows the same step with `sudo` and runs it if you say yes. When Discord is later updated by the package manager or Flatpak, that update can undo this step; if the theme and plugins are gone after one, run the installer again. The snap of Discord can't be changed by Vencord at all.
 
 Fully restart Discord afterwards. The plugins are on by default, and your Vencord settings and themes carry over. **Settings → Vencord → Updater** keeps working: it pulls Vencord and rebuilds, and the plugins stay. For **Vesktop**, point it at the build yourself: **Settings → Vesktop Settings → Vencord Location** → the `dist` folder inside the Vencord folder.
 

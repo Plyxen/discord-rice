@@ -98,8 +98,11 @@ export default class DiscordRice {
     }
 
     private syncHeader() {
-        const row = findButtonRow();
-        if (!row || !this.holder) return;
+        if (!this.holder) return;
+        // while the button is on the page, the row it sits in is the row: the page is only searched for it
+        // when Discord has dropped the button
+        const row = this.holder.isConnected ? this.holder.parentElement : findButtonRow();
+        if (!row) return;
         if (this.holder.parentElement !== row) {
             // look like the buttons already there, whatever Discord calls their class this week
             const other = row.querySelector<HTMLElement>('[class*="clickable_"]:not(.vc-discord-rice-btn)');

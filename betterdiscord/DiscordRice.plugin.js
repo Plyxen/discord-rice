@@ -2,7 +2,7 @@
  * @name DiscordRice
  * @author Pota
  * @description Settings for the discord-rice theme in one terminal-style window, behind a rice bowl button in the channel header: font, corners, wallpaper, ASCII wallpaper, what to hide, and folder looks.
- * @version 1.1.1
+ * @version 1.1.2
  * @source https://github.com/Plyxen/discord-rice
  * @website https://github.com/Plyxen/discord-rice
  */
@@ -244,7 +244,23 @@ var ErrorBoundary = class extends BdApi.React.Component {
 // vencord-plugins/discordRice/store.ts
 var THEME_FILE2 = "discord-rice.theme.css";
 var THEME_LINK = "https://cdn.jsdelivr.net/gh/Plyxen/discord-rice@main/discord-rice.theme.css";
-var isOurLink = (link) => link.includes(THEME_FILE2);
+function isOurLink(link) {
+  try {
+    const url = new URL(link);
+    return url.pathname.endsWith("/" + THEME_FILE2) && /plyxen/i.test(url.hostname + url.pathname);
+  } catch {
+    return false;
+  }
+}
+function isPictureLink(text) {
+  if (text.startsWith("data:image/")) return true;
+  try {
+    const url = new URL(text);
+    return (url.protocol === "https:" || url.protocol === "http:") && url.hostname.includes(".") && url.pathname.length > 1;
+  } catch {
+    return false;
+  }
+}
 var settings = definePluginSettings({
   hideInbox: { type: OptionType.BOOLEAN, description: "Hide the inbox button", default: true, hidden: true },
   hideNameplates: { type: OptionType.BOOLEAN, description: "Hide nameplates", default: true, hidden: true },
@@ -319,7 +335,7 @@ var DEFAULTS = {
   asciiWallpaper: "off",
   asciiSize: 10
 };
-var cssString = (s) => `"${s.replace(/["\\]/g, "\\$&")}"`;
+var cssString = (s) => `"${s.replace(/["\\]/g, "\\$&").replace(/[\n\r\f]/g, (c) => `\\${c.charCodeAt(0).toString(16)} `)}"`;
 var onOff = (b) => b ? "on" : "off";
 var FONTS = {
   iosevka: ["'Iosevka'", "'Iosevka'", "Iosevka"],
@@ -328,7 +344,8 @@ var FONTS = {
 var asciiUrl = null;
 var asciiKey = "";
 var asciiTimer;
-var asciiRetries = 0;
+var asciiWaits = 0;
+var ASCII_TRIES = [5e3, 2e4, 6e4];
 function loadImage(src, crossOrigin) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -430,31 +447,52 @@ function syncAscii() {
   const { asciiWallpaper: mode, asciiSize: cell } = settings.store;
   if (mode === "off") {
     asciiKey = "";
+    clearTimeout(asciiTimer);
     setAsciiUrl(null);
     return;
   }
   const src = wallpaperSource();
   if (!src) {
-    if (asciiRetries++ < 20) setTimeout(syncAscii, 1500);
+    clearTimeout(asciiTimer);
+    if (asciiWaits++ < 20) asciiTimer = setTimeout(syncAscii, 1500);
     return;
   }
+  asciiWaits = 0;
   const key = `${mode}|${cell}|${src.length}|${src.slice(0, 200)}`;
   if (key === asciiKey) return;
   asciiKey = key;
+  drawSoon(key, src, mode, cell, 0);
+}
+function drawSoon(key, src, mode, cell, tries) {
   clearTimeout(asciiTimer);
   asciiTimer = setTimeout(async () => {
+    let url = null;
     try {
-      const url = await drawAscii(src, mode, cell);
-      if (asciiKey !== key) {
-        URL.revokeObjectURL(url);
-        return;
-      }
-      setAsciiUrl(url);
+      url = await drawAscii(src, mode, cell);
     } catch {
-      setAsciiUrl(null);
-      showToast({ text: "Couldn't turn that wallpaper into ASCII. The site doesn't let Discord read the picture; try an imgur link.", variant: "critical" });
     }
-    applyStyle(false);
+    if (asciiKey !== key) {
+      if (url) URL.revokeObjectURL(url);
+      return;
+    }
+    if (url) {
+      setAsciiUrl(url);
+      return applyStyle(false);
+    }
+    if (asciiUrl) {
+      setAsciiUrl(null);
+      applyStyle(false);
+    }
+    const blocked = await loadImage(src, false).then(() => true, () => false);
+    if (asciiKey !== key) return;
+    if (!blocked && tries < ASCII_TRIES.length) {
+      asciiTimer = setTimeout(() => drawSoon(key, src, mode, cell, tries + 1), ASCII_TRIES[tries]);
+      return;
+    }
+    showToast({
+      text: blocked ? "Couldn't turn that wallpaper into ASCII. The site doesn't let Discord read the picture; try an imgur link." : "Couldn't load the wallpaper picture to turn it into ASCII. Check the link, or try an imgur link.",
+      variant: "critical"
+    });
   }, 300);
 }
 var styleEl = null;
@@ -505,6 +543,7 @@ function resetAll() {
 function teardown() {
   clearTimeout(asciiTimer);
   asciiKey = "";
+  asciiWaits = 0;
   setAsciiUrl(null);
   styleEl?.remove();
 }
@@ -1427,7 +1466,21 @@ function Look() {
 var DIM = Array.from({ length: 21 }, (_, i) => i / 20);
 function Wallpaper() {
   const { wallpaper } = settings.use(["wallpaper"]);
-  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Field, { label: "image", desc: "a link to any picture: imgur, i.pinimg.com, github.io, raw.githubusercontent.com. empty = the misty forest." }, /* @__PURE__ */ React.createElement(Prompt, { label: "Wallpaper link", value: wallpaper, onChange: (v) => set("wallpaper", v), placeholder: "https://i.imgur.com/....jpg" })), /* @__PURE__ */ React.createElement(Range, { k: "wallpaperDim", label: "darken", values: DIM, show: (v) => `${Math.round(v * 100)}%`, desc: "raise it if text gets hard to read." }), /* @__PURE__ */ React.createElement(Check, { k: "grain", label: "film grain", desc: "a little noise over the wallpaper." }), /* @__PURE__ */ React.createElement(Heading, null, "ascii"), /* @__PURE__ */ React.createElement(Choice, { k: "asciiWallpaper", label: "redraw as", desc: "draws the wallpaper out of characters.", options: [
+  const [typed, setTyped] = useState(wallpaper);
+  const latest = useRef(typed);
+  latest.current = typed;
+  const takeLink = () => {
+    const link2 = latest.current.trim();
+    if (link2 !== settings.store.wallpaper && (!link2 || isPictureLink(link2))) set("wallpaper", link2);
+  };
+  useEffect(() => setTyped(wallpaper), [wallpaper]);
+  useEffect(() => {
+    const timer = setTimeout(takeLink, 700);
+    return () => clearTimeout(timer);
+  }, [typed]);
+  useEffect(() => takeLink, []);
+  const link = typed.trim();
+  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Field, { label: "image", desc: link && !isPictureLink(link) ? "not a whole link yet: it starts with https:// and ends in the picture's name." : "a link to any picture: imgur, i.pinimg.com, github.io, raw.githubusercontent.com. empty = the misty forest." }, /* @__PURE__ */ React.createElement(Prompt, { label: "Wallpaper link", value: typed, onChange: setTyped, onEnter: takeLink, placeholder: "https://i.imgur.com/....jpg" })), /* @__PURE__ */ React.createElement(Range, { k: "wallpaperDim", label: "darken", values: DIM, show: (v) => `${Math.round(v * 100)}%`, desc: "raise it if text gets hard to read." }), /* @__PURE__ */ React.createElement(Check, { k: "grain", label: "film grain", desc: "a little noise over the wallpaper." }), /* @__PURE__ */ React.createElement(Heading, null, "ascii"), /* @__PURE__ */ React.createElement(Choice, { k: "asciiWallpaper", label: "redraw as", desc: "draws the wallpaper out of characters.", options: [
     ["off", "off"],
     ["ramp", ".:-=+*#%@"],
     ["digits", "0-9"],
@@ -1595,8 +1648,9 @@ var DiscordRice = class {
     return /* @__PURE__ */ React.createElement(RicePage, null);
   }
   syncHeader() {
-    const row = findButtonRow();
-    if (!row || !this.holder) return;
+    if (!this.holder) return;
+    const row = this.holder.isConnected ? this.holder.parentElement : findButtonRow();
+    if (!row) return;
     if (this.holder.parentElement !== row) {
       const other = row.querySelector('[class*="clickable_"]:not(.vc-discord-rice-btn)');
       const clickable = other && Array.from(other.classList).find((c) => c.startsWith("clickable_"));

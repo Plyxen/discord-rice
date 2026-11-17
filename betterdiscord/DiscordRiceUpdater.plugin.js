@@ -2,7 +2,7 @@
  * @name DiscordRiceUpdater
  * @author Pota
  * @description Keeps the discord-rice theme file and plugins up to date from github.com/Plyxen/discord-rice. A file you edited yourself is left alone.
- * @version 1.2.0
+ * @version 1.3.0
  * @source https://github.com/Plyxen/discord-rice
  * @website https://github.com/Plyxen/discord-rice
  */
@@ -23,6 +23,10 @@
  * looked. One you edited is left alone and you get a message instead; "Replace my changes" in the
  * plugin's settings takes the update anyway and keeps your file as .bak.
  *
+ * The plugin's settings also say what happens when there is an update: it is installed by itself, or you
+ * are told and it is installed when you click, or nothing is checked at all. BetterDiscord runs a plugin
+ * file the moment it changes, so "tell me" is the way to look at an update before it runs.
+ *
  * It only ever talks to github.com/Plyxen/discord-rice.
  */
 
@@ -32,6 +36,7 @@ const NAME = "DiscordRiceUpdater";
 const HEADERS = { "User-Agent": "discord-rice-updater", "X-GitHub-Api-Version": "2022-11-28" };
 const FIRST_CHECK = 30000;
 const EVERY = 6 * 60 * 60000;
+const MODES = [["auto", "Install it by itself"], ["ask", "Tell me, and install when I click"], ["off", "Don't check"]];
 
 module.exports = class DiscordRiceUpdater {
     constructor() {
@@ -70,9 +75,21 @@ module.exports = class DiscordRiceUpdater {
         this.watchers.forEach(redraw => redraw());
     }
 
+    /** what to do when there is an update: "auto", "ask" or "off" */
+    mode() {
+        const { mode } = BdApi.Data.load(NAME, "settings") || {};
+        return MODES.some(([value]) => value === mode) ? mode : "auto";
+    }
+
+    /** the check that runs by itself: does what the setting says */
+    automatic() {
+        const mode = this.mode();
+        if (mode !== "off") this.run(false, mode === "auto");
+    }
+
     start() {
-        this.startTimer = setTimeout(() => this.run(false), FIRST_CHECK);
-        this.interval = setInterval(() => this.run(false), EVERY);
+        this.startTimer = setTimeout(() => this.automatic(), FIRST_CHECK);
+        this.interval = setInterval(() => this.automatic(), EVERY);
     }
 
     stop() {
@@ -134,11 +151,31 @@ module.exports = class DiscordRiceUpdater {
         return state.listing;
     }
 
+    /** says once that there is an update, with a button that installs it */
+    offer(names) {
+        const text = `discord-rice has an update (${names.join(", ")}).`;
+        if (!BdApi.UI.showNotice) {
+            BdApi.UI.showToast(`${text} "Check now" in the ${NAME} settings installs it.`, { type: "info", timeout: 10000 });
+            return;
+        }
+        const close = BdApi.UI.showNotice(text, {
+            type: "info",
+            buttons: [{
+                label: "Install",
+                onClick: () => {
+                    if (typeof close === "function") close();
+                    this.run(false);
+                }
+            }]
+        });
+    }
+
     /**
      * @param force also replace a file that was changed on this PC
+     * @param apply install what is found; false only looks
      * @returns one line saying what happened
      */
-    async run(force) {
+    async run(force, apply = true) {
         if (this.busy) return "Still checking.";
         this.busy = true;
         this.say("Checking GitHub…");
@@ -149,7 +186,7 @@ module.exports = class DiscordRiceUpdater {
             const state = BdApi.Data.load(NAME, "state") || {};
             state.seen = state.seen || {};
             const { commit, files: remote } = await this.listing(state, !force);
-            const updated = [], held = [], differs = [];
+            const updated = [], available = [], held = [], differs = [];
 
             for (const [repoPath, file] of Object.entries(this.files())) {
                 const theirs = remote[repoPath];
@@ -178,6 +215,11 @@ module.exports = class DiscordRiceUpdater {
                     }
                 }
 
+                if (!apply) {
+                    available.push(name);
+                    continue;
+                }
+
                 const res = await this.github(`https://raw.githubusercontent.com/${REPO}/${commit}/${repoPath}`);
                 const fresh = await res.text();
                 if (await this.gitSha(fresh) !== theirs) throw new Error(`${name} didn't arrive whole`);
@@ -190,9 +232,12 @@ module.exports = class DiscordRiceUpdater {
 
             const firstReport = held.length && state.told !== commit;
             if (held.length) state.told = commit;
+            const firstOffer = available.length && state.offered !== commit;
+            if (available.length) state.offered = commit;
             this.held = held.length > 0 || differs.length > 0;
 
             if (updated.length) line = `Updated ${updated.join(", ")}.`;
+            else if (available.length) line = `There is an update for ${available.join(", ")}. "Check now" installs it.`;
             else if (held.length) line = `There is an update, but ${held.join(", ")} was changed on this PC and is left alone.`;
             else if (differs.length) line = `Your ${differs.join(", ")} isn't the same as the one on GitHub. It updates with GitHub's next change, or now with "Replace my changes".`;
             else line = "Up to date.";
@@ -201,6 +246,7 @@ module.exports = class DiscordRiceUpdater {
             BdApi.Data.save(NAME, "state", state);
 
             if (updated.length) BdApi.UI.showToast(`discord-rice updated: ${updated.join(", ")}`, { type: "success" });
+            if (firstOffer) this.offer(available);
             if (firstReport) BdApi.UI.showToast(`discord-rice has an update, but ${held.join(", ")} was changed on this PC. See the ${NAME} settings.`, { type: "warning", timeout: 10000 });
             this.status = state.last.text;
         } catch (e) {
@@ -216,9 +262,26 @@ module.exports = class DiscordRiceUpdater {
 
     getSettingsPanel() {
         const panel = document.createElement("div");
+        const text = "color: var(--text-default, #ddd); margin-bottom: 12px;";
+
+        const choice = document.createElement("label");
+        choice.textContent = "When the theme or the plugins change on GitHub: ";
+        choice.style.cssText = "display: block; " + text;
+        const select = document.createElement("select");
+        select.style.cssText = "padding: 4px 8px; color: #ddd; background: #222; border: 1px solid #555; border-radius: 4px;";
+        for (const [value, label] of MODES) {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = label;
+            select.appendChild(option);
+        }
+        select.value = this.mode();
+        select.onchange = () => BdApi.Data.save(NAME, "settings", { mode: select.value });
+        choice.appendChild(select);
+
         const line = document.createElement("div");
-        line.textContent = "Checks GitHub when Discord starts and every six hours.";
-        line.style.cssText = "color: var(--text-default, #ddd); margin-bottom: 12px;";
+        line.textContent = this.status || "GitHub is asked when Discord starts and every six hours.";
+        line.style.cssText = text;
 
         const button = (label, force) => {
             const b = document.createElement("button");
@@ -232,7 +295,7 @@ module.exports = class DiscordRiceUpdater {
             return b;
         };
 
-        panel.append(line, button("Check now", false), button("Replace my changes", true));
+        panel.append(choice, line, button("Check now", false), button("Replace my changes", true));
         return panel;
     }
 };
