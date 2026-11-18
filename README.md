@@ -258,7 +258,7 @@ The presets come in pairs, the same name as ASCII and as an icon:
 - The **notification bell**, **video call**, **sticker button** and **gift button** switches, and the hiding of the greyed-out DM profile button, find those buttons by their English labels, so they do nothing when Discord is set to another language. Everything else works in any language.
 - The theme is made for Discord's dark mode on desktop.
 - The BetterDiscord side (the theme's rules for its interface, and the four plugins) is written from BetterDiscord's and Discord's source and tested on a stand-in page, not inside a running BetterDiscord. If something is off there, please open an issue.
-- The installers are tested on Windows. `install.sh` is tested with fake folders, not on a real Linux or macOS install.
+- The installers are tested on Windows. `install.sh` has run for real on one Linux PC with a Flatpak Discord; its `sudo` step and macOS are only tested with fake folders. If it goes wrong for you, [say what it printed](https://github.com/Plyxen/discord-rice/issues/new/choose).
 - In BetterDiscord the inbox button is hidden from the outside instead of never being drawn, and the folder looks find a folder by an id Discord puts on it. Both can stop working after a Discord update until this repo catches up; the rest of the plugins keeps working.
 - The ASCII wallpaper needs a picture the page is allowed to read: the default one and imgur links work; some sites don't allow it.
 
@@ -267,6 +267,12 @@ The presets come in pairs, the same name as ASCII and as an icon:
 The theme stands on its own, so a fix has to land here: when Discord renames its classes, the rules that use exact class names stop working until the theme is updated. The colours come from Discord's named colour variables, and most switches match links and labels (`href`, `aria-label`), which usually survive renames.
 
 The rules that use exact class names, and may need updating after a big update: the layout (no top bar, the user panel under the channel list, the window dots), the pane lines, the prompt, the selected channel bar, plain folders, the quest card, the timestamp brackets, menu styling, the game page window, the header search and the user panel spacing. If one stops working, the rest of the theme still works.
+
+## Problems and changes
+
+- Something looks or works wrong, or an installer stopped: [open an issue](https://github.com/Plyxen/discord-rice/issues/new/choose). A screenshot, or what the terminal printed, says most.
+- A security problem: privately, as the [security policy](.github/SECURITY.md) says. It also lists what the theme, the plugins, the updaters and the installers reach out to.
+- Sending a change: [CONTRIBUTING.md](.github/CONTRIBUTING.md) says how the theme, the plugins and the installers are put together.
 
 ## Credits and licence
 

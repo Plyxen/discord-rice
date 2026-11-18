@@ -1,0 +1,55 @@
+name: Something looks or works wrong
+description: The theme or a plugin shows something broken, unreadable or out of place.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A screenshot says most: paste or drag one into the first box.
+        A security problem doesn't go here; see the [security policy](https://github.com/Plyxen/discord-rice/security/policy).
+  - type: textarea
+    id: what
+    attributes:
+      label: What is wrong?
+      description: What you see, what you expected instead, and a screenshot if you can.
+    validations:
+      required: true
+  - type: dropdown
+    id: mod
+    attributes:
+      label: Mod
+      options:
+        - Vencord
+        - Vesktop
+        - BetterDiscord
+    validations:
+      required: true
+  - type: dropdown
+    id: system
+    attributes:
+      label: System
+      options:
+        - Windows
+        - Linux
+        - macOS
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Theme version
+      description: The about tab of the discord-rice window shows it, and so do the first lines of discord-rice.theme.css.
+      placeholder: "4.2.5"
+  - type: dropdown
+    id: plugins
+    attributes:
+      label: Are the discord-rice plugins installed?
+      options:
+        - "Yes"
+        - "No, only the theme"
+        - "Not sure"
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else
+      description: Discord's language if it isn't English, other themes or CSS you use, since when it has been like this.

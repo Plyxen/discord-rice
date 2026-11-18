@@ -1,0 +1,36 @@
+name: The installer or the updater went wrong
+description: An installer or an updater stopped, said something odd, or left Discord as it was.
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: which
+    attributes:
+      label: Which one?
+      options:
+        - install.ps1 (Windows)
+        - install.sh (Linux, macOS)
+        - RiceUpdater (Vencord)
+        - DiscordRiceUpdater (BetterDiscord)
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: System, and how Discord is installed
+      description: On Linux it matters whether Discord is a Flatpak, a package (pacman, apt, dnf) or a folder in your home.
+      placeholder: CachyOS, Discord as a Flatpak
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: What it printed
+      description: Everything the terminal showed. For an updater, its status line (Settings, then the plugin's settings) and any notification. Folder paths can have your user name in them; take it out if you'd rather.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: after
+    attributes:
+      label: What happened afterwards
+      description: Does Discord look the same as before? Did running it again change anything?

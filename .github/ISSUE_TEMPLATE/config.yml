@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: A security problem
+    url: https://github.com/Plyxen/discord-rice/security/policy
+    about: Please report these privately, the way the security policy says, not as an issue.
