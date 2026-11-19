@@ -114,7 +114,7 @@ Without the plugin, every option is a CSS variable at the top of the theme file.
 | `--hide-video-call-button` | `on` | The camera in the DM header. The voice call button stays, and you can turn your camera on once in the call. |
 | `--home-icon` | `arch` | Arch logo on the home button. `discord` brings back Discord's logo. |
 | `--mono-window-controls` | `on` | Grey window dots instead of red / yellow / green. `--dot-size` is their size. |
-| `--corner-room` | `168px` | Room kept free at the right end of the channel header, where the inbox, plugin buttons and window dots sit now that there is no top bar (in the `:root` block). Raise it if a plugin adds more buttons there. |
+| `--corner-room` | `168px` | Room kept free at the right end of the channel header, where the inbox, plugin buttons and window dots sit now that there is no top bar (in the `:root` block). It is room for two buttons; the theme adds 40px by itself for each further one, such as Discord's "update ready" arrow or a plugin's button. |
 | `--line`, `--line-focus`, `--float-border` | faint / light grey | The lines between panes, the chat bar's line while typing, and the border around menus (in the `:root` block). |
 | `--mention` | faint grey band | The background of messages that ping you (in the `:root` block). |
 | `--ping-floor` | `0.65` | A ping in a role's colour is never darker than this, so a black or very dark role can still be read. `0` is black, `1` is white, and `0` leaves every colour as the server set it (in the `:root` block). |

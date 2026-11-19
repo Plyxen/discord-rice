@@ -151,7 +151,8 @@ body {
     --custom-channel-header-height: 48px;
     --custom-channel-textarea-text-area-height: 47px; /* so the chat bar's line is level with the user panel's */
     --corner-room: 168px; /* room kept free at the right end of the channel header for the buttons parked
-                             there (see "layout"). Raise it if a plugin adds more buttons */
+                             there (see "layout"): enough for two. The theme adds 40px by itself for
+                             each further one, up to six */
 }
 
 /* ================================================================
@@ -548,7 +549,23 @@ body,
 }
 /* ...and the channel header keeps that corner free */
 .toolbar_ybUK7Z /* buttons at the right of a channel header */ {
-    padding-inline-end: var(--corner-room);
+    padding-inline-end: calc(var(--corner-room) + var(--corner-more, 0px));
+}
+/* --corner-room is room for two buttons. A third (Discord's green "update ready" arrow, a plugin's button)
+   made the row 40px wider, and the first button ended up on the X of the search box. So count the buttons
+   and keep 40px more for each extra one. The row comes before the rest of the window in the page, which
+   is how the count gets from there to the header; it only changes when a button comes or goes */
+.bar_3zSH5d:has(> .trailing_3zSH5d > :nth-child(3 of div:not(.winButtons_3zSH5d))) ~ .content_pog62O {
+    --corner-more: 40px;
+}
+.bar_3zSH5d:has(> .trailing_3zSH5d > :nth-child(4 of div:not(.winButtons_3zSH5d))) ~ .content_pog62O {
+    --corner-more: 80px;
+}
+.bar_3zSH5d:has(> .trailing_3zSH5d > :nth-child(5 of div:not(.winButtons_3zSH5d))) ~ .content_pog62O {
+    --corner-more: 120px;
+}
+.bar_3zSH5d:has(> .trailing_3zSH5d > :nth-child(6 of div:not(.winButtons_3zSH5d))) ~ .content_pog62O {
+    --corner-more: 160px;
 }
 .clickable_ybUK7Z .icon_ybUK7Z /* its icons: a step brighter than Discord's muted grey, so they read on the wallpaper */ {
     color: var(--fg-dim);
@@ -557,7 +574,7 @@ body,
    smaller windows the channel name got squeezed to nothing. Let the box shrink a little earlier */
 .search_bWCaDq {
     flex: 0 1 auto;
-    width: clamp(var(--space-64), 100cqi - 360px, 244px);
+    width: clamp(var(--space-64), 100cqi - 360px - var(--corner-more, 0px), 244px);
 }
 
 /* window buttons: three dots. Each button is twice as wide as its dot, so it stays easy to hit */
