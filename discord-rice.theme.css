@@ -2,7 +2,7 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 4.2.5
+ * @version 4.2.6
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
@@ -644,6 +644,23 @@ body,
 }
 .chat_z_gUBg[data-has-border='true'] /* chat column */ {
     border-top: none;
+}
+/* a forum post, a thread or a voice channel's chat opens in a pane beside the channel. In a window too
+   narrow for both, Discord floats that pane over the channel instead, on one of the base backgrounds.
+   Those are see-through in here, so the post list and the header underneath showed straight through it,
+   text over text. It is a floating window like the menus: their glass (solid dark with --glass-menus:
+   off) and their thin light edge in place of Discord's drop shadow. The [class*] one is a fallback for
+   when the exact names change */
+:is(.floating_FrbQJp, [class*='chatLayerWrapper_'] > [class*='floating_']) {
+    background: var(--panel);
+    border-inline-start-color: var(--float-border);
+    box-shadow: none;
+}
+@container style(--glass-menus: on) {
+    :is(.floating_FrbQJp, [class*='chatLayerWrapper_'] > [class*='floating_']) {
+        background: var(--float-tint);
+        backdrop-filter: blur(var(--float-blur)) saturate(1.2);
+    }
 }
 
 /* server list: the unread pill is a thin rounded bar next to the icon, not a tab stuck to the window edge */
