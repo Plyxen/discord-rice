@@ -2,7 +2,7 @@
  * @name discord-rice
  * @description Linux-rice Discord: misty wallpaper, tiled panes split by thin lines, Iosevka, greyscale, plain folders, no top bar, no store or quest clutter.
  * @author Pota
- * @version 4.2.6
+ * @version 4.2.7
  * @license GPL-3.0-or-later
  * @source https://github.com/Plyxen/discord-rice
  */
@@ -778,6 +778,17 @@ body,
 .source_4HfQya .sourceOverlayCTA_4HfQya {
     background-color: var(--button);
     color: var(--ink);
+}
+
+/* a profile with colours of its own (Nitro): Discord fills the filled button on it ("Edit Profile", "Add
+   Friend") with a colour taken from the profile, and this theme writes dark on filled buttons. On a dark
+   profile that was dark text on dim grey. The button is the theme's light one there too, the same as
+   "Store" on a bot's profile. Discord's rule is ":root .custom-user-profile-theme.theme-dark", so this
+   one is written just as heavy */
+:root .custom-user-profile-theme:is(.theme-dark, .theme-darker, .theme-midnight, .theme-light) {
+    --control-primary-background-default: var(--button);
+    --control-primary-background-hover: var(--button-hover);
+    --control-primary-background-active: var(--button-press);
 }
 
 /* a video or sound file in chat: the player writes on the picture and on its own dark strips, and it does
